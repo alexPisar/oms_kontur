@@ -1,0 +1,58 @@
+﻿<Window x:Class="KonturEdoClient.MarkedCodesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Коды маркировки" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0" Content="Просмотр данных маркировки" Margin="5 0"/>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+            <dxg:GridControl Grid.Row="0"
+                             Name="DocumetDetailsDataGrid"
+                             ShowBorder="False">
+                <dxg:GridControl.Columns>
+                    <dxg:GridColumn FieldName="Name" Header="Название/код маркировки товара" Width="5*"/>
+                    <dxg:GridColumn FieldName="IdDoc" Header="Номер документа" Width="*"/>
+                    <dxg:GridColumn FieldName="IdGood" Header="Id товара" Width="*"/>
+                    <dxg:GridColumn FieldName="Quantity" Header="Количество" Width="*"/>
+                    <dxg:GridColumn FieldName="InsertDateTime" Header="Дата добавления" Width="*"/>
+                    <dxg:GridColumn FieldName="NotAllDocumentsMarked" Visible="False"/>
+                    <dxg:GridColumn FieldName="NotMarked" Visible="False"/>
+                </dxg:GridControl.Columns>
+                <dxg:GridControl.View>
+                    <dxg:TreeListView Name="treeList" AllowEditing="False" NavigationStyle="Row" ShowCheckboxes="True"
+                                      AllowRecursiveNodeChecking="True" SearchPanelAllowFilter="False" ShowSearchPanelMode="Always"
+                                      EnableSelectedRowAppearance="False">
+                        <dxg:TreeListView.FormatConditions>
+                            <dxg:FormatCondition ApplyToRow="True"  Expression="[NotAllDocumentsMarked] and ![NotMarked]" FieldName="NotAllDocumentsMarked">
+                                <dxg:Format Background="#e69c9c"/>
+                            </dxg:FormatCondition>
+                            <dxg:FormatCondition ApplyToRow="True"  Expression="[NotMarked]" FieldName="NotMarked">
+                                <dxg:Format Background="Gray"/>
+                            </dxg:FormatCondition>
+                        </dxg:TreeListView.FormatConditions>
+                    </dxg:TreeListView>
+                </dxg:GridControl.View>
+            </dxg:GridControl>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Margin="5 5" Name="returnButton" Content="Оформить возврат" Click="ReturnButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

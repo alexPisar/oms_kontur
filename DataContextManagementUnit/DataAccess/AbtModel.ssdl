@@ -1,0 +1,437 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DataContextManagementUnit.DataAccess.Contexts.Abt.Store" Alias="Self" Provider="Devart.Data.Oracle" ProviderManifestToken="Oracle, 11.2.0.1" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:devart="http://devart.com/schemas/edml/StorageSchemaExtensions/1.0" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityContainer Name="AbtDbContextStoreContainer">
+    <EntitySet Name="REF_ITEMS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_ITEMS" store:Type="Tables" Schema="ABT" Table="REF_ITEMS" />
+    <EntitySet Name="REF_GOODS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" store:Type="Tables" Schema="ABT" Table="REF_GOODS" />
+    <EntitySet Name="REF_CONTRACTORS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_CONTRACTORS" store:Type="Tables" Schema="ABT" Table="REF_CONTRACTORS" />
+    <EntitySet Name="REF_BAR_CODES" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_BAR_CODES" store:Type="Tables" Schema="ABT" Table="REF_BAR_CODES" />
+    <EntitySet Name="DOC_JOURNALs" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" store:Type="Tables" Schema="ABT" Table="DOC_JOURNAL" />
+    <EntitySet Name="DOC_GOODS_DETAILS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS" store:Type="Tables" Schema="ABT" Table="DOC_GOODS_DETAILS" />
+    <EntitySet Name="DOC_GOODS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS" store:Type="Tables" Schema="ABT" Table="DOC_GOODS" />
+    <EntitySet Name="DOC_GOODS_DETAILS_Is" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS_I" store:Type="Tables" Schema="ABT" Table="DOC_GOODS_DETAILS_I" />
+    <EntitySet Name="DOC_GOODS_Is" EntityType="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_I" store:Type="Tables" Schema="ABT" Table="DOC_GOODS_I" />
+    <AssociationSet Name="FK_REF_ITEMS_1" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.FK_REF_ITEMS_1">
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+      <End Role="REF_ITEMS" EntitySet="REF_ITEMS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_REF_GOODS_7" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.FK_REF_GOODS_7">
+      <End Role="REF_ITEMS" EntitySet="REF_ITEMS" />
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_REF_GOODS_6" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.FK_REF_GOODS_6">
+      <End Role="REF_ITEMS" EntitySet="REF_ITEMS" />
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_REF_GOODS_3" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.FK_REF_GOODS_3">
+      <End Role="REF_CONTRACTORS" EntitySet="REF_CONTRACTORS" />
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_REF_GOODS_2" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.FK_REF_GOODS_2">
+      <End Role="REF_CONTRACTORS" EntitySet="REF_CONTRACTORS" />
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="SYS_C0012442" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.SYS_C0012442">
+      <End Role="DOC_JOURNAL" EntitySet="DOC_JOURNALs" />
+      <End Role="DOC_JOURNAL1" EntitySet="DOC_JOURNALs" />
+    </AssociationSet>
+    <AssociationSet Name="SYS_C0012433" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.SYS_C0012433">
+      <End Role="DOC_JOURNAL" EntitySet="DOC_JOURNALs" />
+      <End Role="DOC_GOODS_DETAILS" EntitySet="DOC_GOODS_DETAILS" />
+    </AssociationSet>
+    <AssociationSet Name="DOC_GOODS_DETAILS_FK_2" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS_FK_2">
+      <End Role="REF_GOODS" EntitySet="REF_GOODS" />
+      <End Role="DOC_GOODS_DETAILS" EntitySet="DOC_GOODS_DETAILS" />
+    </AssociationSet>
+    <AssociationSet Name="DOC_GOODS_FK_9" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_FK_9">
+      <End Role="DOC_JOURNAL" EntitySet="DOC_JOURNALs" />
+      <End Role="DOC_GOODS" EntitySet="DOC_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="DOC_GOODS_FK_5" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_FK_5">
+      <End Role="REF_CONTRACTORS" EntitySet="REF_CONTRACTORS" />
+      <End Role="DOC_GOODS" EntitySet="DOC_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="DOC_GOODS_FK_1" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_FK_1">
+      <End Role="REF_CONTRACTORS" EntitySet="REF_CONTRACTORS" />
+      <End Role="DOC_GOODS" EntitySet="DOC_GOODS" />
+    </AssociationSet>
+    <AssociationSet Name="DOC_GOODS_DETAILS_I_FK1" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS_I_FK1">
+      <End Role="DOC_JOURNAL" EntitySet="DOC_JOURNALs" />
+      <End Role="DOC_GOODS_DETAILS_I" EntitySet="DOC_GOODS_DETAILS_Is" />
+    </AssociationSet>
+    <AssociationSet Name="SYS_C0012438" Association="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.SYS_C0012438">
+      <End Role="DOC_JOURNAL" EntitySet="DOC_JOURNALs" />
+      <End Role="DOC_GOODS_I" EntitySet="DOC_GOODS_Is" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="REF_ITEMS">
+    <Documentation>
+      <Summary>??????? ????????? ??????</Summary>
+    </Documentation>
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="ID_GOOD" Type="decimal" />
+    <Property Name="ID_NAME" Type="decimal" Nullable="false" />
+    <Property Name="QUANTITY" Type="int" Nullable="false" />
+    <Property Name="WEIGHT" Type="decimal" Nullable="false" DefaultValue="0" />
+    <Property Name="CBM" Type="decimal" Nullable="false" DefaultValue="0" />
+  </EntityType>
+  <EntityType Name="REF_GOODS">
+    <Documentation>
+      <Summary>Справочник товаров</Summary>
+    </Documentation>
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="SERT_NUM" Type="VARCHAR2" MaxLength="100" />
+    <Property Name="REG_NUM" Type="VARCHAR2" MaxLength="64" />
+    <Property Name="EXPIRING_DATE" Type="DATE" />
+    <Property Name="CODE" Type="VARCHAR2" MaxLength="32" />
+    <Property Name="NAME" Type="VARCHAR2" Nullable="false" MaxLength="500" />
+    <Property Name="TAX" Type="int" Nullable="false" />
+    <Property Name="ID_BASE_ITEM" Type="decimal" Nullable="false" />
+    <Property Name="ID_DEFAULT_ITEM" Type="decimal" Nullable="false" />
+    <Property Name="ID_ACCOUNT_CURRENCY" Type="decimal" Nullable="false" />
+    <Property Name="ID_MANUFACTURER" Type="decimal" Nullable="false" />
+    <Property Name="ID_ORGAN" Type="decimal" />
+    <Property Name="ID_COUNTRY" Type="decimal" Nullable="false" DefaultValue="116301" />
+    <Property Name="CUSTOMS_NO" Type="VARCHAR2" MaxLength="32" />
+    <Property Name="ID_SUBDIVISION" Type="decimal" Nullable="false" DefaultValue="83901" />
+    <Property Name="HAS_REMAIN" Type="bool" Nullable="false" DefaultValue="True" />
+    <Property Name="OLDID" Type="decimal" />
+    <Property Name="GOOD_SIZE" Type="VARCHAR2" MaxLength="8" />
+    <Property Name="BAR_CODE" Type="decimal" />
+  </EntityType>
+  <EntityType Name="REF_CONTRACTORS">
+    <Documentation>
+      <Summary>Справочник контрагентов (является предком для всех справочников, связанных с людьми ;-)</Summary>
+    </Documentation>
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="NAME" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="ID_DISTRICT" Type="decimal" DefaultValue="80001">
+      <Documentation>
+        <Summary>Ссылка на справочник районов</Summary>
+      </Documentation>
+    </Property>
+    <Property Name="ID_CITY" Type="decimal" />
+    <Property Name="COMMENTS" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="ADDRESS" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="PHONES" Type="VARCHAR2" MaxLength="64" />
+    <Property Name="CONTACT" Type="VARCHAR2" MaxLength="64" />
+    <Property Name="DEFAULT_CUSTOMER" Type="decimal" />
+    <Property Name="ID_CHANNEL" Type="decimal" />
+  </EntityType>
+  <EntityType Name="REF_BAR_CODES">
+    <Key>
+      <PropertyRef Name="BAR_CODE" />
+    </Key>
+    <Property Name="ID_GOOD" Type="decimal" />
+    <Property Name="BAR_CODE" Type="VARCHAR2" Nullable="false" MaxLength="50" />
+    <Property Name="IS_PRIMARY" Type="bool" />
+  </EntityType>
+  <EntityType Name="DOC_JOURNAL">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="CODE" Type="VARCHAR2" Nullable="false" MaxLength="128" />
+    <Property Name="COMMENTS" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="DOC_DATETIME" Type="DATE" Nullable="false" />
+    <Property Name="ID_DOC_TYPE" Type="decimal" Nullable="false" />
+    <Property Name="ID_INSTANCE_SENDER" Type="decimal" DefaultValue="1" />
+    <Property Name="ID_INSTANCE_RECIEPIENT" Type="decimal" DefaultValue="1">
+      <Documentation>
+        <Summary>Регион-получатель для транзитного прихода</Summary>
+      </Documentation>
+    </Property>
+    <Property Name="ID_INSTANCE_OWNER" Type="decimal" Nullable="false" DefaultValue="1" />
+    <Property Name="ID_DOC_MASTER" Type="decimal" />
+    <Property Name="ERROR_STATUS" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="ACT_STATUS" Type="int" Nullable="false" DefaultValue="0" />
+    <Property Name="LOCK_STATUS" Type="bool" Nullable="false" DefaultValue="False" />
+    <Property Name="USER_NAME" Type="VARCHAR2" Nullable="false" MaxLength="100" devart:DefaultValue="USER" />
+    <Property Name="CREATE_INVOICE" Type="decimal" Nullable="false" Scale="0" DefaultValue="0" />
+    <Property Name="DELIVERY_DATE" Type="DATE" />
+    <Property Name="DELETED" Type="decimal" Nullable="false" DefaultValue="0" />
+    <Property Name="UPDATED_PRICE" Type="decimal" Scale="0" DefaultValue="0" />
+    <Property Name="PAY_DELAY" Type="decimal" />
+  </EntityType>
+  <EntityType Name="DOC_GOODS_DETAILS">
+    <Key>
+      <PropertyRef Name="ID_DOC" />
+      <PropertyRef Name="ID_GOOD" />
+      <PropertyRef Name="QUANTITY" />
+      <PropertyRef Name="PRICE" />
+      <PropertyRef Name="ID_ITEM" />
+      <PropertyRef Name="ITEM_QUANTITY" />
+      <PropertyRef Name="DISCOUNT_RATE" />
+      <PropertyRef Name="DISCOUNT_SUMM" />
+      <PropertyRef Name="CHARGE_RATE" />
+      <PropertyRef Name="CHARGE_SUMM" />
+      <PropertyRef Name="LOCK_STATUS" />
+    </Key>
+    <Property Name="ID_DOC" Type="decimal" Nullable="false" />
+    <Property Name="ID_GOOD" Type="decimal" Nullable="false" />
+    <Property Name="QUANTITY" Type="int" Nullable="false" DefaultValue="1" />
+    <Property Name="PRICE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="ID_ITEM" Type="decimal" Nullable="false" />
+    <Property Name="ITEM_QUANTITY" Type="int" Nullable="false" DefaultValue="1" />
+    <Property Name="ITEM_POS" Type="int" />
+    <Property Name="DISCOUNT_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="DISCOUNT_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="CHARGE_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="CHARGE_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="LOCK_STATUS" Type="bool" Nullable="false" DefaultValue="False" />
+    <Property Name="ERR" Type="decimal" Scale="0" DefaultValue="0" />
+    <Property Name="PRIME" Type="double">
+      <Documentation>
+        <Summary>Себестоимость товара на момент добавления строки в документ.</Summary>
+      </Documentation>
+    </Property>
+  </EntityType>
+  <EntityType Name="DOC_GOODS">
+    <Key>
+      <PropertyRef Name="ID_DOC" />
+      <PropertyRef Name="ID_CURRENCY" />
+      <PropertyRef Name="CURRENCY_RATE" />
+      <PropertyRef Name="ID_PRICE_TYPE" />
+      <PropertyRef Name="ID_SELLER" />
+      <PropertyRef Name="ID_CUSTOMER" />
+      <PropertyRef Name="ID_SUBDIVISION" />
+      <PropertyRef Name="IS_RETURN" />
+      <PropertyRef Name="LOCK_STATUS" />
+      <PropertyRef Name="DOC_PRECISION" />
+    </Key>
+    <Property Name="ID_DOC" Type="decimal" Nullable="false" />
+    <Property Name="ID_AGENT" Type="decimal" />
+    <Property Name="ID_CURRENCY" Type="decimal" Nullable="false" />
+    <Property Name="CURRENCY_RATE" Type="double" Nullable="false" DefaultValue="1" />
+    <Property Name="ID_PRICE_TYPE" Type="decimal" Nullable="false" />
+    <Property Name="DISCOUNT_RATE" Type="double" DefaultValue="0" />
+    <Property Name="DISCOUNT_SUMM" Type="double" DefaultValue="0" />
+    <Property Name="TOTAL_SUMM" Type="double" DefaultValue="0" />
+    <Property Name="ID_SELLER" Type="decimal" Nullable="false" />
+    <Property Name="ID_CUSTOMER" Type="decimal" Nullable="false" />
+    <Property Name="ID_STORE_SENDER" Type="decimal" />
+    <Property Name="ID_STORE_RECIEPIENT" Type="decimal" />
+    <Property Name="ID_SUBDIVISION" Type="decimal" Nullable="false" />
+    <Property Name="ID_DOC_RETURN" Type="decimal" />
+    <Property Name="CHARGE_RATE" Type="double" DefaultValue="0" />
+    <Property Name="CHARGE_SUMM" Type="double" DefaultValue="0" />
+    <Property Name="IS_RETURN" Type="CHAR" Nullable="false" MaxLength="1" devart:DefaultValue="'N'" DefaultValue="N" />
+    <Property Name="LOCK_STATUS" Type="bool" Nullable="false" DefaultValue="False" />
+    <Property Name="DOC_PRECISION" Type="bool" Nullable="false" devart:DefaultValue="5" />
+    <Property Name="TOTAL_PRIME" Type="double" />
+  </EntityType>
+  <EntityType Name="DOC_GOODS_DETAILS_I">
+    <Key>
+      <PropertyRef Name="ID_DOC" />
+      <PropertyRef Name="ID_GOOD" />
+    </Key>
+    <Property Name="ID_DOC" Type="decimal" Nullable="false" />
+    <Property Name="ID_GOOD" Type="decimal" Nullable="false" />
+    <Property Name="QUANTITY" Type="int" Nullable="false" DefaultValue="1" />
+    <Property Name="PRICE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="ID_ITEM" Type="decimal" Nullable="false" />
+    <Property Name="ITEM_QUANTITY" Type="int" Nullable="false" DefaultValue="1" />
+    <Property Name="ITEM_POS" Type="int" />
+    <Property Name="DISCOUNT_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="DISCOUNT_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="CHARGE_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="CHARGE_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="LOCK_STATUS" Type="bool" Nullable="false" DefaultValue="False" />
+    <Property Name="TAX_RATE" Type="int" Nullable="false" DefaultValue="0" />
+    <Property Name="TAX_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+  </EntityType>
+  <EntityType Name="DOC_GOODS_I">
+    <Documentation>
+      <Summary>?????</Summary>
+    </Documentation>
+    <Key>
+      <PropertyRef Name="ID_DOC" />
+    </Key>
+    <Property Name="ID_DOC" Type="decimal" Nullable="false" />
+    <Property Name="ID_PRICE_TYPE" Type="decimal" Nullable="false" />
+    <Property Name="DISCOUNT_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="DISCOUNT_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="TOTAL_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="ID_SELLER" Type="decimal" Nullable="false" />
+    <Property Name="ID_CUSTOMER" Type="decimal" Nullable="false" />
+    <Property Name="ID_DOC_RETURN" Type="decimal" />
+    <Property Name="CHARGE_RATE" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="CHARGE_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="IS_RETURN" Type="CHAR" Nullable="false" MaxLength="1" devart:DefaultValue="'N'" DefaultValue="N" />
+    <Property Name="LOCK_STATUS" Type="bool" Nullable="false" DefaultValue="False" />
+    <Property Name="TAX_SUMM" Type="double" Nullable="false" DefaultValue="0" />
+    <Property Name="ID_SUBDIVISION" Type="decimal" />
+  </EntityType>
+  <Association Name="FK_REF_ITEMS_1">
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="0..1" />
+    <End Role="REF_ITEMS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_ITEMS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_GOODS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="REF_ITEMS">
+        <PropertyRef Name="ID_GOOD" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_REF_GOODS_7">
+    <End Role="REF_ITEMS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_ITEMS" Multiplicity="1" />
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_ITEMS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="REF_GOODS">
+        <PropertyRef Name="ID_DEFAULT_ITEM" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_REF_GOODS_6">
+    <End Role="REF_ITEMS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_ITEMS" Multiplicity="1" />
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_ITEMS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="REF_GOODS">
+        <PropertyRef Name="ID_BASE_ITEM" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_REF_GOODS_3">
+    <End Role="REF_CONTRACTORS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_CONTRACTORS" Multiplicity="1" />
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_CONTRACTORS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="REF_GOODS">
+        <PropertyRef Name="ID_MANUFACTURER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_REF_GOODS_2">
+    <End Role="REF_CONTRACTORS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_CONTRACTORS" Multiplicity="0..1" />
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_CONTRACTORS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="REF_GOODS">
+        <PropertyRef Name="ID_ORGAN" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SYS_C0012442">
+    <End Role="DOC_JOURNAL" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="0..1" />
+    <End Role="DOC_JOURNAL1" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_JOURNAL">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_JOURNAL1">
+        <PropertyRef Name="ID_DOC_MASTER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SYS_C0012433">
+    <End Role="DOC_JOURNAL" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="DOC_GOODS_DETAILS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_JOURNAL">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS_DETAILS">
+        <PropertyRef Name="ID_DOC" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DOC_GOODS_DETAILS_FK_2">
+    <End Role="REF_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_GOODS" Multiplicity="1" />
+    <End Role="DOC_GOODS_DETAILS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_GOODS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS_DETAILS">
+        <PropertyRef Name="ID_GOOD" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DOC_GOODS_FK_9">
+    <End Role="DOC_JOURNAL" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="DOC_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_JOURNAL">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS">
+        <PropertyRef Name="ID_DOC" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DOC_GOODS_FK_5">
+    <End Role="REF_CONTRACTORS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_CONTRACTORS" Multiplicity="1" />
+    <End Role="DOC_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_CONTRACTORS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS">
+        <PropertyRef Name="ID_SELLER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DOC_GOODS_FK_1">
+    <End Role="REF_CONTRACTORS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.REF_CONTRACTORS" Multiplicity="1" />
+    <End Role="DOC_GOODS" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_CONTRACTORS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS">
+        <PropertyRef Name="ID_CUSTOMER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DOC_GOODS_DETAILS_I_FK1">
+    <End Role="DOC_JOURNAL" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="DOC_GOODS_DETAILS_I" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_DETAILS_I" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_JOURNAL">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS_DETAILS_I">
+        <PropertyRef Name="ID_DOC" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SYS_C0012438">
+    <End Role="DOC_JOURNAL" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_JOURNAL" Multiplicity="1">
+      <OnDelete Action="Cascade" />
+    </End>
+    <End Role="DOC_GOODS_I" Type="DataContextManagementUnit.DataAccess.Contexts.Abt.Store.DOC_GOODS_I" Multiplicity="0..1" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_JOURNAL">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_GOODS_I">
+        <PropertyRef Name="ID_DOC" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

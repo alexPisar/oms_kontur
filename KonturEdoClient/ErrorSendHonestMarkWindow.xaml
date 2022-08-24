@@ -1,0 +1,31 @@
+﻿<Window x:Class="KonturEdoClient.ErrorSendHonestMarkWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        ResizeMode="NoResize"
+        Title="Ошибка передачи документа" Height="350" Width="530">
+    <Window.Resources>
+        <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
+    </Window.Resources>
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="При отправке приходного УПД в текущую организацию возникли ошибки." Margin="10 10 10 10"></Label>
+                <Image Source="{DynamicResource DiadocImage}" Margin="5 10" Height="49" Width="49"></Image>
+            </StackPanel>
+            <Expander Header="Показать детали" Height="160" Margin="5 0">
+                <ScrollViewer>
+                    <TextBlock Name="textContent" TextWrapping="Wrap"></TextBlock>
+                </ScrollViewer>
+            </Expander>
+            <Label Content = "Вы всё равно хотите отправить документ через Диадок?" Margin="10 10"></Label>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Да" Margin="5 5" Width="60" Click="YesButtonClick"></Button>
+                <Button Content="Нет" Margin="5 5" Width="60" Click="NoButtonClick"></Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

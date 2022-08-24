@@ -1,0 +1,95 @@
+﻿<dxr:DXRibbonWindow x:Class="OrderManagementSystem.UserInterface.JuridicalEntitiesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OrderManagementSystem.UserInterface"
+        mc:Ignorable="d"
+        WindowState="Maximized"
+        Title="Список юридических лиц" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="26" />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Vertical" Grid.Row="0">
+            <dxr:RibbonControl DockPanel.Dock ="Top" Grid.Row="0" ShowApplicationButton="False" Height="Auto">
+                <dxr:RibbonPage Caption="Юр. лица">
+                    <dxr:RibbonPageGroup Caption="Действия">
+                        <dxb:BarButtonItem Content="Обновить" RibbonStyle="Large" 
+                                           Glyph="{dx:DXImage SvgImages/Spreadsheet/RefreshAllPivotTable.svg}"
+                                           Command="{Binding RefreshCommand}"></dxb:BarButtonItem>
+                        <dxb:BarButtonItem Content="Сохранить" RibbonStyle="Large"
+                                           Command="{Binding EditCommand}" Glyph="{dx:DXImage SvgImages/Save/Save.svg}"/>
+                        <dxb:BarButtonItem Content="Добавить" RibbonStyle="Large"
+                                           Command="{Binding CreateNewCommand}" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Add.svg}"/>
+                        <dxb:BarButtonItem Content="Удалить" RibbonStyle="Large"
+                                           Command="{Binding DeleteCommand}" Glyph="{dx:DXImage SvgImages/XAF/Action_Delete.svg}"/>
+                        <dxb:BarButtonItem Content="Прогрузить" RibbonStyle="Large" 
+                                           Command="{Binding ImportDataCommand}" Glyph="{dx:DXImage SvgImages/Export/ExportToXLS.svg}" />
+                    </dxr:RibbonPageGroup>
+                </dxr:RibbonPage>
+            </dxr:RibbonControl>
+            <StackPanel Orientation="Horizontal" Height="26" Margin="0 5 0 5">
+            <Label Content="Торговая сеть" FontWeight="Bold" Width="100"  Margin="10 0 0 0"/>
+            <dxg:LookUpEdit Width="600" Margin="10 0 0 0" PopupWidth="1200" PopupHeight="600"
+					                ItemsSource="{Binding Buyers, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+					                SelectedItem="{Binding SelectedBuyer, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+					                DisplayMember="Name"    
+                                    ValueMember="Gln"                                
+					                EditValueChanged="ChangedBuyer">
+                <dxg:LookUpEdit.PopupContentTemplate>
+                    <ControlTemplate TargetType="{x:Type ContentControl}">
+                        <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                            <dxg:GridControl.Columns>
+                                <dxg:GridColumn Header="ГЛН" Width="80" FieldName="Gln"/>
+                                <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                            </dxg:GridControl.Columns>
+                            <dxg:GridControl.View>
+                                <dxg:TableView AllowPerPixelScrolling="True" 
+									                   ShowSearchPanelMode="Always" 
+									                   AllowEditing="False" 
+									                   NavigationStyle="Row" 
+									                   ShowGroupPanel="False" 
+									                   ShowAutoFilterRow="True" />
+                            </dxg:GridControl.View>
+                        </dxg:GridControl>
+                    </ControlTemplate>
+                </dxg:LookUpEdit.PopupContentTemplate>
+                <dxg:LookUpEdit.StyleSettings>
+                    <dxg:SearchLookUpEditStyleSettings/>
+                </dxg:LookUpEdit.StyleSettings>
+            </dxg:LookUpEdit>
+        </StackPanel>
+        </StackPanel>
+        <dxg:GridControl x:Name="GridJuridicalEntities" 
+                             ItemsSource="{Binding JuridicalEntities}"
+                             SelectedItem="{Binding SelectedJuridicalEntity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                             AutoGenerateColumns="None"
+                         Grid.Row="1">
+                <dxg:GridColumn FieldName="Gln" Header="ГЛН" />
+                <dxg:GridColumn FieldName="Name" Header="Название" />
+                <dxg:GridColumn FieldName="Inn" Header="ИНН" />
+                <dxg:GridColumn FieldName="Kpp" Header="КПП" />
+                <dxg:GridColumn FieldName="City" Header="Город" />
+                <dxg:GridColumn FieldName="Street" Header="Улица" />
+                <dxg:GridColumn FieldName="House" Header="Дом" />
+                <dxg:GridColumn FieldName="RegionCode" Header="Регион" />
+
+            </dxg:GridControl>
+        <dxb:BarContainerControl ContainerType="Bottom" Grid.Row="2">
+            <dxb:StatusBarControl Caption="Status Bar">
+                <dxb:BarStaticItem Content="Количество юр. лиц:"/>
+                <dxb:BarEditItem Content="{Binding ItemsList.Count, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <dxb:BarItemSeparator/>
+                <dxb:BarStaticItem Content="{Binding Time}" Alignment="Far"/>
+            </dxb:StatusBarControl>
+        </dxb:BarContainerControl>
+    </Grid>
+</dxr:DXRibbonWindow>

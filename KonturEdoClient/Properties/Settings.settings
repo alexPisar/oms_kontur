@@ -1,0 +1,27 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="KonturEdoClient.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="XsdSchemaUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://data.nalog.ru/html/sites/www.new.nalog.ru/xsd/ON_NSCHFDOPPR_1_997_01_05_01_03.xsd</Value>
+    </Setting>
+    <Setting Name="DefaultOrgCountryCode" Type="System.String" Scope="User">
+      <Value Profile="(Default)">643</Value>
+    </Setting>
+    <Setting Name="DefaultUnit" Type="System.String" Scope="User">
+      <Value Profile="(Default)">796</Value>
+    </Setting>
+    <Setting Name="DefaultCurrency" Type="System.String" Scope="User">
+      <Value Profile="(Default)">643</Value>
+    </Setting>
+    <Setting Name="XmlFilesPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Files</Value>
+    </Setting>
+    <Setting Name="DefaultEmployePosition" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Зав. складом</Value>
+    </Setting>
+    <Setting Name="UrlAddressHonestMark" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://markirovka.crpt.ru/api/v3/true-api</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

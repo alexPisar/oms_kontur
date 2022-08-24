@@ -1,0 +1,327 @@
+﻿<dxr:DXRibbonWindow x:Class="OrderManagementSystem.UserInterface.OrderSingleView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OrderManagementSystem.UserInterface"
+        mc:Ignorable="d" dx:ThemeManager.ThemeName="Office2019Colorful"
+        Title="Просмотр заказа" Height="Auto" Width="Auto" WindowState="Maximized">
+
+    <dx:DXTabControl>
+        <dx:DXTabItem Header="Заказ">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="200"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="130"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Статус:" Width="110" FontWeight="Bold"/>
+                            <Label Content="{Binding Item.RefOrderStatus.Name}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Номер заказа:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.Number}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Тестовый:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.IsTest}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Дата доставки:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.ReqDeliveryDate}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Дата получения:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.EdiCreationSenderDate}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Width="350" Height="30">
+                            <dx:SimpleButton Height="20" Width="196" Content="Экспорт данных заказа в файл" Margin="0,5" Click="ExportButton_Click"></dx:SimpleButton>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Width="350" Height="30">
+                            <dx:SimpleButton Height="20" Width="246" Content="Переотправить отгрузочные документы" Margin="0,5" IsEnabled="{Binding IsDocumentShipped}" Click="ResentShippingDocuments_Click"></dx:SimpleButton>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Отправитель:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.GlnSender}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Покупатель:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.GlnBuyer}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Точка доставки:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.GlnShipTo}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Коментарий:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.Comment}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Кол-во:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding TotalQuantity}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Сумма НДС:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.TotalVatAmount}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Сумма без НДС:" Width="110"  FontWeight="Bold"/>
+                            <Label Content="{Binding Item.TotalSumExcludeTax}"  Width="250"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <dxg:GridControl Grid.Row="1" Grid.Column="0"
+                      x:Name="DocLineItemsTable"
+                      ItemsSource="{Binding ItemDocLines, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      AutoGenerateColumns="None">
+                    <dxg:GridControl.Columns>
+                        <dxg:GridColumn Header="id товара" Width="80" FieldName="IdGood"/>
+                        <dxg:GridColumn Header="ШК" Width="100" FieldName="Gtin"/>
+                        <dxg:GridColumn Header="id покуп." Width="80" FieldName="BuyerCode"/>
+                        <dxg:GridColumn Header="Заказ. кол-во" Width="90" FieldName="ReqQunatity"/>
+                        <dxg:GridColumn Header="Ед. измер." Width="90" FieldName="UnitOfMeasure"/>
+                        <dxg:GridColumn Header="НДС%" Width="90" FieldName="VatRate"/>
+                        <dxg:GridColumn Header="Сумма НДС" Width="90" FieldName="VatAmount"/>
+                        <dxg:GridColumn Header="Описание" Width="*" MinWidth="350" FieldName="Description"/>
+                    </dxg:GridControl.Columns>
+                    <dxg:GridControl.View>
+                        <dxg:TableView x:Name="view1"
+                               ShowSearchPanelMode="Always"
+                               AllowEditing="True" 
+                               NavigationStyle="Cell"
+                               GroupSummaryDisplayMode="AlignByColumns">
+
+                        </dxg:TableView>
+                    </dxg:GridControl.View>
+
+                    <dxmvvm:Interaction.Behaviors>
+                        <dxmvvm:EventToCommand EventName="SelectedItemChanged" 
+                                           Command="{Binding DocLineItemSelectionChangedCommand}">
+                        </dxmvvm:EventToCommand>
+                    </dxmvvm:Interaction.Behaviors>
+                </dxg:GridControl>
+
+                <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0">
+
+                    <StackPanel Orientation="Vertical">
+                        <Label Width="150" FontWeight="Bold" Content="" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                        <Label Width="150" FontWeight="Bold" Content="Цена позиции" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                        <Label Width="150" FontWeight="Bold" Content="НДС позиции" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                        <Label Width="150" FontWeight="Bold" Content="Сумма позиции" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                        <Label Width="150" FontWeight="Bold" Content="Сумма с НДС" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                        <Label Width="150" FontWeight="Bold" Content="Количество" HorizontalContentAlignment="Right" Margin="0 0 15 0"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical">
+                        <Label FontWeight="Bold" Content="Заказно" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.NetPrice}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.NetPriceVat}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.NetAmount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.Amount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.ReqQunatity}" Width="100"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical">
+                        <Label FontWeight="Bold" Content="Отправлено" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.OrdrspNetPrice}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.OrdrspNetPriceVat}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.OrdrspNetAmount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.OrdrspAmount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.OrdrspQuantity}" Width="100"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical">
+                        <Label FontWeight="Bold" Content="Принято" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.RecadvAcceptNetPrice}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.RecadvAcceptNetPriceVat}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.RecadvAcceptNetAmount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.RecadvAcceptAmount}" Width="100"/>
+                        <Label Content="{Binding ElementName=DocLineItemsTable, Path=SelectedItem.RecadvAcceptQuantity}" Width="100"/>
+                    </StackPanel>
+
+                </StackPanel>
+
+
+            </Grid>
+        </dx:DXTabItem>
+
+
+        <dx:DXTabItem Header="Трейдер-документ">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding RefreshCommand}">
+                        <Button.Content>
+                            <StackPanel Orientation="Vertical">
+                                <Image Source="{dx:DXImage SvgImages/XAF/Action_Refresh.svg}"/>
+                                <TextBlock>Обновить список</TextBlock>
+                            </StackPanel>
+                        </Button.Content>
+                    </Button>
+                    <Button Command="{Binding DeleteOrderCommand}" IsEnabled="{Binding IsDeleteOrderButtonEnabled}">
+                        <Button.Content>
+                            <StackPanel Orientation="Vertical">
+                                <Image Source="{dx:DXImage SvgImages/Icon Builder/Actions_Delete.svg}"/>
+                                <TextBlock>Удалить заказ из списка</TextBlock>
+                            </StackPanel>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+
+                <dxg:GridControl
+                          Grid.Row="1"               
+                          x:Name="Order_TraderDoc_DataGrid"
+                          ItemsSource="{Binding DocJournalList, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedItem="{Binding SelectedDocJournal, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                          ><!--AutoGenerateColumns="AddNew">-->
+
+                    <dxg:GridControl.Columns>
+                        <dxg:GridColumn Header="Id в трейдере" FieldName="Id"/>
+                        <dxg:GridColumn Header="Номер" FieldName="Code"/>
+                        <dxg:GridColumn Header="Комментарий" FieldName="Comment"/>
+                        <dxg:GridColumn Header="Дата создания" FieldName="DocDatetime"/>
+                        <dxg:GridColumn Header="Тип документа" FieldName="IdDocType"/>
+                        <dxg:GridColumn Header="Статус ошибки" FieldName="ErrorStatus"/>
+                        <dxg:GridColumn Header="Статус документа" FieldName="ActStatus"/>
+                        <dxg:GridColumn Header="Lock Status" FieldName="LockStatus"/>
+                        <dxg:GridColumn Header="Дата доставки" FieldName="DeliveryDate"/>
+                        <dxg:GridColumn Header="Имя пользователя" FieldName="UserName"/>
+                        <dxg:GridColumn Header="Признак изменения цены" FieldName="UpdatedPrice"/>
+                        <dxg:GridColumn Header="Документ удалён" FieldName="Deleted"/>
+                    </dxg:GridControl.Columns>
+                    <dxg:GridControl.View>
+                        <dxg:TableView x:Name="view5" AllowPerPixelScrolling="True" />
+                    </dxg:GridControl.View>
+
+                </dxg:GridControl>
+
+                <dxg:GridControl
+                         Grid.Row="2"               
+                          x:Name="Order_TraderDocDetails_DataGrid"
+                          ItemsSource="{Binding SelectedItem.Details, ElementName=Order_TraderDoc_DataGrid, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                    <dxg:GridControl.Bands>
+                        <dxg:GridControlBand Header="В документе">
+                            <dxg:GridColumn Header="Quantity" FieldName="Quantity"/>
+                            <dxg:GridColumn Header="Price" FieldName="Price"/>
+                            <dxg:GridColumn Header="ItemQuantity" FieldName="ItemQuantity"/>
+                            <dxg:GridColumn Header="ItemPo" FieldName="ItemPo"/>
+                            <dxg:GridColumn Header="DiscountRate" FieldName="DiscountRate"/>
+                            <dxg:GridColumn Header="DiscountSumm" FieldName="DiscountSumm"/>
+                            <dxg:GridColumn Header="ChargeRate" FieldName="ChargeRate"/>
+                            <dxg:GridColumn Header="ChargeSumm" FieldName="ChargeSumm"/>
+                            <dxg:GridColumn Header="LockStatus" FieldName="LockStatus"/>
+                            <dxg:GridColumn Header="Err" FieldName="Err"/>
+                        </dxg:GridControlBand>
+                        <dxg:GridControlBand Header="Товар">
+                            <dxg:GridColumn Header="SertNum" FieldName="Good.SertNum"/>
+                            <dxg:GridColumn Header="RegNum" FieldName="Good.RegNum"/>
+                            <dxg:GridColumn Header="ExpiringDate" FieldName="Good.ExpiringDate"/>
+                            <dxg:GridColumn Header="Code" FieldName="Good.Code"/>
+                            <dxg:GridColumn Header="Name" FieldName="Good.Name"/>
+                            <dxg:GridColumn Header="Tax" FieldName="Good.Tax"/>
+                            <dxg:GridColumn Header="CustomsNo" FieldName="Good.CustomsNo"/>
+                            <dxg:GridColumn Header="IdSubdivision" FieldName="Good.IdSubdivision"/>
+                            <dxg:GridColumn Header="GoodSize" FieldName="Good.GoodSize"/>
+                            <dxg:GridColumn Header="BarCode" FieldName="Good.BarCode"/>
+                        </dxg:GridControlBand>
+                        <dxg:GridControlBand Header="Производитель">
+                            <dxg:GridColumn Header="Name" FieldName="Good.Manufacturer.Name"/>
+                            <dxg:GridColumn Header="Comment" FieldName="Good.Manufacturer.Comment"/>
+                            <dxg:GridColumn Header="Address" FieldName="Good.Manufacturer.Address"/>
+                            <dxg:GridColumn Header="Phone" FieldName="Good.Manufacturer.Phone"/>
+                            <dxg:GridColumn Header="Contact" FieldName="Good.Manufacturer.Contact"/>
+                        </dxg:GridControlBand>
+                        <dxg:GridControlBand Header="Страна">
+                            <dxg:GridColumn Header="Name" FieldName="Good.Country.Name"/>
+                            <dxg:GridColumn Header="Code" FieldName="Good.Country.Code"/>
+                            <dxg:GridColumn Header="NumCode" FieldName="Good.Country.NumCode"/>
+                        </dxg:GridControlBand>
+                        <dxg:GridControlBand Header="Техническая часть">
+                            <dxg:GridColumn Header="Id" FieldName="Good.Id"/>
+                            <dxg:GridColumn Header="HasRemain" FieldName="Good.HasRemain"/>
+                            <dxg:GridColumn Header="Oldid" FieldName="Good.Oldid"/>
+                            <dxg:GridColumn Header="IdBaseItem" FieldName="Good.IdBaseItem"/>
+                            <dxg:GridColumn Header="IdDefaultItem" FieldName="Good.IdDefaultItem"/>
+                            <dxg:GridColumn Header="IdAccountCurrency" FieldName="Good.IdAccountCurrency"/>
+                            <dxg:GridColumn Header="IdManufacturer" FieldName="Good.IdManufacturer"/>
+                            <dxg:GridColumn Header="IdOrgan" FieldName="Good.IdOrgan"/>
+                            <dxg:GridColumn Header="IdCountry" FieldName="Good.IdCountry"/>
+                        </dxg:GridControlBand>
+                    </dxg:GridControl.Bands>
+
+                    <dxg:GridControl.View>
+                        <dxg:TableView x:Name="view4" AllowPerPixelScrolling="True" />
+                    </dxg:GridControl.View>
+
+                </dxg:GridControl>
+            </Grid>
+        </dx:DXTabItem>
+
+
+        <dx:DXTabItem Header="История">
+
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <Button Content="Удалить выделенный лог" Command="{Binding DeleteLogCommand}"/>
+                </StackPanel>
+
+                <dxg:GridControl x:Name="OrderLogTable" Grid.Row="1"
+                  ItemsSource="{Binding Item.LogOrders, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                  SelectedItem="{Binding SelectedLogItem}"
+                  AutoGenerateColumns="None">
+                    <dxg:GridControl.Columns>
+                        <dxg:GridColumn Header="Id" Width="*" FieldName="Id"/>
+                        <dxg:GridColumn Header="Id заказа" Width="*" FieldName="IdOrder"/>
+                        <dxg:GridColumn Header="Статус заказа" Width="*" FieldName="OrderStatus"/>
+                        <dxg:GridColumn Header="Дата" Width="*" FieldName="Datetime"/>
+                        <dxg:GridColumn Header="Id док-та трейдер" Width="*" FieldName="IdDocJournal"/>
+                        <dxg:GridColumn Header="CircilationId" Width="*" FieldName="CircilationId"/>
+                        <dxg:GridColumn Header="MessageId" Width="*" FieldName="MessageId"/>
+                        <dxg:GridColumn Header="Номер заказа" Width="*" FieldName="DocOrder.Number"/>
+                    </dxg:GridControl.Columns>
+                    <dxg:GridControl.View>
+                        <dxg:TableView x:Name="view2"
+                               ShowSearchPanelMode="Always"
+                               AllowEditing="True" 
+                               NavigationStyle="Cell"
+                               GroupSummaryDisplayMode="AlignByColumns"
+                                   >
+
+
+                        </dxg:TableView>
+                    </dxg:GridControl.View>
+
+                </dxg:GridControl>
+
+            </Grid>
+        </dx:DXTabItem>
+    </dx:DXTabControl>
+
+
+</dxr:DXRibbonWindow>

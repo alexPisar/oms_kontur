@@ -1,0 +1,155 @@
+﻿<dxr:DXRibbonWindow x:Class="OrderManagementSystem.UserInterface.InvoicExportView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OrderManagementSystem.UserInterface"
+        mc:Ignorable="d" dx:ThemeManager.ThemeName="Office2019Colorful"
+        Title="Журнал заказов" Height="Auto" Width="Auto" WindowState="Maximized">
+
+
+    <Grid Margin="0 0 0 -2" x:Name="mainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="26"/>
+        </Grid.RowDefinitions>
+
+        <dxr:RibbonControl DockPanel.Dock="Top" 
+                           RibbonStyle="Office2019" 
+                           Grid.Row="0" 
+                           Height="Auto" 
+                           ShowApplicationButton="False" 
+                           ToolbarShowMode="ShowAbove" 
+                           PageCategoryAlignment="Left">
+
+            <dxr:RibbonDefaultPageCategory>
+                <dxr:RibbonPage Caption="Заказы">
+                    
+
+                    <dxr:RibbonPageGroup>
+
+                        <dxb:BarButtonItem Content="Обновить" ToolTip="Обновить (F5)"
+                                           Command="{Binding RefreshCommand}"
+                                           RibbonStyle="Large"
+                                           KeyGesture="F5" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Refresh.svg}"/>
+                    </dxr:RibbonPageGroup>
+
+
+                    <dxr:RibbonPageGroup Caption="Управление документами">
+
+                        <dxb:BarButtonItem Content="Экспорт УПД" ToolTip="Экспорт УПД"
+                                           Command="{Binding ExportSCHFDOPPRCommand}"
+                                           RibbonStyle="Large"
+                                           Glyph="{dx:DXImage SvgImages/XAF/Action_Export_ToXML.svg}" />
+
+                    </dxr:RibbonPageGroup>
+
+
+                </dxr:RibbonPage>
+            </dxr:RibbonDefaultPageCategory>
+        </dxr:RibbonControl>
+
+
+        <Grid Height="Auto" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="300"/>
+            </Grid.RowDefinitions>
+
+            <dxg:GridControl Grid.Row="1" Name="DocumentsDataGrid" ShowBorder="False"
+                             ItemsSource="{Binding Path=ItemsList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             SelectedItem="{Binding SelectedItem}"
+                             AutoGenerateColumns="AddNew"
+                             >
+                <!--<dxg:GridControl.Columns>
+                    <dxg:GridColumn Header="Статус" Width="120" FieldName="RefOrderStatus.Name"/>
+                    <dxg:GridColumn Header="Номер заказа" Width="150" FieldName="Number"/>
+                    <dxg:GridColumn Header="Тестовый" Width="33" FieldName="IsTest"/>
+                    <dxg:GridColumn Header="Дата доставки" Width="160" FieldName="ReqDeliveryDate"/>
+                    <dxg:GridColumn Header="Дата получения" Width="160" FieldName="EdiCreationSenderDate"/>
+                    <dxg:GridColumn Header="Отправитель" Width="120" FieldName="GlnSender"/>
+                    <dxg:GridColumn Header="Покупатель" Width="120" FieldName="GlnBuyer"/>
+                    <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="GlnShipTo"/>
+                    <dxg:GridColumn Header="Коментарий" FieldName="Comment"/>
+                </dxg:GridControl.Columns>-->
+                <dxg:GridControl.View>
+                    <dxg:TableView x:Name="view1"
+                               ShowSearchPanelMode="Always"
+                               AllowEditing="True" 
+                               NavigationStyle="Cell"
+                               GroupSummaryDisplayMode="AlignByColumns">
+                    </dxg:TableView>
+                </dxg:GridControl.View>
+
+                <dxmvvm:Interaction.Behaviors>
+                    <dxmvvm:EventToCommand EventName="SelectedItemChanged" 
+                                           Command="{Binding ItemSelectionChangedCommand}">
+                    </dxmvvm:EventToCommand>
+                </dxmvvm:Interaction.Behaviors>
+
+            </dxg:GridControl>
+
+
+            <GridSplitter Grid.Row="2"
+                      Height="5"
+                      ShowsPreview="False"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"/>
+
+            <dxg:GridControl Name="DocumentDetailsDataGrid" Grid.Row="3" 
+                              ItemsSource="{Binding SelectedItem.DocLineItems}"
+                             SelectedItem="{Binding Path=SelectedDocLineItem}"
+                         AutoGenerateColumns="None">
+
+                <dxg:GridControl.Columns>
+                    <dxg:GridColumn Header="Id товара" FieldName="IdGood"/>
+                        <dxg:GridColumn Header="ШК" FieldName="Gtin"/>
+                        <dxg:GridColumn Header="Id у клиента" FieldName="BuyerCode"/>
+                        <dxg:GridColumn Header="Описание" FieldName="Description"/>
+                        <dxg:GridColumn Header="Ед. измер." FieldName="UnitOfMeasure"/>
+                        <dxg:GridColumn Header="Ставка НДС" FieldName="VatRate"/>
+                    <dxg:GridColumn Header="Σ НДС" FieldName="VatAmount"/>
+                </dxg:GridControl.Columns>
+
+                <dxg:GridControl.View>
+                    <dxg:TableView x:Name="view2"
+                                AllowPerPixelScrolling="True" 
+                               ShowSearchPanelMode="Always"
+                               ShowGroupPanel="False" 
+                               ShowAutoFilterRow="True"  
+                               AllowEditing="True" 
+                               NavigationStyle="Cell" >
+
+                    </dxg:TableView>
+                </dxg:GridControl.View>
+
+                <dxmvvm:Interaction.Behaviors>
+                    <dxmvvm:EventToCommand EventName="SelectedItemChanged" 
+                                           Command="{Binding DocLineItemSelectionChangedCommand}">
+                    </dxmvvm:EventToCommand>
+                </dxmvvm:Interaction.Behaviors>
+
+            </dxg:GridControl>
+
+
+        </Grid>
+
+
+        <dxb:BarContainerControl ContainerType="Bottom" Grid.Row="2">
+            <dxb:StatusBarControl Caption="Status Bar">
+
+
+            </dxb:StatusBarControl>
+        </dxb:BarContainerControl>
+    </Grid>
+</dxr:DXRibbonWindow>
+    

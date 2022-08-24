@@ -1,0 +1,25 @@
+﻿<dxr:DXRibbonWindow x:Class="OrderManagementSystem.UserInterface.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OrderManagementSystem.UserInterface"
+        mc:Ignorable="d"
+        Title="Доступно обновление" Height="190" Width="544">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="539*"/>
+        </Grid.ColumnDefinitions>
+        <Label Name="label" Content="" HorizontalAlignment="Left" Margin="141,43,0,0" VerticalAlignment="Top" Width="365"/>
+        <Button Content="Обновить" HorizontalAlignment="Left" Margin="443,109,0,0" VerticalAlignment="Top" Width="80" Click="RefreshButton_Click"/>
+        <Button Content="Отмена" HorizontalAlignment="Left" Margin="345,109,0,0" VerticalAlignment="Top" Width="75" Click="CancelButton_Click"/>
+        <Image HorizontalAlignment="Left" Height="64" Margin="31,23,0,0" VerticalAlignment="Top" Width="65" Source="pack://application:,,,/OrderManagementSystem.UserInterface;component/edi-enter.ico"/>
+
+    </Grid>
+</dxr:DXRibbonWindow>

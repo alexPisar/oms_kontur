@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="AbtDbContextStoreContainer" CdmEntityContainer="AbtDbContext">
+    <EntitySetMapping Name="RefItems">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.RefItem">
+        <MappingFragment StoreEntitySet="REF_ITEMS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="IdName" ColumnName="ID_NAME" />
+          <ScalarProperty Name="Quantity" ColumnName="QUANTITY" />
+          <ScalarProperty Name="Weight" ColumnName="WEIGHT" />
+          <ScalarProperty Name="Cbm" ColumnName="CBM" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RefGoods">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.RefGood">
+        <MappingFragment StoreEntitySet="REF_GOODS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="SertNum" ColumnName="SERT_NUM" />
+          <ScalarProperty Name="RegNum" ColumnName="REG_NUM" />
+          <ScalarProperty Name="ExpiringDate" ColumnName="EXPIRING_DATE" />
+          <ScalarProperty Name="Code" ColumnName="CODE" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+          <ScalarProperty Name="Tax" ColumnName="TAX" />
+          <ScalarProperty Name="IdBaseItem" ColumnName="ID_BASE_ITEM" />
+          <ScalarProperty Name="IdDefaultItem" ColumnName="ID_DEFAULT_ITEM" />
+          <ScalarProperty Name="IdAccountCurrency" ColumnName="ID_ACCOUNT_CURRENCY" />
+          <ScalarProperty Name="IdManufacturer" ColumnName="ID_MANUFACTURER" />
+          <ScalarProperty Name="IdOrgan" ColumnName="ID_ORGAN" />
+          <ScalarProperty Name="IdCountry" ColumnName="ID_COUNTRY" />
+          <ScalarProperty Name="CustomsNo" ColumnName="CUSTOMS_NO" />
+          <ScalarProperty Name="IdSubdivision" ColumnName="ID_SUBDIVISION" />
+          <ScalarProperty Name="HasRemain" ColumnName="HAS_REMAIN" />
+          <ScalarProperty Name="Oldid" ColumnName="OLDID" />
+          <ScalarProperty Name="GoodSize" ColumnName="GOOD_SIZE" />
+          <ScalarProperty Name="BarCode" ColumnName="BAR_CODE" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RefContractors">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.RefContractor">
+        <MappingFragment StoreEntitySet="REF_CONTRACTORS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+          <ScalarProperty Name="IdDistrict" ColumnName="ID_DISTRICT" />
+          <ScalarProperty Name="IdCity" ColumnName="ID_CITY" />
+          <ScalarProperty Name="Comment" ColumnName="COMMENTS" />
+          <ScalarProperty Name="Address" ColumnName="ADDRESS" />
+          <ScalarProperty Name="Phone" ColumnName="PHONES" />
+          <ScalarProperty Name="Contact" ColumnName="CONTACT" />
+          <ScalarProperty Name="DefaultCustomer" ColumnName="DEFAULT_CUSTOMER" />
+          <ScalarProperty Name="IdChannel" ColumnName="ID_CHANNEL" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RefBarCodes">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.RefBarCode">
+        <MappingFragment StoreEntitySet="REF_BAR_CODES">
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="BarCode" ColumnName="BAR_CODE" />
+          <ScalarProperty Name="IsPrimary" ColumnName="IS_PRIMARY" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocJournals">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournal">
+        <MappingFragment StoreEntitySet="DOC_JOURNALs">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="Code" ColumnName="CODE" />
+          <ScalarProperty Name="Comment" ColumnName="COMMENTS" />
+          <ScalarProperty Name="DocDatetime" ColumnName="DOC_DATETIME" />
+          <ScalarProperty Name="IdDocType" ColumnName="ID_DOC_TYPE" />
+          <ScalarProperty Name="IdInstanceSender" ColumnName="ID_INSTANCE_SENDER" />
+          <ScalarProperty Name="IdInstanceReciepient" ColumnName="ID_INSTANCE_RECIEPIENT" />
+          <ScalarProperty Name="IdInstanceOwner" ColumnName="ID_INSTANCE_OWNER" />
+          <ScalarProperty Name="IdDocMaster" ColumnName="ID_DOC_MASTER" />
+          <ScalarProperty Name="ErrorStatus" ColumnName="ERROR_STATUS" />
+          <ScalarProperty Name="ActStatus" ColumnName="ACT_STATUS" />
+          <ScalarProperty Name="LockStatus" ColumnName="LOCK_STATUS" />
+          <ScalarProperty Name="UserName" ColumnName="USER_NAME" />
+          <ScalarProperty Name="CreateInvoice" ColumnName="CREATE_INVOICE" />
+          <ScalarProperty Name="DeliveryDate" ColumnName="DELIVERY_DATE" />
+          <ScalarProperty Name="Deleted" ColumnName="DELETED" />
+          <ScalarProperty Name="UpdatedPrice" ColumnName="UPDATED_PRICE" />
+          <ScalarProperty Name="PayDelay" ColumnName="PAY_DELAY" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocGoodsDetails">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.DocGoodsDetail">
+        <MappingFragment StoreEntitySet="DOC_GOODS_DETAILS">
+          <ScalarProperty Name="IdDoc" ColumnName="ID_DOC" />
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="Quantity" ColumnName="QUANTITY" />
+          <ScalarProperty Name="Price" ColumnName="PRICE" />
+          <ScalarProperty Name="IdItem" ColumnName="ID_ITEM" />
+          <ScalarProperty Name="ItemQuantity" ColumnName="ITEM_QUANTITY" />
+          <ScalarProperty Name="ItemPo" ColumnName="ITEM_POS" />
+          <ScalarProperty Name="DiscountRate" ColumnName="DISCOUNT_RATE" />
+          <ScalarProperty Name="DiscountSumm" ColumnName="DISCOUNT_SUMM" />
+          <ScalarProperty Name="ChargeRate" ColumnName="CHARGE_RATE" />
+          <ScalarProperty Name="ChargeSumm" ColumnName="CHARGE_SUMM" />
+          <ScalarProperty Name="LockStatus" ColumnName="LOCK_STATUS" />
+          <ScalarProperty Name="Err" ColumnName="ERR" />
+          <ScalarProperty Name="Prime" ColumnName="PRIME" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocGoods">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.DocGood">
+        <MappingFragment StoreEntitySet="DOC_GOODS">
+          <ScalarProperty Name="IdDoc" ColumnName="ID_DOC" />
+          <ScalarProperty Name="IdAgent" ColumnName="ID_AGENT" />
+          <ScalarProperty Name="IdCurrency" ColumnName="ID_CURRENCY" />
+          <ScalarProperty Name="CurrencyRate" ColumnName="CURRENCY_RATE" />
+          <ScalarProperty Name="IdPriceType" ColumnName="ID_PRICE_TYPE" />
+          <ScalarProperty Name="DiscountRate" ColumnName="DISCOUNT_RATE" />
+          <ScalarProperty Name="DiscountSumm" ColumnName="DISCOUNT_SUMM" />
+          <ScalarProperty Name="TotalSumm" ColumnName="TOTAL_SUMM" />
+          <ScalarProperty Name="IdSeller" ColumnName="ID_SELLER" />
+          <ScalarProperty Name="IdCustomer" ColumnName="ID_CUSTOMER" />
+          <ScalarProperty Name="IdStoreSender" ColumnName="ID_STORE_SENDER" />
+          <ScalarProperty Name="IdStoreReciepient" ColumnName="ID_STORE_RECIEPIENT" />
+          <ScalarProperty Name="IdSubdivision" ColumnName="ID_SUBDIVISION" />
+          <ScalarProperty Name="IdDocReturn" ColumnName="ID_DOC_RETURN" />
+          <ScalarProperty Name="ChargeRate" ColumnName="CHARGE_RATE" />
+          <ScalarProperty Name="ChargeSumm" ColumnName="CHARGE_SUMM" />
+          <ScalarProperty Name="IsReturn" ColumnName="IS_RETURN" />
+          <ScalarProperty Name="LockStatus" ColumnName="LOCK_STATUS" />
+          <ScalarProperty Name="DocPrecision" ColumnName="DOC_PRECISION" />
+          <ScalarProperty Name="TotalPrime" ColumnName="TOTAL_PRIME" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocGoodsDetailsIs">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.DocGoodsDetailsI">
+        <MappingFragment StoreEntitySet="DOC_GOODS_DETAILS_Is">
+          <ScalarProperty Name="IdDoc" ColumnName="ID_DOC" />
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="Quantity" ColumnName="QUANTITY" />
+          <ScalarProperty Name="Price" ColumnName="PRICE" />
+          <ScalarProperty Name="IdItem" ColumnName="ID_ITEM" />
+          <ScalarProperty Name="ItemQuantity" ColumnName="ITEM_QUANTITY" />
+          <ScalarProperty Name="ItemPo" ColumnName="ITEM_POS" />
+          <ScalarProperty Name="DiscountRate" ColumnName="DISCOUNT_RATE" />
+          <ScalarProperty Name="DiscountSumm" ColumnName="DISCOUNT_SUMM" />
+          <ScalarProperty Name="ChargeRate" ColumnName="CHARGE_RATE" />
+          <ScalarProperty Name="ChargeSumm" ColumnName="CHARGE_SUMM" />
+          <ScalarProperty Name="LockStatus" ColumnName="LOCK_STATUS" />
+          <ScalarProperty Name="TaxRate" ColumnName="TAX_RATE" />
+          <ScalarProperty Name="TaxSumm" ColumnName="TAX_SUMM" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocGoodsIs">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Abt.DocGoodsI">
+        <MappingFragment StoreEntitySet="DOC_GOODS_Is">
+          <ScalarProperty Name="IdDoc" ColumnName="ID_DOC" />
+          <ScalarProperty Name="IdPriceType" ColumnName="ID_PRICE_TYPE" />
+          <ScalarProperty Name="DiscountRate" ColumnName="DISCOUNT_RATE" />
+          <ScalarProperty Name="DiscountSumm" ColumnName="DISCOUNT_SUMM" />
+          <ScalarProperty Name="TotalSumm" ColumnName="TOTAL_SUMM" />
+          <ScalarProperty Name="IdSeller" ColumnName="ID_SELLER" />
+          <ScalarProperty Name="IdCustomer" ColumnName="ID_CUSTOMER" />
+          <ScalarProperty Name="IdDocReturn" ColumnName="ID_DOC_RETURN" />
+          <ScalarProperty Name="ChargeRate" ColumnName="CHARGE_RATE" />
+          <ScalarProperty Name="ChargeSumm" ColumnName="CHARGE_SUMM" />
+          <ScalarProperty Name="IsReturn" ColumnName="IS_RETURN" />
+          <ScalarProperty Name="LockStatus" ColumnName="LOCK_STATUS" />
+          <ScalarProperty Name="TaxSumm" ColumnName="TAX_SUMM" />
+          <ScalarProperty Name="IdSubdivision" ColumnName="ID_SUBDIVISION" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>

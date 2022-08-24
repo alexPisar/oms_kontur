@@ -1,0 +1,37 @@
+﻿<Window x:Class="KonturEdoClient.ConfirmAnnulmentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Входящий запрос на аннулирование" Height="370" Width="800" ResizeMode="NoResize">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <Label Content="Выберите действие - аннулировать документ, либо отказать в аннулировании" Grid.Row="0" Margin="5" FontSize="14" />
+        <StackPanel Orientation="Vertical" Margin="5 0" Grid.Row="1">
+            <RadioButton GroupName="AnnulmentRequest" Height="30" Name="revokeRadioButton" Checked="RevokeRadioButton_Checked">
+                <RadioButton.Content>
+                    <Label Content="Аннулировать" />
+                </RadioButton.Content>
+            </RadioButton>
+            <RadioButton GroupName="AnnulmentRequest" Name="rejectRadioButton" Checked="RejectRadioButton_Checked">
+                <RadioButton.Content>
+                    <DockPanel LastChildFill="True" Name="rejectPanel">
+                        <Label DockPanel.Dock="Top" Content="Отказать в аннулировании" />
+                        <Label DockPanel.Dock="Left" Margin="5 0" Content="Причина отказа:" />
+                        <TextBox Width="654" Height="190" Name="rejectReasonTextBox" />
+                    </DockPanel>
+                </RadioButton.Content>
+            </RadioButton>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2">
+            <Button Margin="5" Content="Выбрать" Click="OkButton_Click" />
+            <Button Margin="5" Content="Отмена" Click="CancelButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

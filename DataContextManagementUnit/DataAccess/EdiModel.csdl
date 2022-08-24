@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DataContextManagementUnit.DataAccess.Contexts.Edi" Alias="Self" d1p1:ViewGeneration="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:devart="http://devart.com/schemas/edml/ConceptualSchemaExtensions/1.0" xmlns:ed="http://devart.com/schemas/EntityDeveloper/1.0" annotation:UseStrongSpatialTypes="false" xmlns:d1p1="http://devart.com/schemas/edml/ConceptualSchemaExtensions/1.0" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityContainer Name="EdiDbContext" annotation:LazyLoadingEnabled="true" ed:Guid="af2a291a-ba4e-446c-b034-e70a8ebaf07b">
+    <EntitySet Name="MapGoods" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.MapGood" />
+    <EntitySet Name="MapPriceTypes" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.MapPriceType" />
+    <EntitySet Name="RefCompanies" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" />
+    <EntitySet Name="DocLineItems" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.DocLineItem" />
+    <EntitySet Name="LogOrders" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.LogOrder" />
+    <EntitySet Name="DocOrders" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" />
+    <EntitySet Name="RefOrderStatuses" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.RefOrderStatus" />
+    <EntitySet Name="ViewRefFilials" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewRefFilial" />
+    <EntitySet Name="ViewRefContractors" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewRefContractor" />
+    <EntitySet Name="ViewInvoicDetails" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewInvoicDetail" />
+    <AssociationSet Name="FK_MAP_PRICE_TYPES_GLN_COMPANYSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_MAP_PRICE_TYPES_GLN_COMPANY">
+      <End Role="RefCompany" EntitySet="RefCompanies" />
+      <End Role="MapPriceTypes" EntitySet="MapPriceTypes" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SHIP_TOSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SHIP_TO">
+      <End Role="ShipTo" EntitySet="RefCompanies" />
+      <End Role="ShipToOrders" EntitySet="DocOrders" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_BUYERSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_BUYER">
+      <End Role="Buyer" EntitySet="RefCompanies" />
+      <End Role="BuyerOrder" EntitySet="DocOrders" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SELLERSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SELLER">
+      <End Role="Seller" EntitySet="RefCompanies" />
+      <End Role="SellerOrders" EntitySet="DocOrders" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SENDERSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SENDER">
+      <End Role="Sender" EntitySet="RefCompanies" />
+      <End Role="SenderOrders" EntitySet="DocOrders" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_LINE_ITEMS_ID_ORDERSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_LINE_ITEMS_ID_ORDER">
+      <End Role="DocOrder" EntitySet="DocOrders" />
+      <End Role="DocLineItems" EntitySet="DocLineItems" />
+    </AssociationSet>
+    <AssociationSet Name="FK_LOG_ORDERS_ID_ORDERSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_LOG_ORDERS_ID_ORDER">
+      <End Role="DocOrder" EntitySet="DocOrders" />
+      <End Role="LogOrders" EntitySet="LogOrders" />
+    </AssociationSet>
+    <AssociationSet Name="RefCompany_ViewRefFilialSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany_ViewRefFilial">
+      <End Role="Filials" EntitySet="RefCompanies" />
+      <End Role="Companies" EntitySet="ViewRefFilials" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ORDERS_STATUSSet" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_ORDERS_STATUS">
+      <End Role="RefOrderStatus" EntitySet="RefOrderStatuses" />
+      <End Role="DocOrders" EntitySet="DocOrders" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="MapGood" ed:Guid="e2a96efb-65a9-4fa7-ba61-deabf22d1598">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="String" Nullable="false" MaxLength="36" ed:ValidateMaxLength="36" ed:ValidateRequired="true" ed:Guid="691b4d04-8f1c-4da1-88a2-01351dcb5e39" />
+    <Property Name="IdGood" Type="Decimal" ed:ValidateRequired="false" ed:Guid="274f431a-26ee-4987-95dd-d10fc3f1ba47" />
+    <Property Name="BarCode" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="3ce1a277-2f94-4ac2-b422-06d43d041ed2" />
+    <Property Name="Name" Type="String" MaxLength="550" Unicode="true" ed:ValidateMaxLength="550" ed:ValidateRequired="false" ed:Guid="65eef653-13ff-4cc4-8d70-e8b97123f4b8" />
+  </EntityType>
+  <EntityType Name="MapPriceType" ed:Guid="71145bd7-a98e-4320-9d99-445a51c5d671">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="String" Nullable="false" MaxLength="50" ed:ValidateMaxLength="50" ed:ValidateRequired="true" ed:Guid="104a32e8-f2e9-4d17-bcf8-990ae2ab8d28" />
+    <Property Name="GlnCompany" Type="String" Nullable="false" MaxLength="50" ed:ValidateMaxLength="50" ed:ValidateRequired="true" ed:Guid="f77c4e46-43c2-43c4-b9c3-c37bffe8b71b" />
+    <Property Name="IdPriceType" Type="Decimal" Nullable="false" ed:ValidateRequired="true" ed:Guid="0ba3911d-745c-4f6c-8b64-2a8f7ca7fc5b" />
+  </EntityType>
+  <EntityType Name="RefCompany" ed:Guid="c9ff084c-77f3-4743-a8f5-6b7973751ee3">
+    <Key>
+      <PropertyRef Name="Gln" />
+    </Key>
+    <Property Name="Gln" Type="String" Nullable="false" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="true" ed:Guid="1edd4433-b984-4ab5-a861-c8759a9ca2b4" />
+    <Property Name="Name" Type="String" Nullable="false" MaxLength="512" ed:ValidateMaxLength="512" ed:ValidateRequired="true" ed:Guid="6e033978-50bc-4530-91a8-bf5b3af76e43" />
+    <Property Name="City" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="6d0701e4-81f8-4fa6-9d01-04da343c1a58" />
+    <Property Name="IdContractor" Type="Int64" ed:ValidateRequired="false" ed:Guid="e3b4d955-d685-4144-8c1f-d8c053f1038a" />
+    <Property Name="Kpp" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="3de3132d-fe28-4c05-9cd2-73ca1c8612ef" />
+    <Property Name="Inn" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="d118fe4f-cf1b-4fd1-b889-078b8e803fdc" />
+    <Property Name="RegionCode" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="2fb17839-c648-4198-8121-5d7f8e4372e6" />
+    <Property Name="Street" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="58347691-dfa3-474a-a5eb-6813993854f5" />
+    <Property Name="House" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="8cbc3c2c-df45-4ea1-9eb5-4ceb72fe7933" />
+    <Property Name="Flat" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="8d22ae90-365a-499d-9604-db05555d139c" />
+    <Property Name="PostalCode" Type="String" MaxLength="256" ed:ValidateMaxLength="256" ed:ValidateRequired="false" ed:Guid="d2be543b-3435-4c43-9c8b-f9f36abebbeb" />
+    <Property Name="LastSync" Type="DateTime" Precision="0" ed:ValidateRequired="false" ed:Guid="cdc35f72-9b7a-4b74-ba0b-05768b08e462" />
+    <Property Name="ParentGln" Type="String" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="false" ed:Guid="8d7060c0-eeb7-4b0b-ae32-22094b98e1c1" />
+    <Property Name="IdDbFilial" Type="Int64" ed:ValidateRequired="false" ed:Guid="f4e4bcb5-1ed3-42c9-9301-ca8f9db10c24" />
+    <NavigationProperty Name="MapPriceTypes" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_MAP_PRICE_TYPES_GLN_COMPANY" FromRole="RefCompany" ToRole="MapPriceTypes" ed:Guid="4dd35990-3060-4fe8-bc16-3fff03ebe7df" />
+    <NavigationProperty Name="ShipToOrders" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SHIP_TO" FromRole="ShipTo" ToRole="ShipToOrders" ed:Guid="76ec8a77-a392-4d78-a22d-1efec61463de" />
+    <NavigationProperty Name="BuyerOrder" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_BUYER" FromRole="Buyer" ToRole="BuyerOrder" ed:Guid="5b25c87d-71af-48b3-9c34-177b80c214bc" />
+    <NavigationProperty Name="SellerOrders" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SELLER" FromRole="Seller" ToRole="SellerOrders" ed:Guid="75a99735-ebcc-44fb-ab78-0a951e464d4d" />
+    <NavigationProperty Name="SenderOrders" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SENDER" FromRole="Sender" ToRole="SenderOrders" ed:Guid="8706b441-ee26-4a22-9cee-944c032bf1cc" />
+    <NavigationProperty Name="Companies" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany_ViewRefFilial" FromRole="Filials" ToRole="Companies" ed:Guid="bdb8800a-7231-4798-bc27-399f12d4910e" />
+  </EntityType>
+  <EntityType Name="DocLineItem" ed:Guid="dec4de25-1b40-4a7f-a0eb-90e60ffdc911">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="String" Nullable="false" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="true" ed:Guid="77e03b07-91ed-45a2-af8a-966ed62ce93f" />
+    <Property Name="IdOrder" Type="String" Nullable="false" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="true" ed:Guid="12f11483-9b42-407f-9e2b-795a233ad068" />
+    <Property Name="IdGood" Type="Int64" ed:ValidateRequired="false" ed:Guid="f0b2495f-fcda-4629-b36e-5e94b416ec3d" />
+    <Property Name="IdPriceType" Type="Int64" ed:ValidateRequired="false" ed:Guid="312c0cad-c332-4804-8de0-c943e175a44b" />
+    <Property Name="IdDocJournal" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="03356aa6-adb5-4ed5-9537-dd936be7a714" />
+    <Property Name="Gtin" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="d16791de-3e8a-49f8-a41f-1000357b056b" />
+    <Property Name="BuyerCode" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="bd86cc9c-8dc9-4ff8-a6d0-d8cc7ec927d1" />
+    <Property Name="Description" Type="String" MaxLength="512" ed:ValidateMaxLength="512" ed:ValidateRequired="false" ed:Guid="2a6f9a8f-5f29-416d-bc7a-738415506502" />
+    <Property Name="Amount" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="921c4197-eb58-40f1-950b-75719e0f726f" />
+    <Property Name="ReqQunatity" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="eb8f2b44-0f0f-4498-a39f-347a1ab97e6f" />
+    <Property Name="UnitOfMeasure" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="68e0d53e-059d-4ae0-aa51-c2725b7fd940" />
+    <Property Name="NetPrice" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="ca293edf-bed2-4869-9657-46b9e101470c" />
+    <Property Name="NetPriceVat" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="28b71ed6-0bf2-49d2-b54b-32184e1a1db3" />
+    <Property Name="NetAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="3de9d203-72fc-46b9-b2ea-ff373d5dd5af" />
+    <Property Name="VatRate" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="913b3baf-55fe-4f15-b926-cbdc0864f3da" />
+    <Property Name="VatAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="2e1e0d97-2ab3-47bc-9568-04a2a1cfe6fe" />
+    <Property Name="RegionIsoCode" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="ba2dd00a-1bef-4e53-bb66-ca56f881bd45" />
+    <Property Name="LineNumber" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="fa2091bb-5417-4e92-ad60-7e6d7e95c660" />
+    <Property Name="OrdrspNetPrice" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="3be91d4b-cdc2-45df-8957-4b376f33d426" />
+    <Property Name="OrdrspNetPriceVat" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="4d30cd65-7fa8-4082-9cb6-27639f5bc1fc" />
+    <Property Name="OrdrspNetAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="d0c6701d-be5a-4cdb-8d58-2e33cac49aa1" />
+    <Property Name="OrdrspAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="ca15588e-7f5a-4337-9aa6-965ddd5dc6a5" />
+    <Property Name="OrdrspQuantity" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="d4af7971-d53c-4be0-bd11-416205757610" />
+    <Property Name="RecadvAcceptQuantity" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="2502db15-e069-49ba-9a90-806010fd1289" />
+    <Property Name="RecadvAcceptNetPrice" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="230d90c3-b775-4ef4-9b34-08d21f1b8819" />
+    <Property Name="RecadvAcceptNetPriceVat" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="33e96252-388a-46f6-a76d-3fa6d25c9e82" />
+    <Property Name="RecadvAcceptAmount" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="b1aea628-e14c-4bc2-ac98-804e92321f29" />
+    <Property Name="RecadvAcceptNetAmount" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="46b09e81-10bf-4e2d-800e-9ae55bc7b095" />
+    <NavigationProperty Name="DocOrder" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_LINE_ITEMS_ID_ORDER" FromRole="DocLineItems" ToRole="DocOrder" ed:Guid="67d0175b-698f-4313-903c-56bedc553f57" />
+  </EntityType>
+  <EntityType Name="LogOrder" ed:Guid="c85b3507-c6f2-43ee-af23-11fedadb44d1">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="String" Nullable="false" MaxLength="38" ed:ValidateMaxLength="38" ed:ValidateRequired="true" ed:Guid="e2227e21-a57c-440e-8520-6d57292d817c" />
+    <Property Name="IdOrder" Type="String" Nullable="false" MaxLength="38" ed:ValidateMaxLength="38" ed:ValidateRequired="true" ed:Guid="4afc22c8-b15d-41ce-b692-00e04174f5fe" />
+    <Property Name="OrderStatus" Type="Int64" Nullable="false" ed:ValidateRequired="true" ed:Guid="93a5038a-b47b-4f91-bbb8-177ffe4cdde9" />
+    <Property Name="Datetime" Type="DateTime" Nullable="false" Precision="0" ed:ValidateRequired="true" ed:Guid="6fe81389-669d-45f8-9964-59fc57da3cde" />
+    <Property Name="IdDocJournal" Type="Int64" ed:ValidateRequired="false" ed:Guid="54fbefb1-1101-4c09-a9c2-c97b52ee7582" />
+    <Property Name="CircilationId" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="a527c579-d09b-4ade-a699-089a4005a11b" />
+    <Property Name="MessageId" Type="String" MaxLength="50" Unicode="true" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="b38f9200-7b07-4689-aad6-10b0ac3a5101" />
+    <NavigationProperty Name="DocOrder" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_LOG_ORDERS_ID_ORDER" FromRole="LogOrders" ToRole="DocOrder" ed:Guid="9bda3e77-4473-4ef3-9e44-9742851b1087" />
+  </EntityType>
+  <EntityType Name="DocOrder" ed:Guid="dd30dccf-cef5-4e55-b5b7-fb9f2605a60b">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="String" Nullable="false" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="true" ed:Guid="bacc323d-3d0f-4c8f-b13e-cfb4dcb79d66" />
+    <Property Name="Number" Type="String" MaxLength="512" ed:ValidateMaxLength="512" ed:ValidateRequired="false" ed:Guid="f62dde25-93a6-4dbb-8dd0-6663ffe0422b" />
+    <Property Name="DocType" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="72597028-2f1b-4362-b37b-953c6bbb98b4" />
+    <Property Name="IsTest" Type="String" MaxLength="1" FixedLength="true" ed:ValidateMaxLength="1" ed:ValidateRequired="false" ed:Guid="77c2f40a-4b54-45a6-b03e-465f684da3d1" />
+    <Property Name="EdiCreationDate" Type="DateTime" Precision="0" ed:ValidateRequired="false" ed:Guid="ada0e769-c442-46ec-8dfc-fa570c868726" />
+    <Property Name="EdiCreationSenderDate" Type="DateTime" Precision="0" ed:ValidateRequired="false" ed:Guid="a43d3eba-02e7-430e-858e-05f8ac4af875" />
+    <Property Name="ReqDeliveryDate" Type="DateTime" Precision="0" ed:ValidateRequired="false" ed:Guid="b74ba5b7-b4cc-4608-9360-89b3e25da572" />
+    <Property Name="GlnSender" Type="String" Nullable="false" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="true" ed:Guid="e78e3171-2fa7-44de-9ce0-94871456354e" />
+    <Property Name="GlnSeller" Type="String" Nullable="false" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="true" ed:Guid="17a7ee50-e8e0-47c7-80e2-3d55a38005d5" />
+    <Property Name="GlnBuyer" Type="String" Nullable="false" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="true" ed:Guid="4d335270-73a7-42e0-b5be-f321b3bc736c" />
+    <Property Name="GlnShipTo" Type="String" Nullable="false" MaxLength="16" ed:ValidateMaxLength="16" ed:ValidateRequired="true" ed:Guid="9cf05985-34ad-417d-8f4d-fc154dea44db" />
+    <Property Name="Comment" Type="String" MaxLength="512" ed:ValidateMaxLength="512" ed:ValidateRequired="false" ed:Guid="9c062d8f-b251-40c5-999d-ff228d0fc221" />
+    <Property Name="CurrencyCode" Type="String" MaxLength="8" ed:ValidateMaxLength="8" ed:ValidateRequired="false" ed:Guid="fbcafdef-e29e-4ff5-b22b-431bd448d5c9" />
+    <Property Name="TotalAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="ad230f44-71d4-4a76-be12-ac8a783c8381" />
+    <Property Name="TotalVatAmount" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="171b08cf-3e63-4655-965b-b1bd1276ad92" />
+    <Property Name="TotalSumExcludeTax" Type="String" MaxLength="20" ed:ValidateMaxLength="20" ed:ValidateRequired="false" ed:Guid="c7b48273-7fdf-42e6-b5a8-e58b4c9f1803" />
+    <Property Name="Status" Type="Int64" Nullable="false" DefaultValue="0" ed:ValidateRequired="true" ed:Guid="bedc025f-eaa0-451f-b6ef-b66455c13504" />
+    <NavigationProperty Name="ShipTo" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SHIP_TO" FromRole="ShipToOrders" ToRole="ShipTo" ed:Guid="00a3cf83-78f5-4e30-9240-e249ecf5c571" />
+    <NavigationProperty Name="Buyer" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_BUYER" FromRole="BuyerOrder" ToRole="Buyer" ed:Guid="1c16a499-4b77-4232-9b9c-250921c58778" />
+    <NavigationProperty Name="Seller" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SELLER" FromRole="SellerOrders" ToRole="Seller" ed:Guid="8397a3a2-5009-424a-a719-b636bc29b166" />
+    <NavigationProperty Name="Sender" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_ORDERS_GLN_SENDER" FromRole="SenderOrders" ToRole="Sender" ed:Guid="9c8643ea-b55c-4524-a69f-c4560f7cfc1b" />
+    <NavigationProperty Name="DocLineItems" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_DOC_LINE_ITEMS_ID_ORDER" FromRole="DocOrder" ToRole="DocLineItems" ed:Guid="0d2a9648-6894-4eec-add8-c3280477c3e0" />
+    <NavigationProperty Name="LogOrders" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_LOG_ORDERS_ID_ORDER" FromRole="DocOrder" ToRole="LogOrders" ed:Guid="a564060a-fce9-4f78-bb42-d6c57c14e9d6" />
+    <NavigationProperty Name="RefOrderStatus" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_ORDERS_STATUS" FromRole="DocOrders" ToRole="RefOrderStatus" ed:Guid="c11dd68d-96b8-4a0c-b93f-48d41d36cd2f" />
+  </EntityType>
+  <EntityType Name="RefOrderStatus" ed:Guid="3a87ba1a-7285-4b23-a68e-0f74505a9035">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int64" Nullable="false" ed:ValidateRequired="true" ed:Guid="4ce0ea98-3005-4a5e-ba8f-e75156940b93" />
+    <Property Name="Name" Type="String" MaxLength="50" ed:ValidateMaxLength="50" ed:ValidateRequired="false" ed:Guid="95cdd8a4-8175-4b15-980b-014eb861bfdc" />
+    <NavigationProperty Name="DocOrders" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.FK_ORDERS_STATUS" FromRole="RefOrderStatus" ToRole="DocOrders" ed:Guid="b2febd35-729d-40a4-b06c-26a6fc04e292" />
+  </EntityType>
+  <EntityType Name="ViewRefFilial" ed:Guid="2e17e60f-b428-4b04-93ac-aaf9b4c11f76">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" ed:ValidateRequired="true" ed:Guid="b450e5de-dfd2-4fb7-9759-d83605091877" />
+    <Property Name="Name" Type="String" MaxLength="30" ed:ValidateMaxLength="30" ed:ValidateRequired="false" ed:Guid="8389c564-508e-4cf7-b125-7cbf362640c1" />
+    <Property Name="Link" Type="String" MaxLength="30" ed:ValidateMaxLength="30" ed:ValidateRequired="false" ed:Guid="b954356e-e0c9-48d2-be6c-9a571452ba12" />
+    <Property Name="Ip" Type="String" MaxLength="15" ed:ValidateMaxLength="15" ed:ValidateRequired="false" ed:Guid="83621c5c-46da-4d3d-a1cb-635b93f56c80" />
+    <NavigationProperty Name="Filials" Relationship="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany_ViewRefFilial" FromRole="Companies" ToRole="Filials" ed:Guid="aa1cd694-6133-4757-8676-2f9b41a43d16" />
+  </EntityType>
+  <EntityType Name="ViewRefContractor" ed:Guid="ad801e21-880e-4531-a365-a5a7882533a1">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Decimal" Nullable="false" ed:ValidateRequired="true" ed:Guid="ec51cf1d-b5b4-484c-b9b8-21fb274c3321" />
+    <Property Name="Name" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="2e07c861-8b7b-4500-b49a-15b06f5cd166" />
+    <Property Name="Address" Type="String" MaxLength="128" ed:ValidateMaxLength="128" ed:ValidateRequired="false" ed:Guid="28a2b203-fcc6-43d2-afd9-02785b27ae37" />
+  </EntityType>
+  <EntityType Name="ViewInvoicDetail" ed:Guid="2284df6e-0411-4693-a1de-be433c9cc756">
+    <Key>
+      <PropertyRef Name="Id" />
+      <PropertyRef Name="Inbox" />
+      <PropertyRef Name="GName" />
+      <PropertyRef Name="Quantity" />
+      <PropertyRef Name="TaxRate" />
+    </Key>
+    <Property Name="Id" Type="Decimal" Nullable="false" ed:ValidateRequired="true" ed:Guid="90780a6a-8f2b-42ca-af0b-c63adfe958f1" />
+    <Property Name="IdDocMaster" Type="Decimal" ed:ValidateRequired="false" ed:Guid="a767a8d1-e183-4ff9-9f97-243272574f73" />
+    <Property Name="Code" Type="String" MaxLength="32" ed:ValidateMaxLength="32" ed:ValidateRequired="false" ed:Guid="56efb5c9-a581-4b30-bd1d-37160a40e9a9" />
+    <Property Name="IName" Type="String" MaxLength="4" ed:ValidateMaxLength="4" ed:ValidateRequired="false" ed:Guid="44b8e8a1-9a5c-42f0-8edd-e4d84e19e2fa" />
+    <Property Name="Inbox" Type="Int32" Nullable="false" ed:ValidateRequired="true" ed:Guid="0dd1d581-286c-4542-b3ee-ae1d0eed8f75" />
+    <Property Name="GName" Type="String" Nullable="false" MaxLength="500" ed:ValidateMaxLength="500" ed:ValidateRequired="true" ed:Guid="953ca531-b72f-4843-83bc-ba5c8c864978" />
+    <Property Name="GoodSize" Type="String" MaxLength="8" ed:ValidateMaxLength="8" ed:ValidateRequired="false" ed:Guid="7600223a-583e-4b63-99fe-37435129c16e" />
+    <Property Name="Quantity" Type="Int32" Nullable="false" ed:ValidateRequired="true" ed:Guid="984aba18-106b-4f0a-a950-f15b05064cf7" />
+    <Property Name="PriceWithoutTax" Type="Decimal" ed:ValidateRequired="false" ed:Guid="31f88c4b-2bb3-4865-8af9-2d8d9059b355" />
+    <Property Name="SummWithoutTax" Type="Decimal" ed:ValidateRequired="false" ed:Guid="953c886c-82f6-47f5-93cd-37ad4f17c12a" />
+    <Property Name="Acsiz" Type="String" MaxLength="1" FixedLength="true" ed:ValidateMaxLength="1" ed:ValidateRequired="false" ed:Guid="ef23fb0e-6f94-447a-89bd-111a986f6316" />
+    <Property Name="TaxRate" Type="Int32" Nullable="false" ed:ValidateRequired="true" ed:Guid="e5d3a23b-c13e-4c03-80da-fc8be5392e42" />
+    <Property Name="TaxSumm" Type="Decimal" ed:ValidateRequired="false" ed:Guid="14e88eac-927b-4531-9984-e5ce1f868019" />
+    <Property Name="Summ" Type="Decimal" ed:ValidateRequired="false" ed:Guid="237cfcba-fb62-4eca-abe6-ab029a6b9487" />
+    <Property Name="CountryName" Type="String" MaxLength="100" ed:ValidateMaxLength="100" ed:ValidateRequired="false" ed:Guid="f8e7b8af-8ffd-400d-bd80-01f76e49f399" />
+    <Property Name="CountryNumCode" Type="String" MaxLength="40" ed:ValidateMaxLength="40" ed:ValidateRequired="false" ed:Guid="e5932480-2c06-4abb-9cb5-1fa316f7162a" />
+    <Property Name="CustomsNum" Type="String" MaxLength="32" ed:ValidateMaxLength="32" ed:ValidateRequired="false" ed:Guid="a0c7472d-7889-4789-a692-fed31fbe12f4" />
+  </EntityType>
+  <Association Name="FK_MAP_PRICE_TYPES_GLN_COMPANY" ed:Guid="863ce0de-6f70-44e6-b6e1-b1b58304dd1a">
+    <End Role="RefCompany" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="1" />
+    <End Role="MapPriceTypes" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.MapPriceType" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="RefCompany">
+        <PropertyRef Name="Gln" />
+      </Principal>
+      <Dependent Role="MapPriceTypes">
+        <PropertyRef Name="GlnCompany" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SHIP_TO" ed:Guid="b6281ff0-7cc0-4bfe-aa82-dac0699f2956">
+    <End Role="ShipTo" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="1" />
+    <End Role="ShipToOrders" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="ShipTo">
+        <PropertyRef Name="Gln" />
+      </Principal>
+      <Dependent Role="ShipToOrders">
+        <PropertyRef Name="GlnShipTo" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_BUYER" ed:Guid="a09c449e-7773-401f-a753-5109be99c241">
+    <End Role="Buyer" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="1" />
+    <End Role="BuyerOrder" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Buyer">
+        <PropertyRef Name="Gln" />
+      </Principal>
+      <Dependent Role="BuyerOrder">
+        <PropertyRef Name="GlnBuyer" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SELLER" ed:Guid="cb53918e-52d0-45f4-b96f-c4743c289d76">
+    <End Role="Seller" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="1" />
+    <End Role="SellerOrders" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Seller">
+        <PropertyRef Name="Gln" />
+      </Principal>
+      <Dependent Role="SellerOrders">
+        <PropertyRef Name="GlnSeller" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SENDER" ed:Guid="2facc2cf-1d6b-4dad-97fb-16c5262d0fb6">
+    <End Role="Sender" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="1" />
+    <End Role="SenderOrders" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Sender">
+        <PropertyRef Name="Gln" />
+      </Principal>
+      <Dependent Role="SenderOrders">
+        <PropertyRef Name="GlnSender" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_LINE_ITEMS_ID_ORDER" ed:Guid="057c261b-d6f9-4c71-8f43-f9df0609bae8">
+    <End Role="DocOrder" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="1" />
+    <End Role="DocLineItems" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocLineItem" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DocOrder">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="DocLineItems">
+        <PropertyRef Name="IdOrder" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_LOG_ORDERS_ID_ORDER" ed:Guid="ba2e835a-a7b9-463d-9a7f-ea75161b385c">
+    <End Role="DocOrder" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="1" />
+    <End Role="LogOrders" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.LogOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DocOrder">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="LogOrders">
+        <PropertyRef Name="IdOrder" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="RefCompany_ViewRefFilial" ed:Guid="77ab6848-9e27-4647-a61d-86e2c2c8888d">
+    <End Role="Filials" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany" Multiplicity="0..1" />
+    <End Role="Companies" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewRefFilial" Multiplicity="*" />
+  </Association>
+  <Association Name="FK_ORDERS_STATUS" ed:Guid="0aa70a60-37ff-41dd-8cef-55cf41c1c6dd">
+    <End Role="RefOrderStatus" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.RefOrderStatus" Multiplicity="1" />
+    <End Role="DocOrders" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="RefOrderStatus">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="DocOrders">
+        <PropertyRef Name="Status" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

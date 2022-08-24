@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="EdiDbContextStoreContainer" CdmEntityContainer="EdiDbContext">
+    <EntitySetMapping Name="MapGoods">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.MapGood">
+        <MappingFragment StoreEntitySet="MAP_GOODS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="BarCode" ColumnName="BAR_CODE" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="MapPriceTypes">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.MapPriceType">
+        <MappingFragment StoreEntitySet="MAP_PRICE_TYPES">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="GlnCompany" ColumnName="GLN_COMPANY" />
+          <ScalarProperty Name="IdPriceType" ColumnName="ID_PRICE_TYPE" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RefCompanies">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.RefCompany">
+        <MappingFragment StoreEntitySet="REF_COMPANIES">
+          <ScalarProperty Name="Gln" ColumnName="GLN" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+          <ScalarProperty Name="City" ColumnName="CITY" />
+          <ScalarProperty Name="IdContractor" ColumnName="ID_CONTRACTOR" />
+          <ScalarProperty Name="Kpp" ColumnName="KPP" />
+          <ScalarProperty Name="Inn" ColumnName="INN" />
+          <ScalarProperty Name="RegionCode" ColumnName="REGION_CODE" />
+          <ScalarProperty Name="Street" ColumnName="STREET" />
+          <ScalarProperty Name="House" ColumnName="HOUSE" />
+          <ScalarProperty Name="Flat" ColumnName="FLAT" />
+          <ScalarProperty Name="PostalCode" ColumnName="POSTAL_CODE" />
+          <ScalarProperty Name="LastSync" ColumnName="LAST_SYNC" />
+          <ScalarProperty Name="ParentGln" ColumnName="PARENT_GLN" />
+          <ScalarProperty Name="IdDbFilial" ColumnName="ID_DB_FILIAL" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocLineItems">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.DocLineItem">
+        <MappingFragment StoreEntitySet="DOC_LINE_ITEMS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="IdOrder" ColumnName="ID_ORDER" />
+          <ScalarProperty Name="IdGood" ColumnName="ID_GOOD" />
+          <ScalarProperty Name="IdPriceType" ColumnName="ID_PRICE_TYPE" />
+          <ScalarProperty Name="IdDocJournal" ColumnName="ID_DOC_JOURNAL" />
+          <ScalarProperty Name="Gtin" ColumnName="GTIN" />
+          <ScalarProperty Name="BuyerCode" ColumnName="BUYER_CODE" />
+          <ScalarProperty Name="Description" ColumnName="DESCRIPTION" />
+          <ScalarProperty Name="Amount" ColumnName="AMOUNT" />
+          <ScalarProperty Name="ReqQunatity" ColumnName="REQ_QUNATITY" />
+          <ScalarProperty Name="UnitOfMeasure" ColumnName="UNIT_OF_MEASURE" />
+          <ScalarProperty Name="NetPrice" ColumnName="NET_PRICE" />
+          <ScalarProperty Name="NetPriceVat" ColumnName="NET_PRICE_VAT" />
+          <ScalarProperty Name="NetAmount" ColumnName="NET_AMOUNT" />
+          <ScalarProperty Name="VatRate" ColumnName="VAT_RATE" />
+          <ScalarProperty Name="VatAmount" ColumnName="VAT_AMOUNT" />
+          <ScalarProperty Name="RegionIsoCode" ColumnName="REGION_ISO_CODE" />
+          <ScalarProperty Name="LineNumber" ColumnName="LINE_NUMBER" />
+          <ScalarProperty Name="OrdrspNetPrice" ColumnName="ORDRSP_NET_PRICE" />
+          <ScalarProperty Name="OrdrspNetPriceVat" ColumnName="ORDRSP_NET_PRICE_VAT" />
+          <ScalarProperty Name="OrdrspNetAmount" ColumnName="ORDRSP_NET_AMOUNT" />
+          <ScalarProperty Name="OrdrspAmount" ColumnName="ORDRSP_AMOUNT" />
+          <ScalarProperty Name="OrdrspQuantity" ColumnName="ORDRSP_QUANTITY" />
+          <ScalarProperty Name="RecadvAcceptQuantity" ColumnName="RECADV_ACCEPT_QUANTITY" />
+          <ScalarProperty Name="RecadvAcceptNetPrice" ColumnName="RECADV_ACCEPT_NET_PRICE" />
+          <ScalarProperty Name="RecadvAcceptNetPriceVat" ColumnName="RECADV_ACCEPT_NET_PRICE_VAT" />
+          <ScalarProperty Name="RecadvAcceptAmount" ColumnName="RECADV_ACCEPT_AMOUNT" />
+          <ScalarProperty Name="RecadvAcceptNetAmount" ColumnName="RECADV_ACCEPT_NET_AMOUNT" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="LogOrders">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.LogOrder">
+        <MappingFragment StoreEntitySet="LOG_ORDERS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="IdOrder" ColumnName="ID_ORDER" />
+          <ScalarProperty Name="OrderStatus" ColumnName="ORDER_STATUS" />
+          <ScalarProperty Name="Datetime" ColumnName="DATETIME" />
+          <ScalarProperty Name="IdDocJournal" ColumnName="ID_DOC_JOURNAL" />
+          <ScalarProperty Name="CircilationId" ColumnName="CIRCILATION_ID" />
+          <ScalarProperty Name="MessageId" ColumnName="MESSAGE_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="DocOrders">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.DocOrder">
+        <MappingFragment StoreEntitySet="DOC_ORDERS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="DocType" ColumnName="DOC_TYPE" />
+          <ScalarProperty Name="IsTest" ColumnName="IS_TEST" />
+          <ScalarProperty Name="EdiCreationDate" ColumnName="EDI_CREATION_DATE" />
+          <ScalarProperty Name="EdiCreationSenderDate" ColumnName="EDI_CREATION_SENDER_DATE" />
+          <ScalarProperty Name="ReqDeliveryDate" ColumnName="REQ_DELIVERY_DATE" />
+          <ScalarProperty Name="GlnSender" ColumnName="GLN_SENDER" />
+          <ScalarProperty Name="GlnSeller" ColumnName="GLN_SELLER" />
+          <ScalarProperty Name="GlnBuyer" ColumnName="GLN_BUYER" />
+          <ScalarProperty Name="GlnShipTo" ColumnName="GLN_SHIP_TO" />
+          <ScalarProperty Name="Comment" ColumnName="COMMENT" />
+          <ScalarProperty Name="CurrencyCode" ColumnName="CURRENCY_CODE" />
+          <ScalarProperty Name="TotalAmount" ColumnName="TOTAL_AMOUNT" />
+          <ScalarProperty Name="TotalVatAmount" ColumnName="TOTAL_VAT_AMOUNT" />
+          <ScalarProperty Name="TotalSumExcludeTax" ColumnName="TOTAL_SUM_EXCLUDE_TAX" />
+          <ScalarProperty Name="Status" ColumnName="STATUS" />
+          <ScalarProperty Name="Number" ColumnName="NUMBER" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RefOrderStatuses">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.RefOrderStatus">
+        <MappingFragment StoreEntitySet="REF_ORDER_STATUSES">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="ViewRefFilials">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewRefFilial">
+        <MappingFragment StoreEntitySet="VIEW_REF_FILIALS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+          <ScalarProperty Name="Link" ColumnName="LINKS" />
+          <ScalarProperty Name="Ip" ColumnName="IP" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="ViewRefContractors">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewRefContractor">
+        <MappingFragment StoreEntitySet="VIEW_REF_CONTRACTORS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="Name" ColumnName="NAME" />
+          <ScalarProperty Name="Address" ColumnName="ADDRESS" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="ViewInvoicDetails">
+      <EntityTypeMapping TypeName="DataContextManagementUnit.DataAccess.Contexts.Edi.ViewInvoicDetail">
+        <MappingFragment StoreEntitySet="VIEW_INVOIC_DETAILS">
+          <ScalarProperty Name="Id" ColumnName="ID" />
+          <ScalarProperty Name="IdDocMaster" ColumnName="ID_DOC_MASTER" />
+          <ScalarProperty Name="Code" ColumnName="CODE" />
+          <ScalarProperty Name="IName" ColumnName="I_NAME" />
+          <ScalarProperty Name="Inbox" ColumnName="INBOX" />
+          <ScalarProperty Name="GName" ColumnName="G_NAME" />
+          <ScalarProperty Name="GoodSize" ColumnName="GOOD_SIZE" />
+          <ScalarProperty Name="Quantity" ColumnName="QUANTITY" />
+          <ScalarProperty Name="PriceWithoutTax" ColumnName="PRICE_WITHOUT_TAX" />
+          <ScalarProperty Name="SummWithoutTax" ColumnName="SUMM_WITHOUT_TAX" />
+          <ScalarProperty Name="Acsiz" ColumnName="ACSIZ" />
+          <ScalarProperty Name="TaxRate" ColumnName="TAX_RATE" />
+          <ScalarProperty Name="TaxSumm" ColumnName="TAX_SUMM" />
+          <ScalarProperty Name="Summ" ColumnName="SUMM" />
+          <ScalarProperty Name="CountryName" ColumnName="COUNTRY_NAME" />
+          <ScalarProperty Name="CountryNumCode" ColumnName="COUNTRY_NUM_CODE" />
+          <ScalarProperty Name="CustomsNum" ColumnName="CUSTOMS_NUM" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>

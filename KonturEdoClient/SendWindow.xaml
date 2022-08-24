@@ -1,0 +1,56 @@
+﻿<Window x:Class="KonturEdoClient.SendWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen" mc:Ignorable="d"
+        Title="Отправка в диадок" Height="130" Width="500">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Label Content="Выберите контрагента" Margin="5 5"></Label>
+                <dxg:LookUpEdit Width="300" PopupWidth="600" Margin="5 5" 
+                          ItemsSource="{Binding Organizations}" 
+                          SelectedItem="{Binding SelectedOrganization, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          DisplayMember="Name"
+                          ImmediatePopup="True"
+					      AutoPopulateColumns="False">
+                    <dxg:LookUpEdit.PopupContentTemplate>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                    <dxg:GridColumn Header="ИНН" Width="100" FieldName="Inn"/>
+                                    <dxg:GridColumn Header="КПП" Width="80" FieldName="Kpp"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView AllowPerPixelScrolling="True" 
+									                   ShowSearchPanelMode="Always" 
+									                   AllowEditing="False" 
+									                   NavigationStyle="Row" 
+									                   ShowGroupPanel="False" 
+									                   ShowAutoFilterRow="True" />
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </ControlTemplate>
+                    </dxg:LookUpEdit.PopupContentTemplate>
+                    <dxg:LookUpEdit.StyleSettings>
+                        <dxg:SearchLookUpEditStyleSettings/>
+                    </dxg:LookUpEdit.StyleSettings>
+                </dxg:LookUpEdit>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="40" Margin="0 5" HorizontalAlignment="Center">
+                <Button Content="Сохранить в черновики" Margin="5 5" ToolTip="Сохранить документ в черновики в Диадоке" Click="SaveButton_Click"></Button>
+                <Button Content="Подписать и отправить" Margin="5 5" ToolTip="Подписать документ и отправить в Диадок" Click="SignAndSaveButton_Click"></Button>
+                <Button Content="Отмена" Margin="5 5" Click="CancelButton_Click"></Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

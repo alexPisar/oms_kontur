@@ -1,0 +1,10 @@
+{
+  "EdoApiUrl": "https://diadoc-api.kontur.ru",
+  "EdoApiClientId": "API-0343835c-4985-4b07-a1ef-59bc615a7b77",
+  "AbtDataBaseIpAddress": "192.168.2.13",
+  "AbtDataBaseSid": "orcl.vladivostok.wera",
+  "ProxyEnabled": true,
+  "ProxyAddress": "192.168.2.29:3128",
+  "ProxyUserName": "developer3",
+  "ProxyUserPassword": "nabeg123"
+}

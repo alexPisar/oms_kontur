@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EntityDeveloper Version="6.8.1019.0">
+  <ModelSettings xmlns:ed="http://devart.com/schemas/EntityDeveloper/1.0" ConnectionStringInAppConfig="False" DetectTPTInheritance="False" EntityFrameworkVersion="Version6" IncludeForeignKeysInModel="true" DetectFunctionBasedColumnDefault="false">
+    <Connection ConnectionString="User Id=edi;Password=byntuhfwbz;Server=ORCL.vladivostok.wera;Persist Security Info=True" Provider="Devart.Data.Oracle" />
+    <Generation>
+      <GeneratedFiles>
+        <File Name="AbtDbContext.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess" />
+        <File Name="RefItem.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="RefGood.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="RefContractor.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="RefBarCode.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="DocJournal.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="DocGoodsDetail.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="DocGood.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="DocGoodsDetailsI.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="DocGoodsI.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities" />
+        <File Name="RefItemConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="RefGoodConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="RefContractorConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="RefBarCodeConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="DocJournalConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="DocGoodsDetailConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="DocGoodConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="DocGoodsDetailsIConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+        <File Name="DocGoodsIConfiguration.cs" DestinationFolder="D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings" />
+      </GeneratedFiles>
+    </Generation>
+    <DatabaseFirstNamingRules>
+      <EntitySet PluralizationName="Pluralize" />
+      <Class UseSchemaAsPrefix="False" PluralizeCollectionNavigationPropertyName="True" AddConstraintColumnsToNavigationPropertyName="False" RemoveUnderscores="True" AddUnderscores="False" RemoveInvalidCharacters="True" CodeCase="Capitalized" AddPrefix="" AddSuffix="" RemovePrefixes="" RemoveSuffixes="" PluralizationName="Singularize" />
+      <Property RemoveUnderscores="True" AddUnderscores="False" RemoveInvalidCharacters="True" CodeCase="Capitalized" AddPrefix="" AddSuffix="" RemovePrefixes="" RemoveSuffixes="" PluralizationName="Singularize" />
+    </DatabaseFirstNamingRules>
+    <ModelFirst StorageSynchronizationEnabled="False" TargetSchema="EDI" TargetProviderName="Devart.Data.Oracle">
+      <TargetServer Server="Oracle" ServerVersion="11gR2" />
+      <ModelFirstNamingRules>
+        <Table RemoveUnderscores="False" AddUnderscores="False" RemoveInvalidCharacters="True" CodeCase="Unchanged" AddPrefix="" AddSuffix="" RemovePrefixes="" RemoveSuffixes="" PluralizationName="Pluralize" />
+        <Column RemoveUnderscores="False" AddUnderscores="False" RemoveInvalidCharacters="True" CodeCase="Unchanged" AddPrefix="" AddSuffix="" RemovePrefixes="" RemoveSuffixes="" PluralizationName="Unchanged" />
+      </ModelFirstNamingRules>
+    </ModelFirst>
+    <Diagrams>
+      <Diagram Name="Diagram1" DefaultDiagram="True" />
+    </Diagrams>
+    <Templates>
+      <Template Name="AbtDbContext" Description="Use this template to generate a strongly-typed DbContext class and persistence ignorant entity classes." Enabled="True" PredefinedTemplateName="Entity DbContext C#">
+        <ed:Property Name="ValidationFramework" Type="EntityDeveloper.TemplateEngine.ValidationFramework, EntityDeveloper.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <ValidationFramework>None</ValidationFramework>
+        </ed:Property>
+        <ed:Property Name="ValidationErrorMessages" Type="EntityDeveloper.TemplateEngine.ValidationErrorMessages, EntityDeveloper.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <ValidationErrorMessages xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" />
+        </ed:Property>
+        <ed:Property Name="FilePerClass" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="ModelNameAsFilesPrefix" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="HeaderTimestampVersionControlTag" Type="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <string d6p1:nil="true" xmlns:d6p1="http://www.w3.org/2001/XMLSchema-instance" />
+        </ed:Property>
+        <ed:Property Name="EntitiesOutput" Type="EntityDeveloper.TemplateEngine.OutputInfo, EntityDeveloper.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <OutputInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <Project />
+            <ProjectFolder />
+            <DestinationFolder>D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Entities</DestinationFolder>
+          </OutputInfo>
+        </ed:Property>
+        <ed:Property Name="ContextOutput" Type="EntityDeveloper.TemplateEngine.OutputInfo, EntityDeveloper.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <OutputInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <Project />
+            <ProjectFolder />
+            <DestinationFolder>D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess</DestinationFolder>
+          </OutputInfo>
+        </ed:Property>
+        <ed:Property Name="GeneratePartialClass" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="ImplementCloneable" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="ImplementEquals" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="ImplementINotifyPropertyChanging" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="ImplementINotifyPropertyChanged" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="PropertyChangePartialMethods" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="WcfDataContractAttributes" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="WcfDataMemberOnNavigationProperties" Type="EntityDeveloper.WcfDataMemberGenerationBehavior, EntityDeveloper.Orm.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <WcfDataMemberGenerationBehavior>All</WcfDataMemberGenerationBehavior>
+        </ed:Property>
+        <ed:Property Name="GenerateDummyComments" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="GenerateGeneratedCodeAttributes" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="PrimitiveDefaultValueGeneration" Type="EntityDeveloper.DefaultValueBehavior, EntityDeveloper.Orm.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <DefaultValueBehavior>Literal</DefaultValueBehavior>
+        </ed:Property>
+        <ed:Property Name="NullableReferenceTypes" Type="EntityDeveloper.ReferenceTypeNullability, EntityDeveloper.Orm.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <ReferenceTypeNullability>Default</ReferenceTypeNullability>
+        </ed:Property>
+        <ed:Property Name="EnableWinFormsDataBinding" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="UseObservableCollection" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="CollectionPropertyType" Type="EntityDeveloper.EntityFramework.EntityCollectionPropertyType, EntityDeveloper.Orm.EntityFramework, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <EntityCollectionPropertyType>List</EntityCollectionPropertyType>
+        </ed:Property>
+        <ed:Property Name="CollectionInitializationType" Type="EntityDeveloper.EntityFramework.EntityCollectionInitializationType, EntityDeveloper.Orm.EntityFramework, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <EntityCollectionInitializationType>List</EntityCollectionInitializationType>
+        </ed:Property>
+        <ed:Property Name="FluentMapping" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="MappingGenerationStrategy" Type="EntityDeveloper.EntityFramework.CodeFirstMappingGenerationStrategy, EntityDeveloper.Orm.EntityFramework, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <CodeFirstMappingGenerationStrategy>UseConfigurationClasses</CodeFirstMappingGenerationStrategy>
+        </ed:Property>
+        <ed:Property Name="DatabaseIndependent" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="DisabledConventions" Type="EntityDeveloper.EntityFramework.CodeFirstConfigurationConvention, EntityDeveloper.Orm.EntityFramework, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <CodeFirstConfigurationConvention />
+        </ed:Property>
+        <ed:Property Name="ConfigurationsOutput" Type="EntityDeveloper.TemplateEngine.OutputInfo, EntityDeveloper.Common, Version=6.8.1019.0, Culture=neutral, PublicKeyToken=09af7300eec23701">
+          <OutputInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <Project />
+            <ProjectFolder />
+            <DestinationFolder>D:\Repos\oms_kontur\DataContextManagementUnit\DataAccess\Mappings</DestinationFolder>
+          </OutputInfo>
+        </ed:Property>
+        <ed:Property Name="AutoDetectChangesEnabled" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="ProxyCreationEnabled" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="ValidateOnSaveEnabled" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+        <ed:Property Name="JsonFileBasePath" Type="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <string d6p1:nil="true" xmlns:d6p1="http://www.w3.org/2001/XMLSchema-instance" />
+        </ed:Property>
+        <ed:Property Name="IncludeEnvironmentVariables" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>false</boolean>
+        </ed:Property>
+        <ed:Property Name="ConfigurationTypeName" Type="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <string>%Default%</string>
+        </ed:Property>
+        <ed:Property Name="UseDbConfigurationTypeAttribute" Type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <boolean>true</boolean>
+        </ed:Property>
+      </Template>
+    </Templates>
+    <AttributeAssemblies />
+    <UpdateFromDatabaseExcludes>
+      <Exclude Name="ID_DOC" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_AGENT" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_CURRENCY" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="CURRENCY_RATE" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_PRICE_TYPE" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="DISCOUNT_RATE" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="DISCOUNT_SUMM" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="TOTAL_SUMM" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_SELLER" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_CUSTOMER" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_STORE_SENDER" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_STORE_RECIEPIENT" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_SUBDIVISION" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="ID_DOC_RETURN" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="CHARGE_RATE" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="CHARGE_SUMM" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="IS_RETURN" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="LOCK_STATUS" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="DOC_PRECISION" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="TOTAL_PRIME" Table="ABT.DOC_GOODS" Type="Column" />
+      <Exclude Name="DOC_GOODS_FK_9" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_2" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_4" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_3" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_6" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_7" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_5" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_1" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_8" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="ID" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="CODE" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="COMMENTS" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="DOC_DATETIME" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ID_DOC_TYPE" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ID_INSTANCE_SENDER" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ID_INSTANCE_RECIEPIENT" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ID_INSTANCE_OWNER" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ID_DOC_MASTER" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ERROR_STATUS" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="ACT_STATUS" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="LOCK_STATUS" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="USER_NAME" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="CREATE_INVOICE" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="DELIVERY_DATE" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="DELETED" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="UPDATED_PRICE" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="PAY_DELAY" Table="ABT.DOC_JOURNAL" Type="Column" />
+      <Exclude Name="DOC_JOURNAL_PK" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="SYS_C0012442" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="SYS_C0012441" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="SYS_C0012440" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="ID" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="NAME" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="ID_DISTRICT" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="ID_CITY" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="COMMENTS" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="ADDRESS" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="PHONES" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="CONTACT" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="DEFAULT_CUSTOMER" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="ID_CHANNEL" Table="ABT.REF_CONTRACTORS" Type="Column" />
+      <Exclude Name="INDX_REF_CONTRACTORS_PK" Table="ABT.REF_CONTRACTORS" Type="Constraint" />
+      <Exclude Name="REF_CONTRACTORS_CNT_1" Table="ABT.REF_CONTRACTORS" Type="Constraint" />
+      <Exclude Name="REF_CONTRACTORS_CNT_2" Table="ABT.REF_CONTRACTORS" Type="Constraint" />
+      <Exclude Name="ID" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="SERT_NUM" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="REG_NUM" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="EXPIRING_DATE" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="CODE" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="NAME" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="TAX" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_BASE_ITEM" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_DEFAULT_ITEM" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_ACCOUNT_CURRENCY" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_MANUFACTURER" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_ORGAN" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_COUNTRY" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="CUSTOMS_NO" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="ID_SUBDIVISION" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="HAS_REMAIN" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="OLDID" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="GOOD_SIZE" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="BAR_CODE" Table="ABT.REF_GOODS" Type="Column" />
+      <Exclude Name="REF_GOODS_PK" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_4" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_7" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_6" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_5" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_3" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_2" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="ID" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="ID_GOOD" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="ID_NAME" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="QUANTITY" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="WEIGHT" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="CBM" Table="ABT.REF_ITEMS" Type="Column" />
+      <Exclude Name="REF_ITEMS_PK" Table="ABT.REF_ITEMS" Type="Constraint" />
+      <Exclude Name="FK_REF_ITEMS_2" Table="ABT.REF_ITEMS" Type="Constraint" />
+      <Exclude Name="FK_REF_ITEMS_1" Table="ABT.REF_ITEMS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_2" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_4" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_3" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_6" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_7" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="DOC_GOODS_FK_8" Table="ABT.DOC_GOODS" Type="Constraint" />
+      <Exclude Name="SYS_C0012441" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="SYS_C0012440" Table="ABT.DOC_JOURNAL" Type="Constraint" />
+      <Exclude Name="REF_CONTRACTORS_CNT_1" Table="ABT.REF_CONTRACTORS" Type="Constraint" />
+      <Exclude Name="REF_CONTRACTORS_CNT_2" Table="ABT.REF_CONTRACTORS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_4" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_GOODS_5" Table="ABT.REF_GOODS" Type="Constraint" />
+      <Exclude Name="FK_REF_ITEMS_2" Table="ABT.REF_ITEMS" Type="Constraint" />
+    </UpdateFromDatabaseExcludes>
+  </ModelSettings>
+</EntityDeveloper>

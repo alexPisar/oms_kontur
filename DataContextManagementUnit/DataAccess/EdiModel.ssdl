@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DataContextManagementUnit.DataAccess.Contexts.Edi.Store" Alias="Self" Provider="Devart.Data.Oracle" ProviderManifestToken="Oracle, 11.2.0.1" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:devart="http://devart.com/schemas/edml/StorageSchemaExtensions/1.0" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityContainer Name="EdiDbContextStoreContainer">
+    <EntitySet Name="MAP_GOODS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.MAP_GOODS" store:Type="Tables" Schema="EDI" Table="MAP_GOODS" />
+    <EntitySet Name="MAP_PRICE_TYPES" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.MAP_PRICE_TYPES" store:Type="Tables" Schema="EDI" Table="MAP_PRICE_TYPES" />
+    <EntitySet Name="REF_COMPANIES" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" store:Type="Tables" Schema="EDI" Table="REF_COMPANIES" />
+    <EntitySet Name="DOC_LINE_ITEMS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_LINE_ITEMS" store:Type="Tables" Schema="EDI" Table="DOC_LINE_ITEMS" />
+    <EntitySet Name="LOG_ORDERS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.LOG_ORDERS" store:Type="Tables" Schema="EDI" Table="LOG_ORDERS" />
+    <EntitySet Name="DOC_ORDERS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" store:Type="Tables" Schema="EDI" Table="DOC_ORDERS" />
+    <EntitySet Name="REF_ORDER_STATUSES" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_ORDER_STATUSES" store:Type="Tables" Schema="EDI" Table="REF_ORDER_STATUSES" />
+    <EntitySet Name="VIEW_REF_FILIALS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.VIEW_REF_FILIALS" store:Type="Views" Schema="EDI" Table="VIEW_REF_FILIALS" />
+    <EntitySet Name="VIEW_REF_CONTRACTORS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.VIEW_REF_CONTRACTORS" store:Type="Views" Schema="EDI" Table="VIEW_REF_CONTRACTORS" />
+    <EntitySet Name="VIEW_INVOIC_DETAILS" EntityType="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.VIEW_INVOIC_DETAILS" store:Type="Views" Schema="EDI" Table="VIEW_INVOIC_DETAILS" />
+    <AssociationSet Name="FK_MAP_PRICE_TYPES_GLN_COMPANY" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_MAP_PRICE_TYPES_GLN_COMPANY">
+      <End Role="REF_COMPANIES" EntitySet="REF_COMPANIES" />
+      <End Role="MAP_PRICE_TYPES" EntitySet="MAP_PRICE_TYPES" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SHIP_TO" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_DOC_ORDERS_GLN_SHIP_TO">
+      <End Role="REF_COMPANIES" EntitySet="REF_COMPANIES" />
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_BUYER" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_DOC_ORDERS_GLN_BUYER">
+      <End Role="REF_COMPANIES" EntitySet="REF_COMPANIES" />
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SELLER" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_DOC_ORDERS_GLN_SELLER">
+      <End Role="REF_COMPANIES" EntitySet="REF_COMPANIES" />
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_ORDERS_GLN_SENDER" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_DOC_ORDERS_GLN_SENDER">
+      <End Role="REF_COMPANIES" EntitySet="REF_COMPANIES" />
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_DOC_LINE_ITEMS_ID_ORDER" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_DOC_LINE_ITEMS_ID_ORDER">
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+      <End Role="DOC_LINE_ITEMS" EntitySet="DOC_LINE_ITEMS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_LOG_ORDERS_ID_ORDER" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_LOG_ORDERS_ID_ORDER">
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+      <End Role="LOG_ORDERS" EntitySet="LOG_ORDERS" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ORDERS_STATUS" Association="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.FK_ORDERS_STATUS">
+      <End Role="REF_ORDER_STATUSES" EntitySet="REF_ORDER_STATUSES" />
+      <End Role="DOC_ORDERS" EntitySet="DOC_ORDERS" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="MAP_GOODS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="VARCHAR2" Nullable="false" MaxLength="36" />
+    <Property Name="ID_GOOD" Type="number" />
+    <Property Name="BAR_CODE" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="NAME" Type="NVARCHAR2" MaxLength="550" />
+  </EntityType>
+  <EntityType Name="MAP_PRICE_TYPES">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="VARCHAR2" Nullable="false" MaxLength="50" />
+    <Property Name="GLN_COMPANY" Type="VARCHAR2" Nullable="false" MaxLength="50" />
+    <Property Name="ID_PRICE_TYPE" Type="number" Nullable="false" />
+  </EntityType>
+  <EntityType Name="REF_COMPANIES">
+    <Key>
+      <PropertyRef Name="GLN" />
+    </Key>
+    <Property Name="GLN" Type="VARCHAR2" Nullable="false" MaxLength="16" />
+    <Property Name="NAME" Type="VARCHAR2" Nullable="false" MaxLength="512" />
+    <Property Name="CITY" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="ID_CONTRACTOR" Type="int64" />
+    <Property Name="KPP" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="INN" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="REGION_CODE" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="STREET" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="HOUSE" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="FLAT" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="POSTAL_CODE" Type="VARCHAR2" MaxLength="256" />
+    <Property Name="LAST_SYNC" Type="DATE" devart:DefaultValue="SYSDATE" />
+    <Property Name="PARENT_GLN" Type="VARCHAR2" MaxLength="16" />
+    <Property Name="ID_DB_FILIAL" Type="int64" />
+  </EntityType>
+  <EntityType Name="DOC_LINE_ITEMS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="VARCHAR2" Nullable="false" MaxLength="128" />
+    <Property Name="ID_ORDER" Type="VARCHAR2" Nullable="false" MaxLength="128" />
+    <Property Name="ID_GOOD" Type="int64" />
+    <Property Name="ID_PRICE_TYPE" Type="int64" />
+    <Property Name="ID_DOC_JOURNAL" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="GTIN" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="BUYER_CODE" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="DESCRIPTION" Type="VARCHAR2" MaxLength="512" />
+    <Property Name="AMOUNT" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="REQ_QUNATITY" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="UNIT_OF_MEASURE" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="NET_PRICE" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="NET_PRICE_VAT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="NET_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="VAT_RATE" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="VAT_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="REGION_ISO_CODE" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="LINE_NUMBER" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="ORDRSP_NET_PRICE" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="ORDRSP_NET_PRICE_VAT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="ORDRSP_NET_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="ORDRSP_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="ORDRSP_QUANTITY" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="RECADV_ACCEPT_QUANTITY" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="RECADV_ACCEPT_NET_PRICE" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="RECADV_ACCEPT_NET_PRICE_VAT" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="RECADV_ACCEPT_AMOUNT" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="RECADV_ACCEPT_NET_AMOUNT" Type="NVARCHAR2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="LOG_ORDERS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="VARCHAR2" Nullable="false" MaxLength="38" />
+    <Property Name="ID_ORDER" Type="VARCHAR2" Nullable="false" MaxLength="38" />
+    <Property Name="ORDER_STATUS" Type="int64" Nullable="false" />
+    <Property Name="DATETIME" Type="DATE" Nullable="false" devart:DefaultValue="SYSDATE" />
+    <Property Name="ID_DOC_JOURNAL" Type="int64" />
+    <Property Name="CIRCILATION_ID" Type="NVARCHAR2" MaxLength="50" />
+    <Property Name="MESSAGE_ID" Type="NVARCHAR2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="DOC_ORDERS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="VARCHAR2" Nullable="false" MaxLength="128" />
+    <Property Name="NUMBER" Type="VARCHAR2" MaxLength="512" />
+    <Property Name="DOC_TYPE" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="IS_TEST" Type="CHAR" MaxLength="1" />
+    <Property Name="EDI_CREATION_DATE" Type="DATE" />
+    <Property Name="EDI_CREATION_SENDER_DATE" Type="DATE" />
+    <Property Name="REQ_DELIVERY_DATE" Type="DATE" />
+    <Property Name="GLN_SENDER" Type="VARCHAR2" Nullable="false" MaxLength="16" />
+    <Property Name="GLN_SELLER" Type="VARCHAR2" Nullable="false" MaxLength="16" />
+    <Property Name="GLN_BUYER" Type="VARCHAR2" Nullable="false" MaxLength="16" />
+    <Property Name="GLN_SHIP_TO" Type="VARCHAR2" Nullable="false" MaxLength="16" />
+    <Property Name="COMMENT" Type="VARCHAR2" MaxLength="512" />
+    <Property Name="CURRENCY_CODE" Type="VARCHAR2" MaxLength="8" />
+    <Property Name="TOTAL_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="TOTAL_VAT_AMOUNT" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="TOTAL_SUM_EXCLUDE_TAX" Type="VARCHAR2" MaxLength="20" />
+    <Property Name="STATUS" Type="int64" Nullable="false" DefaultValue="0" />
+  </EntityType>
+  <EntityType Name="REF_ORDER_STATUSES">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="int64" Nullable="false" />
+    <Property Name="NAME" Type="VARCHAR2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="VIEW_REF_FILIALS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="int" Nullable="false" />
+    <Property Name="NAME" Type="VARCHAR2" MaxLength="30" />
+    <Property Name="LINKS" Type="VARCHAR2" MaxLength="30" />
+    <Property Name="IP" Type="VARCHAR2" MaxLength="15" />
+  </EntityType>
+  <EntityType Name="VIEW_REF_CONTRACTORS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="NAME" Type="VARCHAR2" MaxLength="128" />
+    <Property Name="ADDRESS" Type="VARCHAR2" MaxLength="128" />
+  </EntityType>
+  <EntityType Name="VIEW_INVOIC_DETAILS">
+    <Key>
+      <PropertyRef Name="ID" />
+      <PropertyRef Name="INBOX" />
+      <PropertyRef Name="G_NAME" />
+      <PropertyRef Name="QUANTITY" />
+      <PropertyRef Name="TAX_RATE" />
+    </Key>
+    <Property Name="ID" Type="decimal" Nullable="false" />
+    <Property Name="ID_DOC_MASTER" Type="decimal" />
+    <Property Name="CODE" Type="VARCHAR2" MaxLength="32" />
+    <Property Name="I_NAME" Type="VARCHAR2" MaxLength="4" />
+    <Property Name="INBOX" Type="int" Nullable="false" />
+    <Property Name="G_NAME" Type="VARCHAR2" Nullable="false" MaxLength="500" />
+    <Property Name="GOOD_SIZE" Type="VARCHAR2" MaxLength="8" />
+    <Property Name="QUANTITY" Type="int" Nullable="false" />
+    <Property Name="PRICE_WITHOUT_TAX" Type="decimal" />
+    <Property Name="SUMM_WITHOUT_TAX" Type="decimal" />
+    <Property Name="ACSIZ" Type="CHAR" MaxLength="1" />
+    <Property Name="TAX_RATE" Type="int" Nullable="false" />
+    <Property Name="TAX_SUMM" Type="decimal" />
+    <Property Name="SUMM" Type="decimal" />
+    <Property Name="COUNTRY_NAME" Type="VARCHAR2" MaxLength="100" />
+    <Property Name="COUNTRY_NUM_CODE" Type="VARCHAR2" MaxLength="40" />
+    <Property Name="CUSTOMS_NUM" Type="VARCHAR2" MaxLength="32" />
+  </EntityType>
+  <Association Name="FK_MAP_PRICE_TYPES_GLN_COMPANY">
+    <End Role="REF_COMPANIES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" Multiplicity="1" />
+    <End Role="MAP_PRICE_TYPES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.MAP_PRICE_TYPES" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_COMPANIES">
+        <PropertyRef Name="GLN" />
+      </Principal>
+      <Dependent Role="MAP_PRICE_TYPES">
+        <PropertyRef Name="GLN_COMPANY" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SHIP_TO">
+    <End Role="REF_COMPANIES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" Multiplicity="1" />
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_COMPANIES">
+        <PropertyRef Name="GLN" />
+      </Principal>
+      <Dependent Role="DOC_ORDERS">
+        <PropertyRef Name="GLN_SHIP_TO" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_BUYER">
+    <End Role="REF_COMPANIES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" Multiplicity="1" />
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_COMPANIES">
+        <PropertyRef Name="GLN" />
+      </Principal>
+      <Dependent Role="DOC_ORDERS">
+        <PropertyRef Name="GLN_BUYER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SELLER">
+    <End Role="REF_COMPANIES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" Multiplicity="1" />
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_COMPANIES">
+        <PropertyRef Name="GLN" />
+      </Principal>
+      <Dependent Role="DOC_ORDERS">
+        <PropertyRef Name="GLN_SELLER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_ORDERS_GLN_SENDER">
+    <End Role="REF_COMPANIES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_COMPANIES" Multiplicity="1" />
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_COMPANIES">
+        <PropertyRef Name="GLN" />
+      </Principal>
+      <Dependent Role="DOC_ORDERS">
+        <PropertyRef Name="GLN_SENDER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_DOC_LINE_ITEMS_ID_ORDER">
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="1" />
+    <End Role="DOC_LINE_ITEMS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_LINE_ITEMS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_ORDERS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_LINE_ITEMS">
+        <PropertyRef Name="ID_ORDER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_LOG_ORDERS_ID_ORDER">
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="1" />
+    <End Role="LOG_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.LOG_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DOC_ORDERS">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="LOG_ORDERS">
+        <PropertyRef Name="ID_ORDER" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ORDERS_STATUS">
+    <End Role="REF_ORDER_STATUSES" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.REF_ORDER_STATUSES" Multiplicity="1" />
+    <End Role="DOC_ORDERS" Type="DataContextManagementUnit.DataAccess.Contexts.Edi.Store.DOC_ORDERS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="REF_ORDER_STATUSES">
+        <PropertyRef Name="ID" />
+      </Principal>
+      <Dependent Role="DOC_ORDERS">
+        <PropertyRef Name="STATUS" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="OrderManagementSystem.UserInterface.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FullDataConnectionString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">User Id=redmine;Password=Ecwiegrool;Data Source=192.168.2.37/orcl</Value>
+    </Setting>
+    <Setting Name="OrdersDataGridLayoutsFileConfigName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">DocumentsDataGrid.xml</Value>
+    </Setting>
+    <Setting Name="OrderDetailsGridLayoutsFileConfigName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">DocumentDetailsDataGrid.xml</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
