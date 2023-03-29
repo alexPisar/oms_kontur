@@ -1,0 +1,25 @@
+﻿<Window x:Class="KonturEdoClient.RefEdoUpdValuesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="RefEdoUpdValuesWindow" Height="150" Width="400" ResizeMode="NoResize">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Имя:" Margin="10 5" Width="100" />
+                <TextBox x:Name="NameTextBox" Width="250" Margin="5" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Значение:" Margin="10 5" Width="100" />
+                <TextBox x:Name="ValueTextBox" Width="250" Margin="5" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="SaveButton" Content="Сохранить" Margin="5 10" Width="100" Click="SaveButton_Click" />
+                <Button x:Name="CancelButton" Content="Отмена" Margin="5 10" Width="100" Click="CancelButton_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

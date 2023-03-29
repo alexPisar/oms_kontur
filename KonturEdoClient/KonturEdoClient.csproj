@@ -44,7 +44,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>08C2A2C9A221C5B686059B78B25533CACDAAC115</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8393CD59F3B9F7F072BBB1912C9BF3033B1F25A4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>KonturEdoClient_TemporaryKey.pfx</ManifestKeyFile>
@@ -150,7 +150,7 @@
     </Reference>
     <Reference Include="DiadocApi, Version=2.9.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\OMS\packages\DiadocSDK.2.9.13\lib\net461\DiadocApi.dll</HintPath>
+      <HintPath>..\OMS\packages\DiadocSDK.2.11.3\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -196,11 +196,20 @@
     <Compile Include="AnnulmentWindow.xaml.cs">
       <DependentUpon>AnnulmentWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ChannelSettingsWindow.xaml.cs">
+      <DependentUpon>ChannelSettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ChannelsListWindow.xaml.cs">
+      <DependentUpon>ChannelsListWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ConfirmAnnulmentWindow.xaml.cs">
       <DependentUpon>ConfirmAnnulmentWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ErrorSendHonestMarkWindow.xaml.cs">
       <DependentUpon>ErrorSendHonestMarkWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="GoodsMatchingWindow.xaml.cs">
+      <DependentUpon>GoodsMatchingWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="HonestMark\Enums.cs" />
     <Compile Include="HonestMark\HonestMarkClient.cs" />
@@ -227,6 +236,12 @@
     <Compile Include="MarkedCodesWindow.xaml.cs">
       <DependentUpon>MarkedCodesWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\Base\ListViewModel.cs" />
+    <Compile Include="Models\ChannelSettingsModel.cs" />
+    <Compile Include="Models\ChannelsListModel.cs" />
+    <Compile Include="Models\CorrectionDocumentsModel.cs" />
+    <Compile Include="Models\DocEdoProcessingForLoading.cs" />
+    <Compile Include="Models\GoodsMatchingModel.cs" />
     <Compile Include="Models\TreeListGoodInfo.cs" />
     <Compile Include="Models\Implementations\RelayCommand.cs" />
     <Compile Include="Models\SendModel.cs" />
@@ -234,8 +249,17 @@
     <Compile Include="OrganizationsControl.xaml.cs">
       <DependentUpon>OrganizationsControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="RefEdoUpdValuesWindow.xaml.cs">
+      <DependentUpon>RefEdoUpdValuesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SendWindow.xaml.cs">
       <DependentUpon>SendWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ShowCorrectionDocumentsWindow.xaml.cs">
+      <DependentUpon>ShowCorrectionDocumentsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ShowDocumentSendHistoryWindow.xaml.cs">
+      <DependentUpon>ShowDocumentSendHistoryWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UpdateWindow.xaml.cs">
       <DependentUpon>UpdateWindow.xaml</DependentUpon>
@@ -257,6 +281,14 @@
       <DependentUpon>AuthorizationWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="ChannelSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ChannelsListWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ConfirmAnnulmentWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -266,6 +298,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ErrorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="GoodsMatchingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -285,7 +321,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="RefEdoUpdValuesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SendWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ShowCorrectionDocumentsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ShowDocumentSendHistoryWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -350,6 +398,10 @@
     <ProjectReference Include="..\OMS\Cryptography\Cryptography.csproj">
       <Project>{a588206c-c730-4867-990e-6396c75b758f}</Project>
       <Name>Cryptography</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OMS\FileWorker\FileWorker.csproj">
+      <Project>{1103a09d-f341-4c1e-8e5d-234f79936190}</Project>
+      <Name>FileWorker</Name>
     </ProjectReference>
     <ProjectReference Include="..\OMS\WebService\WebService.csproj">
       <Project>{ce9f432a-bbc8-45b1-8a7f-3a533c4fb47e}</Project>

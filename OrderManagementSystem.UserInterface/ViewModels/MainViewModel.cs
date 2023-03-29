@@ -599,13 +599,16 @@ namespace OMS.ViewModels
 
             newDocJournal.DocGoods.IdCustomer = (decimal)idCustomer;
 
+            var dateTime = GetDateTimeForExportOrder(order);
+            newDocJournal.DocDatetime = dateTime;
+
             if (idManufacturer != null)
             {
                 newDocJournal.DocGoods.IdAgent = abtContext?
                     .RefContractorAgents?
                     .Where( r => r.IdContractor == (decimal)idCustomer
                     && r.IdManufacturer == idManufacturer
-                    && r.StartDate != null)?
+                    && r.StartDate != null && r.StartDate < dateTime)?
                      .OrderByDescending(ra => ra.StartDate)?
                      .FirstOrDefault()?
                      .IdAgent ?? 0;
@@ -636,6 +639,19 @@ namespace OMS.ViewModels
                     }
                 }
             }
+
+            order.ReqDeliveryDate = dateTime.AddDays(1);
+
+            if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Saturday)
+            {
+                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(2);
+            }
+            else if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Sunday)
+            {
+                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(1);
+            }
+
+            newDocJournal.DeliveryDate = order.ReqDeliveryDate;
 
             var mainGln = _edi.RefShoppingStores?
                 .FirstOrDefault(r => r.BuyerGln == SelectedItem.GlnBuyer)?
@@ -685,24 +701,10 @@ namespace OMS.ViewModels
             // генерация кода документа
             newDocJournal.Code = abtContext.SelectSingleValue( "SELECT ABT.DOCUMENTS_UTILS.GET_DOC_CODE(1) FROM dual" );
 
-            var dateTime = GetDateTimeForExportOrder(order);
-            newDocJournal.DocDatetime = dateTime;
             newDocJournal.IdDocType = 2;
             newDocJournal.CreateInvoice = 1;
             newDocJournal.Comment = order.Number;
 
-            order.ReqDeliveryDate = dateTime.AddDays(1);
-
-            if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Saturday)
-            {
-                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(2);
-            }
-            else if(order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Sunday)
-            {
-                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(1);
-            }
-
-            newDocJournal.DeliveryDate = order.ReqDeliveryDate;
             newDocJournal.UserName = "EDI";
 
             newDocJournal.DocGoods.DocPrecision = true;

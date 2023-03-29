@@ -124,6 +124,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
             modelBuilder.Configurations.Add(new Mapping.DocEdoProcessingConfiguration());
             modelBuilder.Configurations.Add(new Mapping.DocComissionEdoProcessingConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefUserByOrgEdoConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefEdoUpdValuesConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefEdoUcdValuesConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefEdoGoodChannelConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefGoodMatchingConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.DocJournalTagConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -151,5 +156,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual DbSet<DocEdoProcessing> DocEdoProcessings { get; set; }
         public virtual DbSet<DocComissionEdoProcessing> DocComissionEdoProcessings { get; set; }
         public virtual DbSet<RefUserByOrgEdo> RefUsersByOrgEdo { get; set; }
+        public virtual DbSet<RefEdoGoodChannel> RefEdoGoodChannels { get; set; }
+        public virtual DbSet<RefGoodMatching> RefGoodMatchings { get; set; }
+        public virtual DbSet<DocJournalTag> DocJournalTags { get; set; }
     }
 }

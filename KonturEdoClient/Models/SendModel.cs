@@ -168,7 +168,8 @@ namespace KonturEdoClient.Models
                                 DocDate = DateTime.Now,
                                 UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                 ReceiverName = SelectedOrganization.Name,
-                                ReceiverInn = SelectedOrganization.Inn
+                                ReceiverInn = SelectedOrganization.Inn,
+                                DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
                             };
 
                             if(isMarked && ComissionDocument == null)

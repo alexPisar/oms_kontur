@@ -17,6 +17,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public virtual string Gln { get; set; }
 
         public virtual string IdMapGood { get; set; }
+
+        public virtual string BuyerCode { get; set; }
         #endregion
 
         #region Navigation Properties

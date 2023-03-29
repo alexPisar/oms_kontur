@@ -1,0 +1,179 @@
+﻿<dxr:DXRibbonWindow x:Class="KonturEdoClient.GoodsMatchingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Сопоставления товаров" Height="650" Width="800">
+    <dxmvvm:Interaction.Behaviors>
+        <dxmvvm:EventToCommand EventName="Loaded" Command="{Binding LoadCommand}">
+        </dxmvvm:EventToCommand>
+    </dxmvvm:Interaction.Behaviors>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="26" />
+        </Grid.RowDefinitions>
+        <dxr:RibbonControl Grid.Row="0" Height="Auto" ShowApplicationButton="False">
+            <dxr:RibbonDefaultPageCategory>
+                <dxr:RibbonPage Caption="Сопоставления кодов товаров">
+                    <dxr:RibbonPageGroup Caption="Действия">
+                        <dxb:BarButtonItem Content="Обновить"
+                                           RibbonStyle="Large" 
+                                           Command="{Binding RefreshCommand}"
+                                           LargeGlyph="{dx:DXImage SvgImages/Icon Builder/Actions_Refresh.svg}"/>
+                        <dxb:BarButtonItem Content="Сохранить"
+                                           RibbonStyle="Large"
+                                           Command="{Binding SaveCommand}"
+                                           LargeGlyph="{dx:DXImage SvgImages/Save/Save.svg}" />
+                        <dxb:BarButtonItem Content="Добавить"
+                                           RibbonStyle="Large" 
+                                           Command="{Binding CreateNewCommand}"
+                                           LargeGlyph="{dx:DXImage SvgImages/Outlook Inspired/NewOrder.svg}"/>
+                        <dxb:BarButtonItem Content="Удалить"
+                                           RibbonStyle="Large" 
+                                           Command="{Binding DeleteCommand}" 
+                                           LargeGlyph="{dx:DXImage SvgImages/Outlook Inspired/Delete.svg}"/>
+                    </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Импорт">
+                        <dxb:BarButtonItem Content="Импорт из файла"
+                                           RibbonStyle="Large" 
+                                           Command="{Binding ImportFromFileCommand}" 
+                                           LargeGlyph="{dx:DXImage SvgImages/Export/ExportToXLS.svg}"/>
+                    </dxr:RibbonPageGroup>
+                </dxr:RibbonPage>
+                <dxr:RibbonPage Caption="Управление" IsEnabled="{Binding PermissionChannelsList}">
+                    <dxr:RibbonPageGroup Caption="Управление" IsEnabled="{Binding PermissionChannelsList}">
+                        <dxb:BarButtonItem Content="Список сетей"
+                                           RibbonStyle="Large"
+                                           Command="{Binding OpenChannelsListCommand}" 
+                                           LargeGlyph="{dx:DXImage SvgImages/HybridDemoIcons/Tiles/HybridDemo_Sales.svg}" />
+                    </dxr:RibbonPageGroup>
+                </dxr:RibbonPage>
+            </dxr:RibbonDefaultPageCategory>
+        </dxr:RibbonControl>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="80" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Vertical" Grid.Row="0">
+                <StackPanel Orientation="Horizontal" Height="26">
+                    <Label Content="Торговая сеть" Width="100" Margin="10 0"/>
+                    <dxg:LookUpEdit Width="600" PopupWidth="1200" PopupHeight="600" Margin="0 2"
+                                    ItemsSource="{Binding EdoGoodChannels, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+					                SelectedItem="{Binding SelectedEdoGoodChannel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+					                DisplayMember="Name"    
+                                    ValueMember="IdChannel" 
+                                    ImmediatePopup="True" 
+                                    AutoPopulateColumns="False"
+                                    EditValueChanged="LookUpEdit_EditValueChanged">
+                        <dxg:LookUpEdit.PopupContentTemplate>
+                            <ControlTemplate TargetType="{x:Type ContentControl}">
+                                <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                                    <dxg:GridControl.Columns>
+                                        <dxg:GridColumn Header="ID" Width="80" FieldName="Id"/>
+                                        <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                        <dxg:GridColumn Header="ID филиала" Width="20" FieldName="IdFilial"/>
+                                    </dxg:GridControl.Columns>
+                                    <dxg:GridControl.View>
+                                        <dxg:TableView AllowPerPixelScrolling="True" 
+									                   ShowSearchPanelMode="Always" 
+									                   AllowEditing="False" 
+									                   NavigationStyle="Row" 
+									                   ShowGroupPanel="False" 
+									                   ShowAutoFilterRow="True" />
+                                    </dxg:GridControl.View>
+                                </dxg:GridControl>
+                            </ControlTemplate>
+                        </dxg:LookUpEdit.PopupContentTemplate>
+                        <dxg:LookUpEdit.StyleSettings>
+                            <dxg:SearchLookUpEditStyleSettings/>
+                        </dxg:LookUpEdit.StyleSettings>
+                    </dxg:LookUpEdit>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="26">
+                    <Label Content="Товар из базы" Width="100" Margin="10 0"/>
+                    <dxg:LookUpEdit Width="600" PopupWidth="1200" PopupHeight="600" Margin="0 2"
+                                    ItemsSource="{Binding RefGoods, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+					                SelectedItem="{Binding SelectedRefGood, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    EditValue="{Binding ElementName=GoodsMatchingGridControl, Path=SelectedItem.IdGood, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+					                DisplayMember="Name" ValueMember="Id" ImmediatePopup="True" AutoPopulateColumns="False">
+                        <dxg:LookUpEdit.PopupContentTemplate>
+                            <ControlTemplate TargetType="{x:Type ContentControl}">
+                                <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                                    <dxg:GridControl.Columns>
+                                        <dxg:GridColumn Header="Id" Width="80" FieldName="Id"/>
+                                        <dxg:GridColumn Header="Код товара" Width="250" FieldName="Code"/>
+                                        <dxg:GridColumn Header="Размер" Width="60" FieldName="Good_Size"/>
+                                        <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                        <dxg:GridColumn Header="Производитель" Width="200" FieldName="Manufacturer"/>
+                                    </dxg:GridControl.Columns>
+                                    <dxg:GridControl.View>
+                                        <dxg:TableView AllowPerPixelScrolling="True" 
+									                   ShowSearchPanelMode="Always" 
+									                   AllowEditing="False" 
+									                   NavigationStyle="Row" 
+									                   ShowGroupPanel="False" 
+									                   ShowAutoFilterRow="True" />
+                                    </dxg:GridControl.View>
+                                </dxg:GridControl>
+                            </ControlTemplate>
+                        </dxg:LookUpEdit.PopupContentTemplate>
+                        <dxg:LookUpEdit.StyleSettings>
+                            <dxg:SearchLookUpEditStyleSettings/>
+                        </dxg:LookUpEdit.StyleSettings>
+                    </dxg:LookUpEdit>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="26">
+                    <Label Content="Код покупателя" Width="100" Margin="10 0"/>
+                    <TextBox Text="{Binding ElementName=GoodsMatchingGridControl, Path = SelectedItem.CustomerArticle, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Width="600" Margin="0 2" />
+                </StackPanel>
+            </StackPanel>
+            <dxg:GridControl Grid.Row="1" x:Name="GoodsMatchingGridControl"
+                             ItemsSource="{Binding ItemsList, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                             SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                             AutoGenerateColumns="None">
+                <dxg:GridControl.Columns>
+                    <dxg:GridColumn Header="Индетификатор товара" Width="150" FieldName="IdGood"/>
+                    <dxg:GridColumn Header="Код покупателя" Width="*" FieldName="CustomerArticle"/>
+                    <dxg:GridColumn Header="Дата создания" Width="160" FieldName="InsertDatetime">
+                        <dxg:GridColumn.EditSettings>
+                            <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy HH:mm:ss"/>
+                        </dxg:GridColumn.EditSettings>
+                    </dxg:GridColumn>
+                </dxg:GridControl.Columns>
+
+                <dxg:GridControl.View>
+                    <dxg:TableView x:Name="GoodsMatchingView"
+                                AllowPerPixelScrolling="True" 
+                               ShowSearchPanelMode="Always"
+                               ShowGroupPanel="False" 
+                               ShowAutoFilterRow="True"  
+                               AllowEditing="True" 
+                               NavigationStyle="Cell" >
+
+                    </dxg:TableView>
+                </dxg:GridControl.View>
+            </dxg:GridControl>
+        </Grid>
+        <dxb:BarContainerControl ContainerType="Bottom" Grid.Row="2">
+            <dxb:StatusBarControl Caption="Status Bar">
+
+                <dxb:BarStaticItem Content="Позиций:"/>
+                <dxb:BarEditItem Content="{Binding ItemsList.Count}" />
+                <dxb:BarItemSeparator/>
+
+            </dxb:StatusBarControl>
+        </dxb:BarContainerControl>
+    </Grid>
+</dxr:DXRibbonWindow>

@@ -1,0 +1,50 @@
+﻿<dxr:DXRibbonWindow x:Class="KonturEdoClient.ShowCorrectionDocumentsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Отправить корректировку" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <dxg:GridControl Grid.Row="0" ItemsSource="{Binding Documents}" 
+                         SelectedItem="{Binding SelectedDocument}" SelectedItemChanged="GridControl_SelectedItemChanged">
+            <dxg:GridColumn Header="Дата создания" Width="120" FieldName="CorrectionDocJournal.DocDatetime">
+                <dxg:GridColumn.EditSettings>
+                    <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy HH:mm:ss"/>
+                </dxg:GridColumn.EditSettings>
+            </dxg:GridColumn>
+            <dxg:GridColumn Header="Номер документа" Width="80" FieldName="DocumentNumber" />
+            <dxg:GridColumn Header="Статус в ЭДО" Width="80" FieldName="DocEdoSendStatus" />
+            <dxg:GridColumn Header="Возвращает" Width="160" FieldName="CorrectionDocJournal.DocGoods.Seller.Name" />
+            <dxg:GridColumn Header="Принимает" Width="160" FieldName="CorrectionDocJournal.DocGoods.Customer.Name" />
+        </dxg:GridControl>
+        <GridSplitter Grid.Row="1"
+                      Height="5"
+                      ShowsPreview="False"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"/>
+        <dxg:GridControl Grid.Row="2" ItemsSource="{Binding Details, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <dxg:GridColumn Header="ID товара" Width="80" FieldName="IdGood" />
+            <dxg:GridColumn Header="Наименование" Width="160" FieldName="Good.Name" />
+            <dxg:GridColumn Header="Количество" Width="80" FieldName="Quantity" />
+            <dxg:GridColumn Header="Стоимость" Width="80" FieldName="Price" />
+        </dxg:GridControl>
+        <StackPanel Orientation="Horizontal" Grid.Row="3" HorizontalAlignment="Right">
+            <Button x:Name="SendButton" Margin="5 5" Content="Отправить" Width="90" Click="SendButton_Click" />
+            <Button x:Name="CancelButton" Margin="5 5" Content="Отмена" Width="90" Click="CancelButton_Click" />
+        </StackPanel>
+    </Grid>
+</dxr:DXRibbonWindow>

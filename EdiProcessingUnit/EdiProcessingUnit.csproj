@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>08C2A2C9A221C5B686059B78B25533CACDAAC115</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8393CD59F3B9F7F072BBB1912C9BF3033B1F25A4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>EdiProcessingUnit_TemporaryKey.pfx</ManifestKeyFile>
@@ -67,7 +67,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DiadocApi, Version=2.9.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <HintPath>..\OMS\packages\DiadocSDK.2.9.13\lib\net461\DiadocApi.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\OMS\packages\DiadocSDK.2.11.3\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -163,9 +164,11 @@
     <Compile Include="Edo\Edo.cs" />
     <Compile Include="Edo\EdoTokenCache.cs" />
     <Compile Include="Edo\Models\Kontragent.cs" />
+    <Compile Include="Edo\Models\UniversalCorrectionDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentDetail.cs" />
     <Compile Include="Enums\DocEdoSendStatus.cs" />
+    <Compile Include="Enums\DocEdoType.cs" />
     <Compile Include="Infrastructure\EdiProcessor.cs" />
     <Compile Include="Infrastructure\MailReporter.cs" />
     <Compile Include="Infrastructure\Xml.cs" />

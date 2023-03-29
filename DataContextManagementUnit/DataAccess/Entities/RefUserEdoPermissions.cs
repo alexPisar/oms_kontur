@@ -21,6 +21,12 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual int ShowMarkedCodes { get; set; }
 
         public virtual int ReturnMarkedCodes { get; set; }
+
+        public virtual int PermissionCompareGoods { get; set; }
+
+        public virtual int PermissionChannelsList { get; set; }
+
+        public virtual int PermissionChannelsSettings { get; set; }
         #endregion
 
         #region Extensibility Method Definitions

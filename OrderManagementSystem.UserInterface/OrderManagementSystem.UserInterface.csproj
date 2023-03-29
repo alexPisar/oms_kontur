@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>08C2A2C9A221C5B686059B78B25533CACDAAC115</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8393CD59F3B9F7F072BBB1912C9BF3033B1F25A4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>OrderManagementSystem.UserInterface_TemporaryKey.pfx</ManifestKeyFile>
@@ -265,6 +265,7 @@
     <Compile Include="ViewModels\CompanyMapViewModel.cs" />
     <Compile Include="ViewModels\DeliveryPointsModel.cs" />
     <Compile Include="ViewModels\GoodsMapViewModel.cs" />
+    <Compile Include="ViewModels\Implementations\MapGoodForExport.cs" />
     <Compile Include="ViewModels\Implementations\RelayCommand.cs" />
     <Compile Include="ViewModels\Implementations\ViewModelBase.cs" />
     <Compile Include="ViewModels\InvoicExportViewModel.cs" />

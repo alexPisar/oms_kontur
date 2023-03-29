@@ -12,7 +12,7 @@
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="ЭДО Диадок" Height="800" Width="1200" Background="#FFD4D3D3">
+        Title="ЭДО Диадок" Height="800" Width="1350" Background="#FFD4D3D3">
     <Window.Resources>
         <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
         <BitmapImage x:Key="HonestMarkImage" UriSource="pack://siteoforigin:,,,/Resources/HonestMark.png" />
@@ -29,7 +29,10 @@
                                        RibbonStyle="Large"
                                        LargeGlyph="{dx:DXImage SvgImages/Icon Builder/Actions_Refresh.svg}"
                                        Command="{Binding RefreshCommand}"></dxb:BarButtonItem>
-                    
+                    <dxb:BarButtonItem Content="Загрузка неотправленных документов"
+                                       RibbonStyle="Large" 
+                                       LargeGlyph="{dx:DXImage SvgImages/RichEdit/UpdateField.svg}"
+                                       Command="{Binding LoadUnsentDocumentCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Фильтрация">
                     <dxb:BarEditItem Content="Дата с" EditValue="{Binding DateFrom,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" EditWidth="150">
@@ -68,8 +71,18 @@
                                        LargeGlyph="{dx:DXImage SvgImages/Reports/AutoModule.svg}"
                                        IsEnabled="{Binding Path=IsDocumentMarked}"
                                        Command="{Binding ShowMarkedCodesCommand}"/>
+                    <dxb:BarButtonItem Content="История отправок"
+                                       RibbonStyle="Large" 
+                                       LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_List.svg}"
+                                       IsEnabled="{Binding Path=IsSended}"
+                                       Command="{Binding ShowDocumentSendHistoryCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Действия" IsEnabled="{Binding WorkWithDocumentsPermission}">
+                    <dxb:BarButtonItem Content="Отправить корректировку"
+                                       RibbonStyle="Large" 
+                                       LargeGlyph="{dx:DXImage SvgImages/XAF/Action_Edit.svg}"
+                                       IsEnabled="{Binding IsSigned}"
+                                       Command="{Binding ShowCorrectionDocumentsCommand}" />
                     <dxb:BarButtonItem Content="Обработать повторно"
                                        RibbonStyle="Large" 
                                        IsEnabled="{Binding DocumentWithErrorStatus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
@@ -88,6 +101,14 @@
                                        RibbonStyle="Large"
                                        LargeGlyph="{dx:DXImage SvgImages/Snap/SnapDeleteList.svg}"
                                        Command="{Binding AnnulmentDocumentCommand}" />
+                </dxr:RibbonPageGroup>
+                <dxr:RibbonPageGroup Caption="Сопоставления">
+                    <dxb:BarButtonItem Content="Сопоставление товаров" 
+                                       IsEnabled="{Binding PermissionCompareGoods}"
+                                       RibbonStyle="Large"
+                                       ToolTip="Сопоставление кодов товаров"
+                                       LargeGlyph="{dx:DXImage SvgImages/XAF/ModelEditor_Categorized.svg}"
+                                       Command="{Binding GoodsMatchingCommand}"/>
                 </dxr:RibbonPageGroup>
             </dxr:RibbonPage>
         </dxr:RibbonControl>
@@ -116,6 +137,7 @@
                             <dxg:GridColumn FieldName="DocJournal.Id" Header="Id документа" Width="100"/>
                             <dxg:GridColumn FieldName="DocJournalNumber" Header="Номер заказа" Width="100"/>
                             <dxg:GridColumn FieldName="DocumentNumber" Header="Номер накладной" Width="100"/>
+                            <dxg:GridColumn FieldName="ActStatusStr" Header="Статус" Width="100"/>
                         </dxg:GridControlBand>
                         <dxg:GridControlBand Header="Информация ЭДО">
                             <dxg:GridColumn FieldName="DocEdoSendStatus" Header="Статус отправки" Width="130"/>
@@ -164,11 +186,22 @@
                 <dxg:GridControl Name="DocumetDetailsDataGrid" ItemsSource="{Binding DocumentDetails, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                  SelectedItem="{Binding SelectedDetail, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2">
                     <dxg:GridColumn FieldName="ItemVendorCode" Header="Код товара/ работ, услуг" Width="2*"/>
-                    <dxg:GridColumn FieldName="Product" Header="Наименование" Width="3*"/>
+                    <dxg:GridColumn FieldName="IdGood" Header="Id товара" Width="*" />
+                    <dxg:GridColumn FieldName="Product" Header="Наименование" Width="2*"/>
                     <dxg:GridColumn FieldName="Quantity" Header="Количество" Width="*"/>
                     <dxg:GridColumn FieldName="Price" Header="Цена за единицу товара" Width="*"/>
                     <dxg:GridColumn FieldName="Subtotal" Header="Сумма с НДС" Width="*"/>
                     <dxg:GridColumn FieldName="Vat" Header="Сумма НДС" Width="*"/>
+                    <dxg:GridColumn FieldName="BuyerCode" Header="Код покупателя" Width="*" />
+                    <dxg:GridControl.View>
+                        <dxg:TableView>
+                            <dxg:TableView.FormatConditions>
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[NotMapped]" >
+                                    <dxg:Format Background="#FFF95A52"/>
+                                </dxg:FormatCondition>
+                            </dxg:TableView.FormatConditions>
+                        </dxg:TableView>
+                    </dxg:GridControl.View>
                 </dxg:GridControl>
             </Grid>
         </Grid>

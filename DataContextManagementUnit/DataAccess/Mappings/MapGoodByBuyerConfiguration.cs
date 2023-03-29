@@ -26,6 +26,12 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                 .HasMaxLength( 36 )
                 .IsUnicode( false );
 
+            this
+                .Property(p => p.BuyerCode)
+                .HasColumnName(@"BUYER_CODE")
+                .HasMaxLength(128)
+                .IsUnicode(false);
+
             OnCreated();
         }
 

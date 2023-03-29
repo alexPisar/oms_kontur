@@ -95,6 +95,8 @@ namespace EdiProcessingUnit.WorkingUnits
 			{
 				using (_abtDbContext = new AbtDbContext( connStr, true ))
 				{
+                    bool isAbtDataBaseError = false;
+
                     foreach (var orderLogsByOrder in orderLogsByOrders)
                     {
                         // дёргаем заказ
@@ -112,11 +114,23 @@ namespace EdiProcessingUnit.WorkingUnits
                             {
                                 foreach(var log in orderLogsByOrder)
                                 {
-                                    // 3. получаем привязанные к логам документы из трейдера
-                                    List<DocJournal> trDocs = _abtDbContext?
-                                        .DocJournals?
-                                        .Where(doc => log.IdDocJournal == doc.Id)?
-                                        .ToList();
+                                    List<DocJournal> trDocs = null;
+
+                                    try
+                                    {
+                                        // 3. получаем привязанные к логам документы из трейдера
+                                        trDocs = _abtDbContext?
+                                            .DocJournals?
+                                            .Where(doc => log.IdDocJournal == doc.Id)?
+                                            .ToList();
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        _log.Log(ex);
+                                        MailReporter.Add(ex, Console.Title);
+                                        isAbtDataBaseError = true;
+                                        break;
+                                    }
 
                                     if (trDocs == null)
                                         continue;
@@ -139,11 +153,23 @@ namespace EdiProcessingUnit.WorkingUnits
                                     // 2. пробегаемся по доступным логам
                                     foreach (LogOrder log in logsGroupsByManufacturer)
                                     {
-                                        // 3. получаем привязанные к логам документы из трейдера
-                                        List<DocJournal> trDocs = _abtDbContext?
-                                            .DocJournals?
-                                            .Where( doc => log.IdDocJournal == doc.Id)?
-                                            .ToList();
+                                        List<DocJournal> trDocs = null;
+
+                                        try
+                                        {
+                                            // 3. получаем привязанные к логам документы из трейдера
+                                            trDocs = _abtDbContext?
+                                                .DocJournals?
+                                                .Where( doc => log.IdDocJournal == doc.Id)?
+                                                .ToList();
+                                        }
+                                        catch(Exception ex)
+                                        {
+                                            _log.Log(ex);
+                                            MailReporter.Add(ex, Console.Title);
+                                            isAbtDataBaseError = true;
+                                            break;
+                                        }
 
                                         if (trDocs == null)
                                             continue;
@@ -156,12 +182,18 @@ namespace EdiProcessingUnit.WorkingUnits
                                             }
                                     }
 
+                                    if (isAbtDataBaseError)
+                                        break;
+
                                     existsManufacturerWithEarlyStatus = existsManufacturerWithEarlyStatus || !existsDocumentWithNeedStatus;
                                 }
 
                                 if (existsManufacturerWithEarlyStatus)
                                     continue;
                             }
+
+                            if (isAbtDataBaseError)
+                                break;
 
                             if (traderDocs.Exists( tr => tr.ActStatus < 4 ))
                                 continue;

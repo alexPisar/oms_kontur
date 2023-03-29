@@ -10,6 +10,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
     {
         public DocEdoProcessing()
         {
+            Children = new List<DocEdoProcessing>();
             OnCreated();
         }
 
@@ -28,10 +29,14 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string ReceiverName { get; set; }
         public virtual string ReceiverInn { get; set; }
         public virtual int DocStatus { get; set; }
+        public virtual int DocType { get; set; }
+        public virtual string IdParent { get; set; }
         #endregion
 
         #region Navigation Properties
         public virtual DocComissionEdoProcessing ComissionDocument { get; set; }
+        public virtual DocEdoProcessing Parent { get; set; }
+        public virtual List<DocEdoProcessing> Children { get; set; }
         #endregion
 
         #region Extensibility Method Definitions

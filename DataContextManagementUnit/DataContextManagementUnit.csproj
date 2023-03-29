@@ -94,6 +94,7 @@
     <Compile Include="DataAccess\Entities\DocGoodsDetailsLabels.cs" />
     <Compile Include="DataAccess\Entities\DocGoodsI.cs" />
     <Compile Include="DataAccess\Entities\DocJournal.cs" />
+    <Compile Include="DataAccess\Entities\DocJournalTag.cs" />
     <Compile Include="DataAccess\Entities\DocLineItem.cs" />
     <Compile Include="DataAccess\Entities\DocOrder.cs" />
     <Compile Include="DataAccess\Entities\EdiApplicationFromDb.cs" />
@@ -113,8 +114,12 @@
     <Compile Include="DataAccess\Entities\RefCountry.cs" />
     <Compile Include="DataAccess\Entities\RefCustomer.cs" />
     <Compile Include="DataAccess\Entities\RefDistrict.cs" />
+    <Compile Include="DataAccess\Entities\RefEdoGoodChannel.cs" />
+    <Compile Include="DataAccess\Entities\RefEdoUcdValues.cs" />
+    <Compile Include="DataAccess\Entities\RefEdoUpdValues.cs" />
     <Compile Include="DataAccess\Entities\RefFilial.cs" />
     <Compile Include="DataAccess\Entities\RefGood.cs" />
+    <Compile Include="DataAccess\Entities\RefGoodMatching.cs" />
     <Compile Include="DataAccess\Entities\RefItem.cs" />
     <Compile Include="DataAccess\Entities\RefOrderStatus.cs" />
     <Compile Include="DataAccess\Entities\RefShoppingStore.cs" />
@@ -136,6 +141,7 @@
     <Compile Include="DataAccess\Mappings\DocGoodsDetailsLabelsConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocGoodsIConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocJournalConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\DocJournalTagConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocLineItemConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocOrderConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\LogOrderConfiguration.cs" />
@@ -154,7 +160,11 @@
     <Compile Include="DataAccess\Mappings\RefContractorConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefCustomerConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefDistrictConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefEdoGoodChannelConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefEdoUcdValuesConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefEdoUpdValuesConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefGoodConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefGoodMatchingConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefItemConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefOrderStatusConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefPriceTypeConfiguration.cs" />

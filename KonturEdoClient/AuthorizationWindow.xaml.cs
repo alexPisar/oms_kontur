@@ -189,7 +189,7 @@ namespace KonturEdoClient
             try
             {
                 var fileController = new WebService.Controllers.FileController();
-                var updaterInfo = fileController.GetUpdateParameters<UpdaterModel>("KonturEdo");
+                var updaterInfo = fileController.GetUpdateParameters<UpdaterModel>(Properties.Settings.Default.ApplicationName);
 
                 if (updaterInfo.LockUpdate)
                     return;

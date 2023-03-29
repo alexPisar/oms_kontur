@@ -301,6 +301,8 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -322,23 +324,6 @@ namespace EdiProcessingUnit.Edo
             string comment=null, 
             string customDocumentId = null)
         {
-            var documentAttachment = new DocumentAttachment
-            {
-                TypeNamedId = "UniversalTransferDocument",
-                Function = function,
-                Version = "utd820_05_01_01_hyphen",
-                SignedContent = new SignedContent
-                {
-                    Content = xmlContent
-                }
-            };
-
-            documentAttachment.Comment = comment;
-            documentAttachment.CustomDocumentId = customDocumentId;
-
-            if (signature != null)
-                documentAttachment.SignedContent.Signature = signature;
-
             OrganizationList myOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
 
             if ((myOrganizations?.Organizations?.Count ?? 0) == 0)
@@ -376,10 +361,41 @@ namespace EdiProcessingUnit.Edo
                 recipientOrganization = counteragent.Organization;
             }
 
+            return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd820_05_01_01_hyphen",
+                xmlContent, signature, comment, customDocumentId);
+        }
+
+        public Message SendDocumentAttachment(string ourBoxId, string counteragentBoxId, string typeNameId, string function, string version,
+            byte[] xmlContent, byte[] signature = null, string comment = null, string customDocumentId = null, string initialMessageId = null, string initialEntityId = null)
+        {
+            var documentAttachment = new DocumentAttachment
+            {
+                TypeNamedId = typeNameId,
+                Function = function,
+                Version = version,
+                SignedContent = new SignedContent
+                {
+                    Content = xmlContent
+                }
+            };
+
+            documentAttachment.Comment = comment;
+            documentAttachment.CustomDocumentId = customDocumentId;
+
+            if (signature != null)
+                documentAttachment.SignedContent.Signature = signature;
+
+            if(initialMessageId != null || initialEntityId != null)
+                documentAttachment.InitialDocumentIds.Add(new DocumentId
+                {
+                    MessageId = initialMessageId,
+                    EntityId = initialEntityId
+                });
+
             var messageToPost = new MessageToPost
             {
-                FromBoxId = senderOrganization.Boxes.First().BoxId,
-                ToBoxId = recipientOrganization.Boxes.First().BoxId
+                FromBoxId = ourBoxId ?? _actualBoxId,
+                ToBoxId = counteragentBoxId
             };
 
             messageToPost.DocumentAttachments.Add(documentAttachment);
@@ -510,7 +526,7 @@ namespace EdiProcessingUnit.Edo
                 Signer = signer
             };
 
-            return _api.GenerateRevocationRequestXml(_authToken, _actualBoxId, messageId, entityId, revocationRequestInfo);
+            return _api.GenerateRevocationRequestXml(_authToken, _actualBoxId, messageId, entityId, revocationRequestInfo, "revocation_request_02");
         }
 
         public void SendRevocationDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature)

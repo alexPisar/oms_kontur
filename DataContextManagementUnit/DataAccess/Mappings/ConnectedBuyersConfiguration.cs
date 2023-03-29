@@ -59,6 +59,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasColumnName(@"ID_SELLER");
 
             this
+                .Property(c => c.IncludedBuyerCodes)
+                    .HasColumnName(@"INCLUDED_BUYER_CODES");
+
+            this
                 .HasMany(c => c.ShoppingStores)
                 .WithRequired(s => s.MainShoppingStore)
                 .HasForeignKey(c => c.MainGln)

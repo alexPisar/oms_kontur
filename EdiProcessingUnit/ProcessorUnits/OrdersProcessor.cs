@@ -364,6 +364,11 @@ namespace EdiProcessingUnit.WorkingUnits
                     .Select(g => g.MainGln)?
                     .FirstOrDefault();
 
+            ConnectedBuyers connectedBuyer = null;
+
+            if(!string.IsNullOrEmpty(glnMainBuyer))
+                connectedBuyer = _ediDbContext?.ConnectedBuyers?.FirstOrDefault(c => c.Gln == glnMainBuyer);
+
             var map = _ediDbContext?.MapGoodsByBuyers?
                 .Where(m => m.Gln == glnMainBuyer)?
                 .Select(l => l.MapGood)?
@@ -394,6 +399,9 @@ namespace EdiProcessingUnit.WorkingUnits
                         IdMapGood = mapGood.Id,
                         MapGood = mapGood
                     };
+
+                    if (connectedBuyer?.IncludedBuyerCodes == 1)
+                        glnItemGood.BuyerCode = item.BuyerCode;
 
                     mapGood.MapGoodByBuyers.Add( glnItemGood );
                 }				

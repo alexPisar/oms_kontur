@@ -13,9 +13,22 @@ namespace EdiProcessingUnit.Edo.Models
         private decimal? _subtotal = null;
         private decimal? _price = null;
         private string _barCode = null;
+        private bool _mappedNotRequired = true;
 
         public DocGoodsDetailsI DocDetailI { get; set; }
         public DocGoodsDetail DocDetail { get; set; }
+        public RefGoodMatching GoodMatching{ get; set; }
+        public decimal IdGood { get; set; }
+
+        public bool NotMapped
+        {
+            set {
+                _mappedNotRequired = value;
+            }
+            get {
+                return GoodMatching == null && !_mappedNotRequired;
+            }
+        }
 
         public string Product { get { return DocDetailI?.Good?.Name ?? DocDetail?.Good?.Name; } }
 
@@ -67,6 +80,13 @@ namespace EdiProcessingUnit.Edo.Models
                     _barCode = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
 
                 return _barCode;
+            }
+        }
+
+        public string BuyerCode
+        {
+            get {
+                return GoodMatching?.CustomerArticle;
             }
         }
     }

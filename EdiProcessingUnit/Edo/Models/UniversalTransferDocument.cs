@@ -19,6 +19,7 @@ namespace EdiProcessingUnit.Edo.Models
         private string _buyerAddress;
         private object _status;
         private object _edoProcessing;
+        private object _refEdoGoodChannel;
 
         public IEnumerable<UniversalTransferDocumentDetail> Details
         {
@@ -41,10 +42,36 @@ namespace EdiProcessingUnit.Edo.Models
             }
             set {
                 if(value?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
-                    _details = from detail in value?.DocGoodsDetailsIs select new UniversalTransferDocumentDetail() { DocDetailI = detail };
+                    _details = from detail in value?.DocGoodsDetailsIs select new UniversalTransferDocumentDetail() { DocDetailI = detail, IdGood = detail.IdGood };
                 else if(value?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
-                    _details = from detail in value?.Details select new UniversalTransferDocumentDetail() { DocDetail = detail };
+                    _details = from detail in value?.Details select new UniversalTransferDocumentDetail() { DocDetail = detail, IdGood = detail.IdGood };
                 _docJournal = value;
+            }
+        }
+
+        public object RefEdoGoodChannel
+        {
+            set {
+                _refEdoGoodChannel = value;
+            }
+            get {
+                if(_refEdoGoodChannel != null)
+                {
+                    if (_refEdoGoodChannel as IQueryable<RefEdoGoodChannel> != null)
+                    {
+                        var query = _refEdoGoodChannel as IQueryable<RefEdoGoodChannel>;
+                        _refEdoGoodChannel = query.FirstOrDefault();
+                    }
+                    else if (_refEdoGoodChannel as IEnumerable<RefEdoGoodChannel> != null)
+                    {
+                        var collection = _refEdoGoodChannel as IEnumerable<RefEdoGoodChannel>;
+                        _refEdoGoodChannel = collection.FirstOrDefault();
+                    }
+                    else if (_refEdoGoodChannel as RefEdoGoodChannel == null)
+                        return null;
+                }
+
+                return _refEdoGoodChannel;
             }
         }
 
@@ -58,6 +85,28 @@ namespace EdiProcessingUnit.Edo.Models
                     return DocJournal.IdDocMaster;
                 else
                     return DocJournal.Id;
+            }
+        }
+
+        public int? ActStatus { get; set; }
+
+        public string ActStatusStr
+        {
+            get {
+                if (ActStatus == null)
+                    return null;
+
+                if (ActStatus == 2)
+                    return "В резерве";
+                else if (ActStatus == 3)
+                    return "Отборка";
+                else if (ActStatus == 4)
+                    return "Отобран";
+                else if (ActStatus == 5)
+                    return "Вывезен";
+                else if (ActStatus == 6)
+                    return "Подтверждён";
+                else return null;
             }
         }
 
@@ -116,12 +165,20 @@ namespace EdiProcessingUnit.Edo.Models
                 {
                     var query = _edoProcessing as IQueryable<DocEdoProcessing>;
 
+                    if (!query.Any())
+                    {
+                        _edoProcessing = null;
+                        return null;
+                    }
+
                     if(query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
                     else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
+                    else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
+                        _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else
                         _edoProcessing = query.FirstOrDefault();
                 }
@@ -129,12 +186,20 @@ namespace EdiProcessingUnit.Edo.Models
                 {
                     var collection = _edoProcessing as IEnumerable<DocEdoProcessing>;
 
+                    if (!collection.Any())
+                    {
+                        _edoProcessing = null;
+                        return null;
+                    }
+
                     if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
                     else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
+                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else
                         _edoProcessing = collection.FirstOrDefault();
                 }
@@ -154,6 +219,9 @@ namespace EdiProcessingUnit.Edo.Models
                     return "-";
 
                 var edoProc = (DocEdoProcessing)EdoProcessing;
+
+                if (edoProc.Children.Count > 0)
+                    return "Корректирован";
 
                 if (edoProc.AnnulmentStatus == 2 || edoProc.AnnulmentStatus == 3 || edoProc.AnnulmentStatus == 4)
                     return "Аннулирован";

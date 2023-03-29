@@ -54,5 +54,12 @@ namespace WebService.Controllers
         {
             return _service.GetRequest<T>(Reference + $"/request.php?application={appName}");
         }
+
+        public T GetApplicationConfigParameter<T>(string appName, string ParameterName)
+        {
+            var obj = _service.GetRequest<Newtonsoft.Json.Linq.JObject>(Reference + $"/settings/{appName}/Settings.json");
+            var result = obj[ParameterName].ToObject<T>();
+            return result;
+        }
     }
 }

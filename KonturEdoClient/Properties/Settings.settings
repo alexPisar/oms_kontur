@@ -23,5 +23,8 @@
     <Setting Name="UrlAddressHonestMark" Type="System.String" Scope="User">
       <Value Profile="(Default)">https://markirovka.crpt.ru/api/v3/true-api</Value>
     </Setting>
+    <Setting Name="ApplicationName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">KonturEdo</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
