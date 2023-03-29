@@ -158,6 +158,12 @@ namespace KonturEdoClient.Models
 
         private void Refresh()
         {
+            if (_abt != null)
+            {
+                _abt.Dispose();
+                _abt = null;
+            }
+
             if (SelectedFilial != null)
             {
                 _abt = new AbtDbContext(_config.GetConnectionStringByUser(SelectedFilial), true);
@@ -166,6 +172,9 @@ namespace KonturEdoClient.Models
             }
             else
                 _abt = new AbtDbContext();
+
+            var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            _abt.ExecuteProcedure("DBMS_APPLICATION_INFO.set_client_info", new Oracle.ManagedDataAccess.Client.OracleParameter("client_info", appVersion));
 
             GetDocuments();
             SelectedOrganization = null;

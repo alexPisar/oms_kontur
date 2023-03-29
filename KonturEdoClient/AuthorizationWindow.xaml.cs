@@ -134,6 +134,9 @@ namespace KonturEdoClient
                 if (_abtDbContext.Database.Connection.State != System.Data.ConnectionState.Open)
                     _abtDbContext.Database.Connection.Open();
 
+                var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                _abtDbContext.ExecuteProcedure("DBMS_APPLICATION_INFO.set_client_info", new Oracle.ManagedDataAccess.Client.OracleParameter("client_info", appVersion));
+
                 MainWindow mainWindow = new MainWindow();
                 MainModel mainModel = new MainModel(_abtDbContext, _consignorCertificate, utils, authInHonestMark);
 
