@@ -1089,6 +1089,12 @@ namespace KonturEdoClient.Models
             SelectedFilial = Filials.FirstOrDefault(f => f.UserGLN == userId);
         }
 
+        public void Dispose()
+        {
+            _abt?.Dispose();
+            _abt = null;
+        }
+
         private List<Kontragent> SetCounteragents()
         {
             _log.Log($"SetCounteragents: загрузка контрагентов для организации {SelectedOrganization.Name}, OrgId: {SelectedOrganization.OrgId}");
@@ -2762,6 +2768,12 @@ namespace KonturEdoClient.Models
             OnPropertyChanged("DateFrom");
             OnPropertyChanged("DateTo");
 
+            if (_abt != null)
+            {
+                _abt.Dispose();
+                _abt = null;
+            }
+
             if (SelectedFilial != null)
             {
                 _abt = new AbtDbContext(_config.GetConnectionStringByUser(SelectedFilial), true);
@@ -2770,6 +2782,9 @@ namespace KonturEdoClient.Models
             }
             else
                 _abt = new AbtDbContext();
+
+            var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            _abt.ExecuteProcedure("DBMS_APPLICATION_INFO.set_client_info", new Oracle.ManagedDataAccess.Client.OracleParameter("client_info", appVersion));
 
             GetDocuments(true);
             SelectedOrganization = null;

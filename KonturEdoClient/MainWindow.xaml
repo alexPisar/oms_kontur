@@ -12,7 +12,7 @@
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="ЭДО Диадок" Height="800" Width="1350" Background="#FFD4D3D3">
+        Title="ЭДО Диадок" Height="800" Width="1350" Background="#FFD4D3D3" Closing="MainWindow_Closing">
     <Window.Resources>
         <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
         <BitmapImage x:Key="HonestMarkImage" UriSource="pack://siteoforigin:,,,/Resources/HonestMark.png" />
