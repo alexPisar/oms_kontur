@@ -405,19 +405,38 @@ namespace EdiProcessingUnit.Edo
         public List<Counteragent> GetKontragents(string orgId = null)
         {
             CounteragentList list;
+            List<Counteragent> result = new List<Counteragent>();
 
-            if (string.IsNullOrEmpty(orgId))
-            {
-                OrganizationList MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
-                Organization myOrganization = MyOrganizations.Organizations.First();
+            string currentIndexKey = null;
 
-                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, myOrganization.OrgId, "IsMyCounteragent", null); }));
-            }
-            else
+            do
             {
-                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, orgId, "IsMyCounteragent", null); }));
+                if (string.IsNullOrEmpty(orgId))
+                {
+                    OrganizationList MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
+                    Organization myOrganization = MyOrganizations.Organizations.First();
+
+                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, myOrganization.OrgId, "IsMyCounteragent", currentIndexKey); }));
+                }
+                else
+                {
+                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, orgId, "IsMyCounteragent", currentIndexKey); }));
+                }
+
+                currentIndexKey = null;
+
+                if (list?.Counteragents != null)
+                {
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
+                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+
+                    if(list.Counteragents.Count >= 100)
+                        currentIndexKey = list.Counteragents.Last().IndexKey;
+                }
             }
-            return list.Counteragents;
+            while (!string.IsNullOrEmpty(currentIndexKey));
+
+            return result;
         }
 
         public List<Models.Kontragent> GetOrganizations(string orgId = null)
