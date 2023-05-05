@@ -379,7 +379,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                                         .FirstOrDefault()?
                                         .TaxSumm ?? 0;
 
-                                    VATAmount = Math.Round(taxSumm * UnitsCount, 2, MidpointRounding.AwayFromZero);
+                                    VATAmount = Math.Round(taxSumm * UnitsCount, 3);
+                                    VATAmount = Math.Round(VATAmount, 2, MidpointRounding.AwayFromZero);
                                     NetPrice = Math.Round(detail.Price - taxSumm, 2);
                                 }
                                 else
