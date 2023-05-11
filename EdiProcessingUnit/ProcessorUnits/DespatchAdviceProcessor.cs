@@ -373,15 +373,21 @@ namespace EdiProcessingUnit.ProcessorUnits
                                     NetPriceWithVAT = detail.Price;
                                     Amount = Math.Round(NetPriceWithVAT * UnitsCount, 2);
 
-                                    var taxSumm = traderInvoice?
+                                    var taxRate = traderInvoice?
                                         .DocGoodsDetailsIs?
                                         .Where(ds=> ds.IdGood == detail.IdGood)?
                                         .FirstOrDefault()?
-                                        .TaxSumm ?? 0;
+                                        .TaxRate ?? 0;
 
-                                    VATAmount = Math.Round(taxSumm * UnitsCount, 3);
+                                    var taxSumm = Amount * taxRate / (taxRate + 100);
+
+                                    VATAmount = Math.Round(taxSumm, 3);
                                     VATAmount = Math.Round(VATAmount, 2, MidpointRounding.AwayFromZero);
-                                    NetPrice = Math.Round(detail.Price - taxSumm, 2);
+
+                                    if(UnitsCount > 0)
+                                        NetPrice = Math.Round((Amount - VATAmount) / UnitsCount, 2, MidpointRounding.AwayFromZero);
+                                    else
+                                        NetPrice = Math.Round(NetPriceWithVAT * 100 / (taxRate + 100), 2);
                                 }
                                 else
                                 {
