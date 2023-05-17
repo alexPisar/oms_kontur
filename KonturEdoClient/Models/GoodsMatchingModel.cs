@@ -16,7 +16,9 @@ namespace KonturEdoClient.Models
         private AbtDbContext _abt;
         private DTO_RefGoods _selectedRefGood;
         private EdiProcessingUnit.UsersConfig _config;
+        private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocument> _docs;
 
+        public Action SaveAction;
         public bool PermissionChannelsList { get; set; }
         public bool PermissionChannelsSettings { get; set; }
         public bool AccountWithChoicesOfFilials => (Filials?.Count ?? 0) > 1;
@@ -45,10 +47,11 @@ namespace KonturEdoClient.Models
         public RelayCommand ImportFromFileCommand => new RelayCommand((o) => { ImportFromFile(); });
         public RelayCommand OpenChannelsListCommand => new RelayCommand((o) => { OpenChannelsList(); });
 
-        public GoodsMatchingModel(AbtDbContext abt, EdiProcessingUnit.UsersConfig config)
+        public GoodsMatchingModel(AbtDbContext abt, EdiProcessingUnit.UsersConfig config, List<EdiProcessingUnit.Edo.Models.UniversalTransferDocument> docs)
         {
             _abt = abt;
             _config = config;
+            _docs = docs;
 
             var idFilialStr = _abt?.Database?.SqlQuery<string>("select const_value from ref_const where id = 0")?.FirstOrDefault();
 
@@ -315,6 +318,21 @@ namespace KonturEdoClient.Models
         {
             if (_selectedRefGood != null && SelectedItem != null)
                 SelectedItem.IdGood = _selectedRefGood.Id;
+
+            if (SelectedEdoGoodChannel != null && SelectedItem?.IdGood != null)
+            {
+                var docs = _docs.Where(d => d.RefEdoGoodChannel as RefEdoGoodChannel != null && (d.RefEdoGoodChannel as RefEdoGoodChannel)?.IdChannel == SelectedEdoGoodChannel.IdChannel)
+                    .Where(d => d.Details.Any(det => det.IdGood == SelectedItem.IdGood));
+
+                foreach (var doc in docs)
+                {
+                    var detail = doc.Details.First(det => det.IdGood == SelectedItem.IdGood);
+
+                    detail.GoodMatching = SelectedItem;
+                }
+
+                SaveAction?.Invoke();
+            }
 
             _abt?.SaveChanges();
         }

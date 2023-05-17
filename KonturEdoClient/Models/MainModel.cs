@@ -1985,10 +1985,11 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var goodsMatchingModel = new GoodsMatchingModel(_abt, _config);
+            var goodsMatchingModel = new GoodsMatchingModel(_abt, _config, Documents ?? new List<UniversalTransferDocument>());
             goodsMatchingModel.PermissionChannelsList = this.PermissionChannelsList;
             goodsMatchingModel.PermissionChannelsSettings = this.PermissionChannelsSettings;
             goodsMatchingModel.Filials = this.Filials;
+            goodsMatchingModel.SaveAction = () => { this.OnPropertyChanged("DocumentDetails"); };
 
             var goodsMatchingWindow = new GoodsMatchingWindow();
             goodsMatchingWindow.DataContext = goodsMatchingModel;
