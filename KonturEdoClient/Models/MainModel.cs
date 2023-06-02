@@ -1680,7 +1680,7 @@ namespace KonturEdoClient.Models
             }
         }
 
-        private void AnnulmentDocument()
+        private void AnnulmentDocument(DocEdoProcessing docProcessing = null)
         {
             if (SelectedDocument == null)
             {
@@ -1706,33 +1706,35 @@ namespace KonturEdoClient.Models
                 if (SelectedDocument.EdoProcessing == null)
                     throw new Exception("Документ не найден в базе. Возможно, он не был ранее отправлен.");
 
-                DocEdoProcessing docProcessing = null;
                 Diadoc.Api.Proto.Documents.Document document = null;
 
-                if(SelectedDocument.ProcessingStatus != null)
+                if (docProcessing == null)
                 {
-                    if (SelectedDocument.IsMarked && ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus).MainDocuments.Count > 1)
+                    if (SelectedDocument.ProcessingStatus != null)
                     {
-                        foreach(var docProc in ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus).MainDocuments)
+                        if (SelectedDocument.IsMarked && ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus).MainDocuments.Count > 1)
                         {
-                            if (docProcessing != null)
-                                break;
-
-                            var doc = Edo.GetInstance().GetDocument(docProc.MessageId, docProc.EntityId);
-
-                            if (docProc.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed && 
-                                doc.LastOuterDocflows != null && doc.LastOuterDocflows.Exists(l => l.OuterDocflow?.DocflowNamedId == "TtGis" && 
-                                l.OuterDocflow?.Status?.Type == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success))
+                            foreach(var docProc in ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus).MainDocuments)
                             {
-                                docProcessing = docProc;
-                                SelectedDocument.EdoProcessing = docProcessing;
-                                document = doc;
+                                if (docProcessing != null)
+                                    break;
+
+                                var doc = Edo.GetInstance().GetDocument(docProc.MessageId, docProc.EntityId);
+
+                                if (docProc.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed &&
+                                    doc.LastOuterDocflows != null && doc.LastOuterDocflows.Exists(l => l.OuterDocflow?.DocflowNamedId == "TtGis" &&
+                                    l.OuterDocflow?.Status?.Type == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success))
+                                {
+                                    docProcessing = docProc;
+                                    SelectedDocument.EdoProcessing = docProcessing;
+                                    document = doc;
+                                }
                             }
                         }
                     }
-                }
 
-                docProcessing = SelectedDocument.EdoProcessing as DocEdoProcessing;
+                    docProcessing = SelectedDocument.EdoProcessing as DocEdoProcessing;
+                }
 
                 if(document == null)
                     document = Edo.GetInstance().GetDocument(docProcessing.MessageId, docProcessing.EntityId);
@@ -2737,6 +2739,24 @@ namespace KonturEdoClient.Models
             dataContext.ItemsList = new System.Collections.ObjectModel.ObservableCollection<DocEdoProcessingForLoading>(docs);
 
             var showDocumentSendHistoryWindow = new ShowDocumentSendHistoryWindow();
+            showDocumentSendHistoryWindow.AnnulmentDocument = (d) => 
+            {
+                if (d?.DocEdoProcessing == null)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Не выбрана отправка.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                if (d.DocEdoProcessing.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Документ ранее был отклонён.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                this.AnnulmentDocument(d.DocEdoProcessing);
+            };
             showDocumentSendHistoryWindow.DataContext = dataContext;
             showDocumentSendHistoryWindow.ShowDialog();
         }

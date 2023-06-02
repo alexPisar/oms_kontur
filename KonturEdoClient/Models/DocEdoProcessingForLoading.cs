@@ -59,5 +59,6 @@ namespace KonturEdoClient.Models
         }
 
         public string UserName => _docEdoProcessing.UserName;
+        public DocEdoProcessing DocEdoProcessing => _docEdoProcessing;
     }
 }

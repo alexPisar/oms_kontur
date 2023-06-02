@@ -24,9 +24,22 @@ namespace KonturEdoClient
             InitializeComponent();
         }
 
+        public Action<Models.DocEdoProcessingForLoading> AnnulmentDocument;
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void AnnulmentButton_Click(object sender, RoutedEventArgs e)
+        {
+            var docEdoProcessingForLoading = (DataContext as Models.Base.ListViewModel<Models.DocEdoProcessingForLoading>)?.SelectedItem;
+
+            AnnulmentDocument?.Invoke(docEdoProcessingForLoading);
+
+            (DataContext as Models.Base.ListViewModel<Models.DocEdoProcessingForLoading>)?.OnPropertyChanged("ItemsList");
+            (DataContext as Models.Base.ListViewModel<Models.DocEdoProcessingForLoading>)?.OnPropertyChanged("SelectedItem");
+            this.UpdateLayout();
         }
     }
 }
