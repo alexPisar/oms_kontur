@@ -1316,6 +1316,7 @@ namespace KonturEdoClient.Models
                 var signerDetails = Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                 var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, signerDetails, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
                 SendModel sendModel = new SendModel(_abt, SelectedOrganization, SelectedOrganization.Certificate, doc, SelectedDocument.CurrentDocJournalId, (DataContextManagementUnit.DataAccess.DocJournalType)SelectedDocument.DocJournal.IdDocType, _authInHonestMark);
+                sendModel.SetButtonsEnabled(true);
 
                 if (SelectedDocument.IsMarked)
                 {

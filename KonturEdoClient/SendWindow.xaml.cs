@@ -27,11 +27,13 @@ namespace KonturEdoClient
 
         private void SignAndSaveButton_Click(object sender, RoutedEventArgs e)
         {
+            ((SendModel)DataContext).SetButtonsEnabled(false);
             ((SendModel)DataContext).Send(true);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            ((SendModel)DataContext).SetButtonsEnabled(false);
             ((SendModel)DataContext).Send(false);
         }
 
