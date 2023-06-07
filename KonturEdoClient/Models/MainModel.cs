@@ -2739,7 +2739,7 @@ namespace KonturEdoClient.Models
             var dataContext = new Base.ListViewModel<DocEdoProcessingForLoading>();
             dataContext.ItemsList = new System.Collections.ObjectModel.ObservableCollection<DocEdoProcessingForLoading>(docs);
 
-            var showDocumentSendHistoryWindow = new ShowDocumentSendHistoryWindow();
+            var showDocumentSendHistoryWindow = new ShowDocumentSendHistoryWindow(WorkWithDocumentsPermission);
             showDocumentSendHistoryWindow.AnnulmentDocument = (d) => 
             {
                 if (d?.DocEdoProcessing == null)

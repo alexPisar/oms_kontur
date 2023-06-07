@@ -19,9 +19,10 @@ namespace KonturEdoClient
     /// </summary>
     public partial class ShowDocumentSendHistoryWindow : Window
     {
-        public ShowDocumentSendHistoryWindow()
+        public ShowDocumentSendHistoryWindow(bool workWithDocumentsPermission)
         {
             InitializeComponent();
+            AnnulmentButton.IsEnabled = workWithDocumentsPermission;
         }
 
         public Action<Models.DocEdoProcessingForLoading> AnnulmentDocument;
