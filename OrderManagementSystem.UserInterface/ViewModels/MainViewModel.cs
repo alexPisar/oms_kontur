@@ -747,6 +747,8 @@ namespace OMS.ViewModels
             }
             newDocJournal.DocGoods.DocJournal = newDocJournal;
             abtContext.DocJournals.Add( newDocJournal );
+            var docJournalTag = new DocJournalTag { IdDoc = newDocJournal.Id, IdTad = 137, TagValue = order.Number };
+            abtContext.DocJournalTags.Add(docJournalTag);
             //abtContext.DocGoods.Add( newDocJournal.DocGoods );
             return newDocJournal;
         }
