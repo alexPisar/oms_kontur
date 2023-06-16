@@ -311,8 +311,11 @@ namespace KonturEdoClient.Models
                         if (!string.IsNullOrEmpty(refEdoGoodChannel.NumberUpdId))
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.NumberUpdId, Value = _baseDocument?.DocJournal?.Code });
 
-                        if (!string.IsNullOrEmpty(refEdoGoodChannel.OrderNumberUpdId))
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderNumberUpdId, Value = _baseDocument?.DocJournal?.DocMaster?.Comment });
+                        if (_baseDocument?.DocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.OrderNumberUpdId))
+                        {
+                            var docJournalTag = _abt.DocJournalTags.FirstOrDefault(t => t.IdDoc == _baseDocument.DocJournal.IdDocMaster && t.IdTad == 137);
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
+                        }
 
                         if (!string.IsNullOrEmpty(refEdoGoodChannel.OrderDateUpdId))
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderDateUpdId, Value = _baseDocument?.DocJournal?.DocMaster?.DocDatetime.ToString("dd.MM.yyyy") });
