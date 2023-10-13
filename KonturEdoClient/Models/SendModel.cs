@@ -110,13 +110,18 @@ namespace KonturEdoClient.Models
                     loadWindow.Show();
                     Exception exception = null;
 
+                    if (isMarked && _authInHonestMark && !HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
+                    {
+                        _log.Log("Проверка на регистрацию дала отрицательный результат.");
+
+                        if (System.Windows.MessageBox.Show("Возможно, контрагент не зарегистрирован в Честном знаке.\nВсё равно хотите отправить документ?", "Ошибка", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+                            return;
+                    }
+
                     await Task.Run(() =>
                     {
                         try
                         {
-                            if (isMarked && _authInHonestMark && !HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
-                                throw new Exception("Данный участник не зарегистрирован в Честном знаке");
-
                             if (_docType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             {
                                 Diadoc.Api.DataXml.RussianAddress receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?

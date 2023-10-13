@@ -621,6 +621,54 @@ namespace EdiProcessingUnit.Edo
             var messagePatch = CallApiSafe(new Func<MessagePatch>(() => _api.PostMessagePatch(_authToken, postMessage)));
         }
 
+        /// <summary>
+        /// Отправка запроса на регистрацию машиночитаемой доверенности (МЧД)
+        /// </summary>
+        public string RegisterPowerOfAttorneyByRegNumber(string registrationNumber, string issuerInn)
+        {
+            var powerOfAttorneyToRegister = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyToRegister
+            {
+                FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                {
+                    RegistrationNumber = registrationNumber,
+                    IssuerInn = issuerInn
+                }
+            };
+
+            var result = CallApiSafe(new Func<AsyncMethodResult>(() => _api.RegisterPowerOfAttorney(_authToken, _actualBoxId, powerOfAttorneyToRegister)));
+            return result?.TaskId;
+        }
+
+        /// <summary>
+        /// Отправка запроса на регистрацию машиночитаемой доверенности (МЧД)
+        /// </summary>
+        public string RegisterPowerOfAttorneyByFiles(byte[] xmlFileBytes, byte[] signFileBytes)
+        {
+            var powerOfAttorneyToRegister = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyToRegister
+            {
+                Content = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneySignedContent
+                {
+                    Content = new Content_v3
+                    {
+                        Content = xmlFileBytes
+                    },
+                    Signature = new Content_v3
+                    {
+                        Content = signFileBytes
+                    }
+                }
+            };
+
+            var result = CallApiSafe(new Func<AsyncMethodResult>(() => _api.RegisterPowerOfAttorney(_authToken, _actualBoxId, powerOfAttorneyToRegister)));
+            return result?.TaskId;
+        }
+
+        public Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyRegisterResult RegisterPowerOfAttorneyResult(string taskId)
+        {
+            var result = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyRegisterResult>(() => _api.RegisterPowerOfAttorneyResult(_authToken, _actualBoxId, taskId)));
+            return result;
+        }
+
         public void SetOrganizationParameters(Models.Kontragent kAgent)
         {
             OrganizationList myOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
