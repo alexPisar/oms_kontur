@@ -114,8 +114,8 @@ namespace KonturEdoClient.Models
                     {
                         _log.Log("Проверка на регистрацию дала отрицательный результат.");
 
-                        if (System.Windows.MessageBox.Show("Возможно, контрагент не зарегистрирован в Честном знаке.\nВсё равно хотите отправить документ?", "Ошибка", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
-                            return;
+                        //if (System.Windows.MessageBox.Show("Возможно, контрагент не зарегистрирован в Честном знаке.\nВсё равно хотите отправить документ?", "Ошибка", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+                        //    return;
                     }
 
                     await Task.Run(() =>
