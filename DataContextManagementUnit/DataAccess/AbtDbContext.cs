@@ -129,6 +129,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
             modelBuilder.Configurations.Add(new Mapping.RefEdoGoodChannelConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefGoodMatchingConfiguration());
             modelBuilder.Configurations.Add(new Mapping.DocJournalTagConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefAuthoritySignDocumentsConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -159,5 +160,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual DbSet<RefEdoGoodChannel> RefEdoGoodChannels { get; set; }
         public virtual DbSet<RefGoodMatching> RefGoodMatchings { get; set; }
         public virtual DbSet<DocJournalTag> DocJournalTags { get; set; }
+        public virtual DbSet<RefAuthoritySignDocuments> RefAuthoritySignDocuments { get; set; }
     }
 }

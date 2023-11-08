@@ -651,6 +651,75 @@ namespace EdiTest
             desadvProcessor.Run();
         }
 
+        [TestMethod]
+        public void CreateMarkedDocumentTest()
+        {
+            var orgInn = "253800573557";
+            var personalCertificates = new WinApiCryptWrapper().GetAllGostPersonalCertificates();
+            var certs = personalCertificates.Where(c => orgInn == GetOrgInnFromCertificate(c) && c.NotAfter > DateTime.Now).OrderByDescending(c => c.NotBefore);
+            var orgCertificate = certs.FirstOrDefault();
+
+            var crypt = new WinApiCryptWrapper(orgCertificate);
+            Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens document = null;
+
+            EdiProcessingUnit.Edo.Edo.GetInstance().Authenticate(false, orgCertificate, orgInn);
+            var receiverOrganization = EdiProcessingUnit.Edo.Edo.GetInstance().GetKontragentByInnKpp("254305893970");
+            var signerDetails = EdiProcessingUnit.Edo.Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
+
+            using (var abtDbContext = new AbtDbContext("User Id=EDI;Password=byntuhfwbz;Data Source=192.168.2.13/orcl.vladivostok.wera", true))
+            {
+                decimal idDocJournal = 998537600;
+                var docJournal = abtDbContext.DocJournals.First(d => d.Id == idDocJournal);
+                string employee = abtDbContext.SelectSingleValue("select const_value from ref_const where id = 1200");
+
+                var labels = (from label in abtDbContext.DocGoodsDetailsLabels
+                              where label.IdDocSale == idDocJournal
+                              select label)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+
+                //KonturEdoClient.HonestMark.HonestMarkClient.GetInstance().Authorization(orgCertificate);
+                //var markedCodesInfo = KonturEdoClient.HonestMark.HonestMarkClient.GetInstance().GetMarkCodesInfo(KonturEdoClient.HonestMark.ProductGroupsEnum.None, 
+                //    labels.Select(l=>l.DmLabel).ToArray()).Where(l => l?.CisInfo?.Status != "RETIRED").ToList();
+
+                //labels = labels.Where(l => markedCodesInfo.Exists(m => m.CisInfo.RequestedCis == l.DmLabel)).ToList();
+
+                Diadoc.Api.DataXml.RussianAddress receiverAddress = receiverOrganization?.Address?.RussianAddress != null ?
+                new Diadoc.Api.DataXml.RussianAddress
+                {
+                    ZipCode = receiverOrganization.Address.RussianAddress.ZipCode,
+                    Region = receiverOrganization.Address.RussianAddress.Region ?? "25",
+                    Street = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.Street) ? null : receiverOrganization.Address.RussianAddress.Street,
+                    City = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.City) ? null : receiverOrganization.Address.RussianAddress.City,
+                    Locality = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.Locality) ? null : receiverOrganization.Address.RussianAddress.Locality,
+                    Territory = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.Territory) ? null : receiverOrganization.Address.RussianAddress.Territory,
+                    Building = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.Building) ? null : receiverOrganization.Address.RussianAddress.Building
+                } : null;
+
+                var senderAddress = new Diadoc.Api.DataXml.RussianAddress
+                {
+                    ZipCode = "690033",
+                    City = "Владивосток",
+                    Street = "Постышева",
+                    Building="31",
+                    Region="25",
+                    Apartment = string.Empty,
+                    Block=string.Empty,
+                    Locality=string.Empty,
+                    Territory = string.Empty
+                };
+
+                document = CreateShipmentDocument(abtDbContext, docJournal, senderAddress, orgInn, null, "ИП Пойс Нина Филипповна", orgCertificate,
+                    receiverAddress, "254305893970", null, "ИП Мигеркина Лада Романовна", labels, docJournal.Code, employee, signerDetails, true);
+            }
+
+            var generatedFile = EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
+            "ДОП", "utd820_05_01_01_hyphen", 0, document);
+
+            generatedFile.SaveContentToFile($@"C:\Users\systech\Desktop\Files\{generatedFile.FileName}");
+
+            //byte[] signature = crypt.Sign(generatedFile.Content, true);
+            //var message = EdiProcessingUnit.Edo.Edo.GetInstance().SendXmlDocument(_consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature);
+        }
+
         private string ParseCertAttribute(string certData, string attributeName)
         {
             string result = String.Empty;
@@ -816,6 +885,407 @@ namespace EdiTest
                     }
                 }
             }
+        }
+
+        public string GetOrgInnFromCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2 certificate)
+        {
+            var inn = ParseCertAttribute(certificate.Subject, "ИНН").TrimStart('0');
+
+            if (string.IsNullOrEmpty(inn) || inn.Length == 12)
+            {
+                var crypt = new WinApiCryptWrapper(certificate);
+                var orgInn = crypt.GetValueBySubjectOid("1.2.643.100.4");
+
+                if(!string.IsNullOrEmpty(orgInn))
+                    inn = orgInn;
+            }
+
+            return inn;
+        }
+
+        private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens CreateShipmentDocument(
+            AbtDbContext abt,
+            DocJournal d,
+            Diadoc.Api.DataXml.RussianAddress senderOrganizationRussianAddress,
+            string senderOrganizationInn,
+            string senderOrganizationKpp,
+            string senderOrganizationName,
+            System.Security.Cryptography.X509Certificates.X509Certificate2 senderOrganizationCertificate,
+            Diadoc.Api.DataXml.RussianAddress receiverOrganizationRussianAddress,
+            string receiverOrganizationInn,
+            string receiverOrganizationKpp,
+            string receiverOrganizationName,
+            List<DocGoodsDetailsLabels> detailsLabels, 
+            string documentNumber, 
+            string employee = null,
+            Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null,
+            bool considerOnlyLabeledGoods = false)
+        {
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
+                return null;
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocGoodsI == null)
+                return null;
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && d.DocGoods == null)
+                return null;
+
+            var document = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens()
+            {
+                Function = Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.ДОП,
+                DocumentNumber = documentNumber,
+                DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
+                Currency = "643",
+                DocumentCreator = ParseCertAttribute(senderOrganizationCertificate.Subject, "SN") + " " + ParseCertAttribute(senderOrganizationCertificate.Subject, "G"),
+                Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+                {
+                    TotalSpecified = true,
+                    TotalWithVatExcludedSpecified = true
+                },
+                TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
+                {
+                    OperationInfo = "Товары переданы",
+                    TransferDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                }
+            };
+
+            if (!string.IsNullOrEmpty(employee))
+            {
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                {
+                    Position = "Зав. складом",
+                    EmployeeInfo = employee,
+                    LastName = employee.Substring(0, employee.IndexOf(' ')),
+                    FirstName = employee.Substring(employee.IndexOf(' ') + 1)
+                };
+            }
+
+
+            Diadoc.Api.DataXml.RussianAddress senderAddress = senderOrganizationRussianAddress != null ?
+                            new Diadoc.Api.DataXml.RussianAddress
+                            {
+                                ZipCode = senderOrganizationRussianAddress.ZipCode,
+                                Region = senderOrganizationRussianAddress.Region,
+                                Street = string.IsNullOrEmpty(senderOrganizationRussianAddress?.Street) ? null : senderOrganizationRussianAddress.Street,
+                                City = string.IsNullOrEmpty(senderOrganizationRussianAddress?.City) ? null : senderOrganizationRussianAddress.City,
+                                Locality = string.IsNullOrEmpty(senderOrganizationRussianAddress?.Locality) ? null : senderOrganizationRussianAddress.Locality,
+                                Territory = string.IsNullOrEmpty(senderOrganizationRussianAddress?.Territory) ? null : senderOrganizationRussianAddress.Territory,
+                                Building = string.IsNullOrEmpty(senderOrganizationRussianAddress?.Building) ? null : senderOrganizationRussianAddress.Building
+                            } : null;
+
+            document.Sellers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            {
+                new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                {
+                    Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                    {
+                        Inn = senderOrganizationInn,
+                        Kpp = senderOrganizationKpp,
+                        OrgType = senderOrganizationInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                        OrgName = senderOrganizationName,
+                        Address = new Diadoc.Api.DataXml.Address
+                        {
+                            Item = senderAddress
+                        }
+                    }
+                }
+            };
+
+            Diadoc.Api.DataXml.RussianAddress receiverAddress = receiverOrganizationRussianAddress != null ?
+                new Diadoc.Api.DataXml.RussianAddress
+                {
+                    ZipCode = receiverOrganizationRussianAddress.ZipCode,
+                    Region = receiverOrganizationRussianAddress.Region,
+                    Street = string.IsNullOrEmpty(receiverOrganizationRussianAddress?.Street) ? null : receiverOrganizationRussianAddress.Street,
+                    City = string.IsNullOrEmpty(receiverOrganizationRussianAddress?.City) ? null : receiverOrganizationRussianAddress.City,
+                    Locality = string.IsNullOrEmpty(receiverOrganizationRussianAddress?.Locality) ? null : receiverOrganizationRussianAddress.Locality,
+                    Territory = string.IsNullOrEmpty(receiverOrganizationRussianAddress?.Territory) ? null : receiverOrganizationRussianAddress.Territory,
+                    Building = string.IsNullOrEmpty(receiverOrganizationRussianAddress?.Building) ? null : receiverOrganizationRussianAddress.Building
+                } : null;
+
+            document.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            {
+                new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                {
+                    Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                    {
+                        Inn = receiverOrganizationInn,
+                        Kpp = receiverOrganizationKpp,
+                        OrgType = receiverOrganizationInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                        OrgName = receiverOrganizationName,
+                        Address = new Diadoc.Api.DataXml.Address
+                        {
+                            Item = receiverAddress
+                        }
+                    }
+                }
+            };
+
+            var firstMiddleName = ParseCertAttribute(senderOrganizationCertificate.Subject, "G");
+            string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+            string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+
+            var signer = new[]
+            {
+                                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                                {
+                                    SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                                    FirstName = signerFirstName,
+                                    MiddleName = signerMiddleName,
+                                    LastName = ParseCertAttribute(senderOrganizationCertificate.Subject, "SN"),
+                                    SignerOrganizationName = ParseCertAttribute(senderOrganizationCertificate.Subject, "CN"),
+                                    Inn = GetOrgInnFromCertificate(senderOrganizationCertificate),
+                                    Position = ParseCertAttribute(senderOrganizationCertificate.Subject, "T")
+                                }
+                            };
+
+
+            if (signer.First().Inn?.Length == 12)
+                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
+
+            //if (signerDetails != null)
+            //{
+            //    signer.First().Inn = GetOrgInnFromCertificate(senderOrganizationCertificate);
+            //    signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
+            //    signer.First().SignerPowers = (Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitleSignerPowers)Convert.ToInt32(signerDetails.SignerPowers);
+
+            //    if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.SellerEmployee)
+            //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.SellerEmployee;
+            //    else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.InformationCreatorEmployee)
+            //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.InformationCreatorEmployee;
+            //    else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.OtherOrganizationEmployee)
+            //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.OtherOrganizationEmployee;
+            //    else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.AuthorizedPerson)
+            //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
+            //}
+
+            document.UseSignerDetails(signer);
+
+            int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
+            document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
+            {
+                                new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment
+                                {
+                                    Name = "Реализация (акт, накладная, УПД)",
+                                    Number = $"п/п 1-{docLineCount}, №{documentNumber}",
+                                    Date = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                                }
+            };
+
+            var details = new List<Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem>();
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+            {
+                foreach (var docJournalDetail in d.DocGoodsDetailsIs)
+                {
+                    var refGood = abt.RefGoods?
+                    .FirstOrDefault(r => r.Id == docJournalDetail.IdGood);
+
+                    if (refGood == null)
+                        continue;
+
+                    var docGoodDetailLabels = detailsLabels.Where(l => l.IdGood == docJournalDetail.IdGood).ToList();
+
+                    if (considerOnlyLabeledGoods && docGoodDetailLabels.Count == 0)
+                        continue;
+
+                    var barCode = abt.RefBarCodes?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .BarCode;
+
+                    string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
+                        $"(select ID_COUNTRY from REF_GOODS where ID = {refGood.Id})");
+
+                    int quantity;
+
+                    if (considerOnlyLabeledGoods)
+                        quantity = docGoodDetailLabels.Count;
+                    else
+                        quantity = docJournalDetail.Quantity;
+
+                    var vat = (decimal)Math.Round(docJournalDetail.TaxSumm * quantity, 2);
+                    var subtotal = Math.Round(quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
+
+                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    {
+                        Product = refGood.Name,
+                        Unit = "796",
+                        Quantity = quantity,
+                        QuantitySpecified = true,
+                        VatSpecified = true,
+                        Vat = vat,
+                        PriceSpecified = true,
+                        Price = (decimal)Math.Round(docJournalDetail.Price - docJournalDetail.DiscountSumm - docJournalDetail.TaxSumm, 2),
+                        SubtotalSpecified = true,
+                        Subtotal = subtotal,
+                        SubtotalWithVatExcludedSpecified = true,
+                        SubtotalWithVatExcluded = subtotal - vat,
+                        ItemVendorCode = barCode,
+                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
+                        {
+                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
+                                        {
+                                            Country = countryCode
+                                        }
+                        }
+                    };
+
+                    if (!string.IsNullOrEmpty(refGood.CustomsNo))
+                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+
+                    switch (docJournalDetail.TaxRate)
+                    {
+                        case 0:
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            break;
+                        case 10:
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            break;
+                        case 18:
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            break;
+                        case 20:
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            break;
+                        default:
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            break;
+                    }
+
+                    decimal idGood = docJournalDetail.IdGood;
+
+                    if (docGoodDetailLabels.Count > 0)
+                    {
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        {
+                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            Items = new string[docGoodDetailLabels.Count]
+                        };
+
+                        int j = 0;
+                        foreach (var doc in docGoodDetailLabels)
+                        {
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].Items[j] = doc.DmLabel;
+                            j++;
+                        }
+                    }
+
+                    details.Add(detail);
+                }
+            }
+            else
+            {
+                foreach (var docJournalDetail in d.Details)
+                {
+                    var refGood = abt.RefGoods?
+                    .FirstOrDefault(r => r.Id == docJournalDetail.IdGood);
+
+                    if (refGood == null)
+                        continue;
+
+                    var docGoodDetailLabels = detailsLabels.Where(l => l.IdGood == docJournalDetail.IdGood).ToList();
+
+                    if (considerOnlyLabeledGoods && docGoodDetailLabels.Count == 0)
+                        continue;
+
+                    var barCode = abt.RefBarCodes?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .BarCode;
+
+                    string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
+                        $"(select ID_COUNTRY from REF_GOODS where ID = {refGood.Id})");
+
+                    int quantity;
+
+                    if (considerOnlyLabeledGoods)
+                        quantity = docGoodDetailLabels.Count;
+                    else
+                        quantity = docJournalDetail.Quantity;
+
+                    var subtotal = Math.Round(quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
+                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    {
+                        Product = refGood.Name,
+                        Unit = "796",
+                        Quantity = quantity,
+                        QuantitySpecified = true,
+                        PriceSpecified = true,
+                        Price = (decimal)Math.Round(docJournalDetail.Price - docJournalDetail.DiscountSumm, 2),
+                        SubtotalSpecified = true,
+                        Subtotal = subtotal,
+                        SubtotalWithVatExcludedSpecified = true,
+                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+                        SubtotalWithVatExcluded = subtotal,
+                        ItemVendorCode = barCode,
+                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
+                        {
+                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
+                                        {
+                                            Country = countryCode
+                                        }
+                        }
+                    };
+
+                    if (!string.IsNullOrEmpty(refGood.CustomsNo))
+                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+
+                    if (docGoodDetailLabels.Count > 0)
+                    {
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        {
+                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            Items = new string[docGoodDetailLabels.Count]
+                        };
+
+                        int j = 0;
+                        foreach (var doc in docGoodDetailLabels)
+                        {
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].Items[j] = doc.DmLabel;
+                            j++;
+                        }
+                    }
+
+                    details.Add(detail);
+                }
+            }
+
+            document.Table.Item = details.ToArray();
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                document.Table.VatSpecified = true;
+            else
+                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True;
+
+            if (considerOnlyLabeledGoods)
+            {
+                document.Table.Total = details.Select(i => i.Subtotal).Sum();
+                document.Table.TotalWithVatExcluded = details.Select(i => i.SubtotalWithVatExcluded).Sum();
+
+                if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                    document.Table.Vat = details.Select(i => i.Vat).Sum();
+            }
+            else
+            {
+                if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                {
+                    document.Table.Total = (decimal)d.DocGoodsI.TotalSumm;
+                    document.Table.Vat = (decimal)d.DocGoodsI.TaxSumm;
+                    document.Table.TotalWithVatExcluded = (decimal)(d.DocGoodsI.TotalSumm - d.DocGoodsI.TaxSumm);
+                }
+                else
+                {
+                    document.Table.Total = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
+                    document.Table.TotalWithVatExcluded = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
+                }
+            }
+
+            return document;
         }
     }
 }
