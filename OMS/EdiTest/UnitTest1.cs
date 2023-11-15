@@ -304,12 +304,12 @@ namespace EdiTest
         [TestMethod]
         public void SignCryptographyTest()
         {
-            var filePath = "C:\\Users\\systech\\Desktop\\ON_NSCHFDOPPRMARK_2BM-7750370234-4012052808304878702630000000000_2BM-7750370234-4012052808304878702630000000004_20210702_f9e2a63a-c7af-4642-ad60-67b5c7c9a221.xml";
-            var signerCertificate = new System.Security.Cryptography.X509Certificates.
-                X509Certificate2("C:\\Users\\systech\\Desktop\\Certs\\CertsForTest\\newcert.cer");
+            var filePath = @"C:\Users\systech\Desktop\Машиночитаемая доверенность\ON_EMCHD_20231115_9745f1d9-5333-477e-9293-57322b73fdb3.xml";
+
+            var crypto = new WinApiCryptWrapper();
+            var signerCertificate = crypto.GetCertificateWithPrivateKey("A1908BDFF81A0F3940D6EDB428263E48A9C05927", false);
 
             var crypt = new WinApiCryptWrapper(signerCertificate);
-            crypt.SetupPinCode("1");
 
             var contentBytes = File.ReadAllBytes(filePath);
 
