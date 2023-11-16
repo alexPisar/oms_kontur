@@ -304,7 +304,7 @@ namespace EdiTest
         [TestMethod]
         public void SignCryptographyTest()
         {
-            var filePath = @"C:\Users\systech\Desktop\Машиночитаемая доверенность\ON_EMCHD_20231115_9745f1d9-5333-477e-9293-57322b73fdb3.xml";
+            var filePath = @"C:\Users\systech\Desktop\Машиночитаемая доверенность\ON_EMCHD_20231116_e785f785-d763-464b-bdf4-56737bc3cb95.xml";
 
             var crypto = new WinApiCryptWrapper();
             var signerCertificate = crypto.GetCertificateWithPrivateKey("A1908BDFF81A0F3940D6EDB428263E48A9C05927", false);
