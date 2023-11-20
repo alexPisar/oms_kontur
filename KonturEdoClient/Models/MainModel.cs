@@ -221,12 +221,16 @@ namespace KonturEdoClient.Models
 
         private Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle CreateBuyerShipmentDocument(Kontragent receiverOrganization)
         {
-            var firstMiddleName = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "G");
-            string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
-            string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+            Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820[] signers;
 
-            var signers = new[]
+            if (string.IsNullOrEmpty(receiverOrganization.EmchdId))
             {
+                var firstMiddleName = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "G");
+                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+
+                signers = new[]
+                {
                 new Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820
                 {
                     FirstName = signerFirstName,
@@ -239,23 +243,47 @@ namespace KonturEdoClient.Models
                     SignerPowersBase = "Должностные обязанности"
                 }
             };
+            }
+            else
+            {
+                signers = new[]
+                {
+                    new Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820
+                    {
+                        FirstName = receiverOrganization.EmchdPersonName,
+                        MiddleName = receiverOrganization.EmchdPersonPatronymicSurname,
+                        LastName = receiverOrganization.EmchdPersonSurname,
+                        SignerOrganizationName = receiverOrganization.Name,
+                        Inn = receiverOrganization.EmchdPersonInn,
+                        Position = receiverOrganization.EmchdPersonPosition,
+                        SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820SignerStatus.AuthorizedPerson,
+                        SignerPowersBase = "Доверенность"
+                    }
+                };
+            }
 
             if (signers.First().Inn == receiverOrganization.Inn)
                 signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
             else if (signers.First().Inn?.Length == 12)
             {
                 signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson;
-                signers.First().SignerPowersBase = signers.First().Position;
+
+                if(string.IsNullOrEmpty(signers.First().SignerPowersBase))
+                    signers.First().SignerPowersBase = signers.First().Position;
             }
             else
                 signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
 
             var document = new Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle()
             {
-                DocumentCreator = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "G"),
                 Signers = signers,
                 OperationContent = "Товары переданы"
             };
+
+            if (!string.IsNullOrEmpty(receiverOrganization.EmchdId))
+                document.DocumentCreator = $"{receiverOrganization.EmchdPersonSurname} {receiverOrganization.EmchdPersonName} {receiverOrganization.EmchdPersonPatronymicSurname}";
+            else
+                document.DocumentCreator = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "G");
 
             return document;
         }
