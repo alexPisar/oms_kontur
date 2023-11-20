@@ -21,6 +21,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string PatronymicSurname { get; set; }
         public virtual string Position { get; set; }
         public virtual string Inn { get; set; }
+        public virtual string DataBaseUserName { get; set; }
+        public virtual string Comment { get; set; }
+        public virtual string EmchdId { get; set; }
+        public virtual global::System.DateTime? EmchdBeginDate { get; set; }
+        public virtual global::System.DateTime? EmchdEndDate { get; set; }
 
         #endregion
 

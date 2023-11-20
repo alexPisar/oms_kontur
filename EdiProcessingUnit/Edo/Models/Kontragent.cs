@@ -23,6 +23,22 @@ namespace EdiProcessingUnit.Edo.Models
 
         public string Kpp { get; set; }
 
+        public string EmchdId { get; set; }
+
+        public string EmchdPersonSurname { get; set; }
+
+        public string EmchdPersonName { get; set; }
+
+        public string EmchdPersonPatronymicSurname { get; set; }
+
+        public string EmchdPersonPosition { get; set; }
+
+        public string EmchdPersonInn { get; set; }
+
+        public DateTime? EmchdBeginDate { get; set; }
+
+        public DateTime? EmchdEndDate { get; set; }
+
         public Diadoc.Api.Proto.Address Address { get; set; }
 
         public X509Certificate2 Certificate { get; set; }

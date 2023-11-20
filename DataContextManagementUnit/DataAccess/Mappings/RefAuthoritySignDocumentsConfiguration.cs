@@ -39,6 +39,29 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .Property(r => r.Inn)
                 .HasColumnName(@"INN")
                 .HasMaxLength(15);
+
+            this
+                .Property(r => r.DataBaseUserName)
+                .HasColumnName(@"DATABASE_USER_NAME")
+                .HasMaxLength(40);
+
+            this
+                .Property(r => r.Comment)
+                .HasColumnName(@"COMENT")
+                .HasMaxLength(200);
+
+            this
+                .Property(r => r.EmchdId)
+                .HasColumnName(@"EMCHD_ID")
+                .HasMaxLength(50);
+
+            this
+                .Property(r => r.EmchdBeginDate)
+                .HasColumnName(@"EMCHD_BEGIN_DATE");
+
+            this
+                .Property(r => r.EmchdEndDate)
+                .HasColumnName(@"EMCHD_END_DATE");
         }
     }
 }

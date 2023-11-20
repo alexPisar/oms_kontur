@@ -168,7 +168,9 @@ namespace KonturEdoClient.Models
             {
                 _abt = new AbtDbContext(_config.GetConnectionStringByUser(SelectedFilial), true);
                 SetPermissions();
-                SetMyOrganizations();
+
+                if(Organizations.Count == 0)
+                    SetMyOrganizations();
             }
             else
                 _abt = new AbtDbContext();
@@ -276,7 +278,6 @@ namespace KonturEdoClient.Models
                 DocumentNumber = documentNumber,
                 DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
                 Currency = Properties.Settings.Default.DefaultCurrency,
-                DocumentCreator = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "G"),
                 Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
                 {
                     TotalSpecified = true,
@@ -288,6 +289,11 @@ namespace KonturEdoClient.Models
                     TransferDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                 }
             };
+
+            if (!string.IsNullOrEmpty(senderOrganization.EmchdId))
+                document.DocumentCreator = $"{senderOrganization.EmchdPersonSurname} {senderOrganization.EmchdPersonName} {senderOrganization.EmchdPersonPatronymicSurname}";
+            else
+                document.DocumentCreator = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "G");
 
             if (!string.IsNullOrEmpty(employee))
             {
@@ -361,12 +367,15 @@ namespace KonturEdoClient.Models
                 }
             };
 
-            var firstMiddleName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "G");
-            string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
-            string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
-
-            var signer = new[]
+            Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle[] signer;
+            if (string.IsNullOrEmpty(senderOrganization.EmchdId))
             {
+                var firstMiddleName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "G");
+                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+
+                signer = new[]
+                {
                                 new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
                                 {
                                     SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
@@ -378,6 +387,24 @@ namespace KonturEdoClient.Models
                                     Position = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "T")
                                 }
                             };
+            }
+            else
+            {
+                signer = new[]
+                {
+                    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                    {
+                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                        FirstName = senderOrganization.EmchdPersonName,
+                        MiddleName = senderOrganization.EmchdPersonPatronymicSurname,
+                        LastName = senderOrganization.EmchdPersonSurname,
+                        SignerOrganizationName = senderOrganization.Name,
+                        Inn = senderOrganization.EmchdPersonInn,
+                        Position = senderOrganization.EmchdPersonPosition,
+                        SignerPowersBase = "Доверенность"
+                    }
+                };
+            }
 
             document.UseSignerDetails(signer);
 
@@ -1109,25 +1136,60 @@ namespace KonturEdoClient.Models
             _log.Log($"SetMyOrganizations: загрузка организаций для пользователя с именем {UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser}");
 
             var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
-            var customers = (from cust in _abt.RefCustomers
+            var customers = from cust in _abt.RefCustomers
                             join refUser in _abt.RefUsersByOrgEdo
                             on cust.Id equals refUser.IdCustomer
                             where refUser.UserName == dataBaseUser
-                            select cust).ToArray();
+                            select cust;
 
-            var orgs = customers.Select(c => new Kontragent(c.Name, c.Inn, c.Kpp)).ToList();
+            var authoritySignDocuments = from a in _abt.RefAuthoritySignDocuments
+                                         where a.EmchdEndDate != null
+                                         join c in customers
+                                         on a.IdCustomer equals (c.Id)
+                                         select a;
 
-            List<X509Certificate2> personalCertificates = GetPersonalCertificates();
+            var orgs = customers.ToArray().Select(c => 
+            {
+                var authoritySignDocument = authoritySignDocuments?.FirstOrDefault(a => a.IdCustomer == c.Id);
+
+                if (authoritySignDocument == null)
+                    return new Kontragent(c.Name, c.Inn, c.Kpp);
+
+                return new Kontragent(c.Name, c.Inn, c.Kpp)
+                {
+                    EmchdId = authoritySignDocument?.EmchdId,
+                    EmchdBeginDate = authoritySignDocument?.EmchdBeginDate,
+                    EmchdEndDate = authoritySignDocument?.EmchdEndDate,
+                    EmchdPersonInn = authoritySignDocument?.Inn,
+                    EmchdPersonSurname = authoritySignDocument?.Surname,
+                    EmchdPersonName = authoritySignDocument?.Name,
+                    EmchdPersonPatronymicSurname = authoritySignDocument?.PatronymicSurname,
+                    EmchdPersonPosition = authoritySignDocument?.Position
+                };
+            }).ToList();
+
+            List < X509Certificate2 > personalCertificates = GetPersonalCertificates().Where(c => c.NotAfter > DateTime.Now)?.ToList() ?? new List<X509Certificate2>();
 
             foreach (var org in orgs)
             {
-                var certs = personalCertificates.Where(c => org.Inn == _utils.GetOrgInnFromCertificate(c) && _utils.IsCertificateValid(c) && c.NotAfter > DateTime.Now).OrderByDescending(c => c.NotBefore);
-                org.Certificate = certs.FirstOrDefault();
+                if (!string.IsNullOrEmpty(org.EmchdPersonInn))
+                {
+                    var certs = personalCertificates.Where(c => org.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
+                    org.Certificate = certs.FirstOrDefault();
+                }
+                else
+                {
+                    var certs = personalCertificates.Where(c => org.Inn == _utils.GetOrgInnFromCertificate(c) && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
+                    org.Certificate = certs.FirstOrDefault();
+                }
 
                 if (org.Certificate != null)
                 {
                     try
                     {
+                        if (org.EmchdEndDate != null && org.EmchdEndDate.Value < DateTime.Now)
+                            throw new Exception($"Срок доверенности истёк для физ лица с ИНН {org.EmchdPersonInn}");
+
                         Edo.GetInstance().Authenticate(false, org.Certificate, org.Inn);
                         Edo.GetInstance().SetOrganizationParameters(org);
                     }
@@ -2192,7 +2254,6 @@ namespace KonturEdoClient.Models
                 DocumentNumber = d.Code,
                 DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
                 Currency = Properties.Settings.Default.DefaultCurrency,
-                DocumentCreator = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "G"),
                 Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
                 {
                     TotalSpecified = true,
@@ -2205,7 +2266,12 @@ namespace KonturEdoClient.Models
                 }
             };
 
-            if(d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+            if (!string.IsNullOrEmpty(organization.EmchdId))
+                document.DocumentCreator = $"{organization.EmchdPersonSurname} {organization.EmchdPersonName} {organization.EmchdPersonPatronymicSurname}";
+            else
+                document.DocumentCreator = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(organization.Certificate.Subject, "G");
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
                 document.Table.VatSpecified = true;
                 document.Table.Total = (decimal)d.DocGoodsI.TotalSumm;
@@ -2355,29 +2421,52 @@ namespace KonturEdoClient.Models
                 }
             }
 
-            var firstMiddleName = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "G");
-            string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
-            string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+            Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle[] signer;
 
-            var signer = new[]
+            if (string.IsNullOrEmpty(organization.EmchdId))
             {
+                var firstMiddleName = _utils.ParseCertAttribute(organization.Certificate.Subject, "G");
+                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+
+                signer = new[]
+                {
                                 new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
                                 {
                                     FirstName = signerFirstName,
                                     MiddleName = signerMiddleName,
-                                    LastName = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "SN"),
-                                    SignerOrganizationName = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "CN"),
-                                    Inn = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "ИНН").TrimStart('0'),
-                                    Position = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "T")
+                                    LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN"),
+                                    SignerOrganizationName = _utils.ParseCertAttribute(organization.Certificate.Subject, "CN"),
+                                    Inn = _utils.ParseCertAttribute(organization.Certificate.Subject, "ИНН").TrimStart('0'),
+                                    Position = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
                                 }
                             };
+            }
+            else
+            {
+                signer = new[]
+                {
+                    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                    {
+                        FirstName = organization.EmchdPersonName,
+                        MiddleName = organization.EmchdPersonPatronymicSurname,
+                        LastName = organization.EmchdPersonSurname,
+                        SignerOrganizationName = organization.Name,
+                        Inn = organization.EmchdPersonInn,
+                        Position = organization.EmchdPersonPosition,
+                        SignerPowersBase = "Доверенность"
+                    }
+                };
+            }
 
             if (signer.First().Inn == organization.Inn)
                 signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
             else if (signer.First().Inn?.Length == 12)
             {
                 signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson;
-                signer.First().SignerPowersBase = signer.First().Position;
+
+                if(string.IsNullOrEmpty(signer.First().SignerPowersBase))
+                    signer.First().SignerPowersBase = signer.First().Position;
             }
             else
                 signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
@@ -2803,7 +2892,9 @@ namespace KonturEdoClient.Models
             {
                 _abt = new AbtDbContext(_config.GetConnectionStringByUser(SelectedFilial), true);
                 SetPermissions();
-                SetMyOrganizations();
+
+                if (Organizations.Count == 0)
+                    SetMyOrganizations();
             }
             else
                 _abt = new AbtDbContext();
