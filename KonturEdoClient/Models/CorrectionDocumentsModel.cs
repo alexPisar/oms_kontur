@@ -12,10 +12,10 @@ namespace KonturEdoClient.Models
 {
     public class CorrectionDocumentsModel : Base.ModelBase
     {
-        private X509Certificate2 _orgCert;
         private UniversalTransferDocument _baseDocument;
         private AbtDbContext _abt;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
+        private Kontragent _currentOrganization;
 
         public System.Windows.Window Owner { get; set; }
 
@@ -24,11 +24,15 @@ namespace KonturEdoClient.Models
 
         public List<DocGoodsDetail> Details => SelectedDocument?.CorrectionDocJournal?.Details;
 
-        public CorrectionDocumentsModel(AbtDbContext abt, X509Certificate2 orgCert, UniversalTransferDocument baseDocument)
+        public CorrectionDocumentsModel(AbtDbContext abt, Kontragent currentOrganization, UniversalTransferDocument baseDocument)
         {
             _baseDocument = baseDocument;
             _abt = abt;
-            _orgCert = orgCert;
+
+            if (currentOrganization?.Certificate == null)
+                throw new Exception("Не задан сертификат для организации.");
+
+            _currentOrganization = currentOrganization;
         }
 
         public async void SendDocument()
@@ -101,8 +105,8 @@ namespace KonturEdoClient.Models
                         }
                     };
 
-                    var orgInn = utils.GetOrgInnFromCertificate(_orgCert);
-                    bool result = EdiProcessingUnit.Edo.Edo.GetInstance().Authenticate(false, _orgCert, orgInn);
+                    var orgInn = _currentOrganization.Inn;
+                    bool result = EdiProcessingUnit.Edo.Edo.GetInstance().Authenticate(false, _currentOrganization.Certificate, orgInn);
 
                     if (!result)
                         throw new Exception("Не удалось авторизоваться в системе по сертификату.");
@@ -121,27 +125,48 @@ namespace KonturEdoClient.Models
                         }
                     };
 
-                    var firstMiddleName = utils.ParseCertAttribute(_orgCert.Subject, "G");
-                    string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
-                    string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
-                    string signerLastName = utils.ParseCertAttribute(_orgCert.Subject, "SN");
-
-                    var signer = new[]
+                    Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle[] signer;
+                    if (string.IsNullOrEmpty(_currentOrganization.EmchdId))
                     {
+                        var firstMiddleName = utils.ParseCertAttribute(_currentOrganization.Certificate.Subject, "G");
+                        string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                        string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+                        string signerLastName = utils.ParseCertAttribute(_currentOrganization.Certificate.Subject, "SN");
+
+                        signer = new[]
+                        {
                     new Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle
                     {
                         SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
                         FirstName = signerFirstName,
                         MiddleName = signerMiddleName,
                         LastName = signerLastName,
-                        SignerOrganizationName = utils.ParseCertAttribute(_orgCert.Subject, "CN"),
+                        SignerOrganizationName = utils.ParseCertAttribute(_currentOrganization.Certificate.Subject, "CN"),
                         Inn = orgInn,
-                        Position = utils.ParseCertAttribute(_orgCert.Subject, "T")
+                        Position = utils.ParseCertAttribute(_currentOrganization.Certificate.Subject, "T")
                     }
                 };
+                    }
+                    else
+                    {
+                        signer = new[]
+                        {
+                            new Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle
+                            {
+                                SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                                FirstName = _currentOrganization.EmchdPersonName,
+                                MiddleName = _currentOrganization.EmchdPersonPatronymicSurname,
+                                LastName = _currentOrganization.EmchdPersonSurname,
+                                SignerOrganizationName = _currentOrganization.Name,
+                                Inn = orgInn,
+                                Position = _currentOrganization.EmchdPersonPosition
+                            }
+                        };
+                    }
+
                     correctionDocument.UseSignerDetails(signer);
 
-                    correctionDocument.DocumentCreator = signerLastName + " " + firstMiddleName;
+                    correctionDocument.DocumentCreator = $"{signer.First().LastName} {signer.First().FirstName} {signer.First().MiddleName}";
 
                     var itemDetails = new List<Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItem>();
                     foreach (var detail in Details)
@@ -354,7 +379,7 @@ namespace KonturEdoClient.Models
                             function, version, 0, correctionDocument);
 
                     loadContext.Text = "Подписание документа.";
-                    var crypt = new Cryptography.WinApi.WinApiCryptWrapper(_orgCert);
+                    var crypt = new Cryptography.WinApi.WinApiCryptWrapper(_currentOrganization.Certificate);
                     var signature = crypt.Sign(generatedFile.Content, true);
 
                     loadContext.Text = "Отправка документа.";

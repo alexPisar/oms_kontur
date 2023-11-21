@@ -3036,7 +3036,7 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization.Certificate, SelectedDocument);
+            var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization, SelectedDocument);
             correctionDocumentsModel.Documents = new System.Collections.ObjectModel.ObservableCollection<UniversalCorrectionDocument>(docsCollection);
 
             var correctionDocumentsWindow = new ShowCorrectionDocumentsWindow();
