@@ -382,7 +382,56 @@ namespace EdiProcessingUnit.Edo
             };
 
             if(powerOfAttorneyToPost != null)
-                documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+            {
+                var powerOfAttorneyStatus = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>(() => 
+                {
+                    return _api.PrevalidatePowerOfAttorney(_authToken, ourBoxId ?? _actualBoxId, 
+                        powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                        {
+                            ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
+                            {
+                                Content = new Content_v3
+                                {
+                                    Content = _certificate.RawData
+                                }
+                            }
+                        });
+                }));
+
+                if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                    documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+                else if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
+                    powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                {
+                    var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
+
+                    if((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                    {
+                        errorText = errorText + "Список ошибок:\r\n";
+
+                        foreach(var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                        {
+                            errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                        }
+                    }
+
+                    throw new Exception(errorText);
+                }
+                else
+                {
+                    if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                    {
+                        var errorText = "Список ошибок:\r\n";
+
+                        foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                        {
+                            errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                        }
+                        throw new Exception(errorText);
+                    }
+                }
+            }
 
             documentAttachment.Comment = comment;
             documentAttachment.CustomDocumentId = customDocumentId;
