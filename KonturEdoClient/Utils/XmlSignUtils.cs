@@ -66,12 +66,25 @@ namespace KonturEdoClient.Utils
 
             if (isSign)
             {
+                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
+
+                if (!string.IsNullOrEmpty(sender.EmchdId))
+                    powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                    {
+                        UseDefault = false,
+                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                        {
+                            RegistrationNumber = sender.EmchdId,
+                            IssuerInn = sender.Inn
+                        }
+                    };
+
                 byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                 message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
                     receiver.OrgId, false,
                     generatedFile.Content,
-                    "СЧФДОП", signature);
+                    "СЧФДОП", signature, powerOfAttorneyToPost);
             }
             else
             {

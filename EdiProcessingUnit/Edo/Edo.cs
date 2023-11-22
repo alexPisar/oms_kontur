@@ -320,7 +320,8 @@ namespace EdiProcessingUnit.Edo
             bool isOurRecipient,
             byte[] xmlContent,
             string function,
-            byte[] signature = null, 
+            byte[] signature = null,
+            PowerOfAttorneyToPost powerOfAttorneyToPost = null,
             string comment=null, 
             string customDocumentId = null)
         {
@@ -362,11 +363,12 @@ namespace EdiProcessingUnit.Edo
             }
 
             return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd820_05_01_01_hyphen",
-                xmlContent, signature, comment, customDocumentId);
+                xmlContent, signature, comment, customDocumentId, powerOfAttorneyToPost);
         }
 
         public Message SendDocumentAttachment(string ourBoxId, string counteragentBoxId, string typeNameId, string function, string version,
-            byte[] xmlContent, byte[] signature = null, string comment = null, string customDocumentId = null, string initialMessageId = null, string initialEntityId = null)
+            byte[] xmlContent, byte[] signature = null, string comment = null, string customDocumentId = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null, 
+            string initialMessageId = null, string initialEntityId = null)
         {
             var documentAttachment = new DocumentAttachment
             {
@@ -378,6 +380,9 @@ namespace EdiProcessingUnit.Edo
                     Content = xmlContent
                 }
             };
+
+            if(powerOfAttorneyToPost != null)
+                documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
 
             documentAttachment.Comment = comment;
             documentAttachment.CustomDocumentId = customDocumentId;
@@ -507,7 +512,7 @@ namespace EdiProcessingUnit.Edo
             return message;
         }
 
-        public MessagePatch SendPatchRecipientXmlDocument(string messageId, int docType, string entityId, byte[] content, byte[] signature = null)
+        public MessagePatch SendPatchRecipientXmlDocument(string messageId, int docType, string entityId, byte[] content, byte[] signature = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var recipientAttachment = new RecipientTitleAttachment
             {
@@ -520,6 +525,9 @@ namespace EdiProcessingUnit.Edo
 
             if (signature != null)
                 recipientAttachment.SignedContent.Signature = signature;
+
+            if (powerOfAttorneyToPost != null)
+                recipientAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
 
             var messageToPost = new MessagePatchToPost
             {
@@ -548,7 +556,7 @@ namespace EdiProcessingUnit.Edo
             return _api.GenerateRevocationRequestXml(_authToken, _actualBoxId, messageId, entityId, revocationRequestInfo, "revocation_request_02");
         }
 
-        public void SendRevocationDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature)
+        public void SendRevocationDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var signatureAttachment = new RevocationRequestAttachment()
             {
@@ -560,6 +568,9 @@ namespace EdiProcessingUnit.Edo
                 }
             };
 
+            if (powerOfAttorneyToPost != null)
+                signatureAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
             var postMessage = new MessagePatchToPost
             {
                 BoxId = _actualBoxId,
@@ -570,7 +581,7 @@ namespace EdiProcessingUnit.Edo
             var messagePatch = CallApiSafe(new Func<MessagePatch>(() => _api.PostMessagePatch(_authToken, postMessage)));
         }
 
-        public MessagePatch SendPatchSignedDocument(string messageId, string parentEntityId, byte[] signature)
+        public MessagePatch SendPatchSignedDocument(string messageId, string parentEntityId, byte[] signature, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var messageToPost = new MessagePatchToPost
             {
@@ -578,11 +589,16 @@ namespace EdiProcessingUnit.Edo
                 MessageId = messageId
             };
 
-            messageToPost.AddSignature(new DocumentSignature
+            var documentSignature = new DocumentSignature
             {
                 ParentEntityId = parentEntityId,
                 Signature = signature
-            });
+            };
+
+            if (powerOfAttorneyToPost != null)
+                documentSignature.PowerOfAttorney = powerOfAttorneyToPost;
+
+            messageToPost.AddSignature(documentSignature);
 
             return CallApiSafe(new Func<MessagePatch>(() => { return _api.PostMessagePatch(_authToken, messageToPost); }));
         }
@@ -598,7 +614,7 @@ namespace EdiProcessingUnit.Edo
             return _api.GenerateSignatureRejectionXml(_authToken, _actualBoxId, messageId, entityId, xmlRejectionInfo);
         }
 
-        public void SendRejectionDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature)
+        public void SendRejectionDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var signatureRejectionAttachment = new XmlSignatureRejectionAttachment()
             {
@@ -609,6 +625,9 @@ namespace EdiProcessingUnit.Edo
                     Signature = signature
                 }
             };
+
+            if (powerOfAttorneyToPost != null)
+                signatureRejectionAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
 
             var postMessage = new MessagePatchToPost
             {

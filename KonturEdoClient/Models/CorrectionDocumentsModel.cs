@@ -383,10 +383,30 @@ namespace KonturEdoClient.Models
                     var signature = crypt.Sign(generatedFile.Content, true);
 
                     loadContext.Text = "Отправка документа.";
-                    var message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, generatedFile.Content, signature,
-                        null, null, baseProcessing.MessageId, baseProcessing.EntityId);
 
-                    if(message != null)
+                    Diadoc.Api.Proto.Events.Message message;
+                    if (!string.IsNullOrEmpty(_currentOrganization.EmchdId))
+                    {
+                        var powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                        {
+                            UseDefault = false,
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = _currentOrganization.EmchdId,
+                                IssuerInn = _currentOrganization.Inn
+                            }
+                        };
+
+                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, generatedFile.Content, signature,
+                            null, null, powerOfAttorneyToPost, baseProcessing.MessageId, baseProcessing.EntityId);
+                    }
+                    else
+                    {
+                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, generatedFile.Content, signature,
+                                null, null, null, baseProcessing.MessageId, baseProcessing.EntityId);
+                    }
+
+                    if (message != null)
                     {
                         loadContext.Text = "Сохранение в базе данных.";
 

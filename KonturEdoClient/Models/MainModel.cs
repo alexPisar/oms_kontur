@@ -1582,7 +1582,21 @@ namespace KonturEdoClient.Models
                     byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                     loadContext.Text = "Отправка приходного УПД";
-                    var message = Edo.GetInstance().SendXmlDocument(_consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature);
+
+                    Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+
+                    if (!string.IsNullOrEmpty(_consignor.EmchdId))
+                        consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                        {
+                            UseDefault = false,
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = _consignor.EmchdId,
+                                IssuerInn = _consignor.Inn
+                            }
+                        };
+
+                    var message = Edo.GetInstance().SendXmlDocument(_consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature, consignorPowerOfAttorneyToPost);
                     var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
 
                     loadContext.Text = "Обработка приходного УПД";
@@ -1594,8 +1608,22 @@ namespace KonturEdoClient.Models
 
                     crypt.InitializeCertificate(SelectedOrganization.Certificate);
                     var buyerSignature = crypt.Sign(generatedBuyerFile.Content, true);
+
+                    Diadoc.Api.Proto.Events.PowerOfAttorneyToPost selectedOrganizationPowerOfAttorneyToPost = null;
+
+                    if (!string.IsNullOrEmpty(SelectedOrganization.EmchdId))
+                        selectedOrganizationPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                        {
+                            UseDefault = false,
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = SelectedOrganization.EmchdId,
+                                IssuerInn = SelectedOrganization.Inn
+                            }
+                        };
+
                     Edo.GetInstance().SendPatchRecipientXmlDocument(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument, 
-                        entity.EntityId, generatedBuyerFile.Content, buyerSignature);
+                        entity.EntityId, generatedBuyerFile.Content, buyerSignature, selectedOrganizationPowerOfAttorneyToPost);
 
                     loadContext.Text = "Сохранение в базе данных.";
 
@@ -1833,7 +1861,20 @@ namespace KonturEdoClient.Models
                 if (document == null)
                     throw new Exception("Документ не найден в системе ЭДО.");
 
-                if(document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RequestsMyRevocation)
+                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
+
+                if (!string.IsNullOrEmpty(SelectedOrganization.EmchdId))
+                    powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                    {
+                        UseDefault = false,
+                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                        {
+                            RegistrationNumber = SelectedOrganization.EmchdId,
+                            IssuerInn = SelectedOrganization.Inn
+                        }
+                    };
+
+                if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RequestsMyRevocation)
                 {
                     var message = Edo.GetInstance().GetMessage(docProcessing.MessageId, docProcessing.EntityId, true);
                     var crypt = new Cryptography.WinApi.WinApiCryptWrapper(SelectedOrganization.Certificate);
@@ -1854,7 +1895,7 @@ namespace KonturEdoClient.Models
                     if(confirmAnnulmentWindow.Result == AnnulmentRequestDialogResult.Revoke)
                     {
                         var signature = crypt.Sign(entity.Content.Data, true);
-                        Edo.GetInstance().SendPatchSignedDocument(message.MessageId, entity.EntityId, signature);
+                        Edo.GetInstance().SendPatchSignedDocument(message.MessageId, entity.EntityId, signature, powerOfAttorneyToPost);
 
                         var fileNameLength = entity.FileName.LastIndexOf('.');
 
@@ -1942,7 +1983,7 @@ namespace KonturEdoClient.Models
 
                             loadContext.Text = "Подписание и отправка.";
                             var signature = crypt.Sign(generatedFile.Content, true);
-                            Edo.GetInstance().SendRejectionDocument(message.MessageId, entity.EntityId, generatedFile.Content, signature);
+                            Edo.GetInstance().SendRejectionDocument(message.MessageId, entity.EntityId, generatedFile.Content, signature, powerOfAttorneyToPost);
 
                             docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Rejected;
                             _abt.SaveChanges();
@@ -2050,7 +2091,7 @@ namespace KonturEdoClient.Models
 
                             loadContext.Text = "Подписание и отправка.";
                             var signature = crypt.Sign(generatedFile.Content, true);
-                            Edo.GetInstance().SendRevocationDocument(docProcessing.MessageId, docProcessing.EntityId, generatedFile.Content, signature);
+                            Edo.GetInstance().SendRevocationDocument(docProcessing.MessageId, docProcessing.EntityId, generatedFile.Content, signature, powerOfAttorneyToPost);
 
                             loadContext.Text = "Сохранение в базе.";
                             var fileNameLength = generatedFile.FileName.LastIndexOf('.');
@@ -2241,7 +2282,20 @@ namespace KonturEdoClient.Models
                     byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                     loadContext.Text = "Отправка УПД";
-                    var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, _consignor.OrgId, false, generatedFile.Content, "ДОП", signature);
+                    Diadoc.Api.Proto.Events.PowerOfAttorneyToPost selectedOrganizationPowerOfAttorneyToPost = null;
+
+                    if(!string.IsNullOrEmpty(SelectedOrganization.EmchdId))
+                        selectedOrganizationPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                        {
+                            UseDefault = false,
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = SelectedOrganization.EmchdId,
+                                IssuerInn = SelectedOrganization.Inn
+                            }
+                        };
+
+                    var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, _consignor.OrgId, false, generatedFile.Content, "ДОП", signature, selectedOrganizationPowerOfAttorneyToPost);
                     var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
 
                     loadContext.Text = "Обработка УПД";
@@ -2254,8 +2308,21 @@ namespace KonturEdoClient.Models
                     crypt.InitializeCertificate(_consignor.Certificate);
                     var buyerSignature = crypt.Sign(generatedBuyerFile.Content, true);
 
+                    Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+
+                    if (!string.IsNullOrEmpty(_consignor.EmchdId))
+                        consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                        {
+                            UseDefault = false,
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = _consignor.EmchdId,
+                                IssuerInn = _consignor.Inn
+                            }
+                        };
+
                     Edo.GetInstance().SendPatchRecipientXmlDocument(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
-                        entity.EntityId, generatedBuyerFile.Content, buyerSignature);
+                        entity.EntityId, generatedBuyerFile.Content, buyerSignature, consignorPowerOfAttorneyToPost);
                     Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
 
                     processingStatus.NumberOfReturnDocuments++;
