@@ -1209,16 +1209,7 @@ namespace KonturEdoClient.Models
                 if(org.Certificate == null || string.IsNullOrEmpty(org.EmchdPersonInn))
                 {
                     if (org.Certificate == null && !string.IsNullOrEmpty(org.EmchdPersonInn))
-                    {
-                        org.EmchdId = null;
-                        org.EmchdBeginDate = null;
-                        org.EmchdEndDate = null;
-                        org.EmchdPersonInn = null;
-                        org.EmchdPersonSurname = null;
-                        org.EmchdPersonName = null;
-                        org.EmchdPersonPatronymicSurname = null;
-                        org.EmchdPersonPosition = null;
-                    }
+                        org.SetNullEmchdValues();
 
                     var certs = personalCertificates.Where(c => org.Inn == _utils.GetOrgInnFromCertificate(c) && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
                     org.Certificate = certs.FirstOrDefault();

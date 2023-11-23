@@ -46,5 +46,17 @@ namespace EdiProcessingUnit.Edo.Models
         public string OrgId { get; set; }
 
         public string FnsParticipantId { get; set; }
+
+        public void SetNullEmchdValues()
+        {
+            this.EmchdId = null;
+            this.EmchdBeginDate = null;
+            this.EmchdEndDate = null;
+            this.EmchdPersonInn = null;
+            this.EmchdPersonSurname = null;
+            this.EmchdPersonName = null;
+            this.EmchdPersonPatronymicSurname = null;
+            this.EmchdPersonPosition = null;
+        }
     }
 }
