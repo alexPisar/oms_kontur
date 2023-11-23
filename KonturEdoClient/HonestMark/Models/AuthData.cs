@@ -7,15 +7,12 @@ using Newtonsoft.Json;
 
 namespace KonturEdoClient.HonestMark.Models
 {
-    public class AuthRequest
+    public class AuthData
     {
         [JsonProperty(PropertyName = "uuid")]
         public string Uid { get; set; }
 
         [JsonProperty(PropertyName = "data")]
         public string Data { get; set; }
-
-        [JsonProperty(PropertyName = "inn")]
-        public string Inn { get; set; }
     }
 }

@@ -956,7 +956,7 @@ namespace KonturEdoClient.Models
 
                         try
                         {
-                            HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate);
+                            HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
 
                             var docProcessingsForReprocessing = (from doc in _loadedDocuments[index]
                                                                  where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
@@ -1079,7 +1079,7 @@ namespace KonturEdoClient.Models
                         }
                         finally
                         {
-                            HonestMark.HonestMarkClient.GetInstance().Authorization(_consignor.Certificate);
+                            HonestMark.HonestMarkClient.GetInstance().Authorization(_consignor.Certificate, _consignor);
                         }
 
                         _log.Log($"Для организации {organization.Name} получено документов {_loadedDocuments[index].Count}");

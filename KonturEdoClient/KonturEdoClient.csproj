@@ -215,6 +215,7 @@
     <Compile Include="HonestMark\HonestMarkClient.cs" />
     <Compile Include="HonestMark\HonestMarkTokenCache.cs" />
     <Compile Include="HonestMark\IDocument.cs" />
+    <Compile Include="HonestMark\Models\AuthData.cs" />
     <Compile Include="HonestMark\Models\AuthRequest.cs" />
     <Compile Include="HonestMark\Models\AuthResult.cs" />
     <Compile Include="HonestMark\Models\DocumentEdoProcessResultInfo.cs" />

@@ -38,9 +38,14 @@ namespace KonturEdoClient.HonestMark
             return _instance;
         }
 
-        public bool Authorization(X509Certificate2 certificate)
+        public bool Authorization(X509Certificate2 certificate, EdiProcessingUnit.Edo.Models.Kontragent organization = null)
         {
-            var cache = new HonestMarkTokenCache().Load(certificate.Thumbprint);
+            HonestMarkTokenCache cache;
+
+            if(organization == null || string.IsNullOrEmpty(organization?.EmchdId))
+                cache = new HonestMarkTokenCache().Load(certificate.Thumbprint);
+            else
+                cache = new HonestMarkTokenCache().Load($"{organization.Inn}_{certificate.Thumbprint}");
 
             if (cache?.Token != null && cache?.TokenExpirationDate > DateTime.Now)
             {
@@ -49,7 +54,7 @@ namespace KonturEdoClient.HonestMark
                 return true;
             }
 
-            var authData = _webService.GetRequest<Models.AuthRequest>($"{Properties.Settings.Default.UrlAddressHonestMark}/auth/key");
+            var authData = _webService.GetRequest<Models.AuthData>($"{Properties.Settings.Default.UrlAddressHonestMark}/auth/key");
 
             var crypto = new WinApiCryptWrapper(certificate);
 
@@ -61,6 +66,9 @@ namespace KonturEdoClient.HonestMark
                 Uid = authData.Uid,
                 Data = Convert.ToBase64String(signature)
             };
+
+            if (organization != null && !string.IsNullOrEmpty(organization?.EmchdId))
+                authRequest.Inn = organization.Inn;
 
             var authRequestJson = JsonConvert.SerializeObject(authRequest);
 
@@ -81,7 +89,12 @@ namespace KonturEdoClient.HonestMark
                 TokenCreationDate = DateTime.Now,
                 TokenExpirationDate = DateTime.Now.AddHours(10)
             };
-            cache.Save(cache, certificate.Thumbprint);
+
+            if(organization == null || string.IsNullOrEmpty(organization?.EmchdId))
+                cache.Save(cache, certificate.Thumbprint);
+            else
+                cache.Save(cache, $"{organization.Inn}_{certificate.Thumbprint}");
+
             _certificate = certificate;
 
             return true;
