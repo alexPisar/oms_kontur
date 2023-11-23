@@ -1203,10 +1203,23 @@ namespace KonturEdoClient.Models
                 if (!string.IsNullOrEmpty(org.EmchdPersonInn))
                 {
                     var certs = personalCertificates.Where(c => org.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
-                    org.Certificate = certs.FirstOrDefault();
+                    org.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
                 }
-                else
+                
+                if(org.Certificate == null || string.IsNullOrEmpty(org.EmchdPersonInn))
                 {
+                    if (org.Certificate == null && !string.IsNullOrEmpty(org.EmchdPersonInn))
+                    {
+                        org.EmchdId = null;
+                        org.EmchdBeginDate = null;
+                        org.EmchdEndDate = null;
+                        org.EmchdPersonInn = null;
+                        org.EmchdPersonSurname = null;
+                        org.EmchdPersonName = null;
+                        org.EmchdPersonPatronymicSurname = null;
+                        org.EmchdPersonPosition = null;
+                    }
+
                     var certs = personalCertificates.Where(c => org.Inn == _utils.GetOrgInnFromCertificate(c) && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
                     org.Certificate = certs.FirstOrDefault();
                 }
