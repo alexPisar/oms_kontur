@@ -171,6 +171,21 @@ namespace KonturEdoClient.Models
 
                 if(Organizations.Count == 0)
                     SetMyOrganizations();
+                else
+                {
+                    var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+                    var customers = from cust in _abt.RefCustomers
+                                    join refUser in _abt.RefUsersByOrgEdo
+                                    on cust.Id equals refUser.IdCustomer
+                                    where refUser.UserName == dataBaseUser
+                                    select cust;
+
+                    foreach (var org in Organizations)
+                        org.Kpp = customers?.FirstOrDefault(c => c.Inn == org.Inn)?.Kpp;
+
+                    SelectedOrganization = null;
+                    OnAllPropertyChanged();
+                }
             }
             else
                 _abt = new AbtDbContext();
@@ -3038,6 +3053,21 @@ namespace KonturEdoClient.Models
 
                 if (Organizations.Count == 0)
                     SetMyOrganizations();
+                else
+                {
+                    var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+                    var customers = from cust in _abt.RefCustomers
+                                    join refUser in _abt.RefUsersByOrgEdo
+                                    on cust.Id equals refUser.IdCustomer
+                                    where refUser.UserName == dataBaseUser
+                                    select cust;
+
+                    foreach (var org in Organizations)
+                        org.Kpp = customers?.FirstOrDefault(c => c.Inn == org.Inn)?.Kpp;
+
+                    SelectedOrganization = null;
+                    OnAllPropertyChanged();
+                }
             }
             else
                 _abt = new AbtDbContext();
