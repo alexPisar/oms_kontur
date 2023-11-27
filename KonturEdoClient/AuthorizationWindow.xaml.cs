@@ -29,7 +29,6 @@ namespace KonturEdoClient
     {
         WinApiCryptWrapper _crypto;
         UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
-        X509Certificate2 _consignorCertificate;
         private AbtDbContext _abtDbContext;
 
         public AuthorizationWindow()
@@ -69,63 +68,6 @@ namespace KonturEdoClient
 
             try
             {
-                bool authInHonestMark = false;
-                if (_consignorCertificate == null)
-                {
-                    var crypto = new WinApiCryptWrapper();
-
-                    var personalCertificates = crypto.GetAllGostPersonalCertificates();
-                    var consignorInn = Config.GetInstance().ConsignorInn;
-
-                    var certs = personalCertificates.Where(c => consignorInn == utils.GetOrgInnFromCertificate(c) && utils.IsCertificateValid(c) && c.NotAfter > DateTime.Now).OrderByDescending(c => c.NotBefore);
-                    _consignorCertificate = certs.FirstOrDefault();
-
-                    if (_consignorCertificate == null)
-                        throw new Exception("Не найден сертификат Комитента.");
-                }
-
-                try
-                {
-                    authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(_consignorCertificate);
-
-                    if (!authInHonestMark)
-                        throw new Exception("Не удалось авторизоваться в честном знаке");
-                }
-                catch (System.Net.WebException webEx)
-                {
-                    var errorWindow = new ErrorWindow(
-                        "Произошла ошибка авторизации в Честном знаке на удалённом сервере.",
-                        new List<string>(
-                            new string[]
-                            {
-                                    webEx.Message,
-                                    webEx.StackTrace
-                            }
-                            ));
-
-                    errorWindow.ShowDialog();
-                    _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(webEx));
-                    authInHonestMark = false;
-                }
-                catch (Exception ex)
-                {
-                    var errorWindow = new ErrorWindow(
-                        "Произошла ошибка авторизации в Честном знаке.",
-                        new List<string>(
-                            new string[]
-                            {
-                                    ex.Message,
-                                    ex.StackTrace
-                            }
-                            ));
-
-                    errorWindow.ShowDialog();
-                    _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(ex));
-                    authInHonestMark = false;
-                }
-
-                _log.Log($"Результат авторизации в честном знаке: {authInHonestMark.ToString()}");
-
                 ((Config)DataContext).GenerateParametersForPassword();
                 ((Config)DataContext).SetDataBasePassword(authPassword.Text);
 
@@ -138,7 +80,7 @@ namespace KonturEdoClient
                 _abtDbContext.ExecuteProcedure("DBMS_APPLICATION_INFO.set_client_info", new Oracle.ManagedDataAccess.Client.OracleParameter("client_info", appVersion));
 
                 MainWindow mainWindow = new MainWindow();
-                MainModel mainModel = new MainModel(_abtDbContext, _consignorCertificate, utils, authInHonestMark);
+                MainModel mainModel = new MainModel(_abtDbContext, utils);
 
                 if (mainModel.Filials.Count == 0)
                     mainWindow.ChangeFilialsBar.IsVisible = false;

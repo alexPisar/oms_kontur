@@ -24,6 +24,7 @@ namespace KonturEdoClient.Models
         private EdiProcessingUnit.UsersConfig _config;
         private Kontragent _consignor;
         private bool _authInHonestMark;
+        private List<X509Certificate2> _personalCertificates = null;
 
         public RelayCommand RefreshCommand => new RelayCommand((o) => { Refresh(); });
         public RelayCommand LoadXmlCommand => new RelayCommand((o) => { LoadXml(); });
@@ -64,7 +65,7 @@ namespace KonturEdoClient.Models
         public List<UniversalTransferDocumentDetail> DocumentDetails { get; set; }
         public UniversalTransferDocumentDetail SelectedDetail { get; set; }
 
-        public MainModel(AbtDbContext abt, X509Certificate2 consignorCertificate = null, Utils.XmlSignUtils utils = null, bool authInHonestMark = false)
+        public MainModel(AbtDbContext abt, Utils.XmlSignUtils utils = null)
         {
             _loadContext = new LoadModel();
             Organizations = new List<Kontragent>();
@@ -76,12 +77,49 @@ namespace KonturEdoClient.Models
             SetPermissions();
             SetMyOrganizations();
 
-            _consignor = Edo.GetInstance().GetKontragentByInnKpp(UtilitesLibrary.ConfigSet.Config.GetInstance().ConsignorInn);
+            _consignor = GetMyKontragent(UtilitesLibrary.ConfigSet.Config.GetInstance().ConsignorInn);
 
-            if (consignorCertificate != null)
-                _consignor.Certificate = consignorCertificate;
+            try
+            {
+                _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(_consignor.Certificate, _consignor);
 
-            _authInHonestMark = authInHonestMark;
+                if (!_authInHonestMark)
+                    throw new Exception("Не удалось авторизоваться в честном знаке");
+            }
+            catch (System.Net.WebException webEx)
+            {
+                var errorWindow = new ErrorWindow(
+                    "Произошла ошибка авторизации в Честном знаке на удалённом сервере.",
+                    new List<string>(
+                        new string[]
+                        {
+                                    webEx.Message,
+                                    webEx.StackTrace
+                        }
+                        ));
+
+                errorWindow.ShowDialog();
+                _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(webEx));
+                _authInHonestMark = false;
+            }
+            catch (Exception ex)
+            {
+                var errorWindow = new ErrorWindow(
+                    "Произошла ошибка авторизации в Честном знаке.",
+                    new List<string>(
+                        new string[]
+                        {
+                                    ex.Message,
+                                    ex.StackTrace
+                        }
+                        ));
+
+                errorWindow.ShowDialog();
+                _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(ex));
+                _authInHonestMark = false;
+            }
+
+            _log.Log($"Результат авторизации в честном знаке: {_authInHonestMark.ToString()}");
         }
 
         public void SetOwner(System.Windows.Window owner)
@@ -678,6 +716,49 @@ namespace KonturEdoClient.Models
             return document;
         }
 
+        public Kontragent GetMyKontragent(string inn, string kpp = null)
+        {
+            var kontragent = Edo.GetInstance().GetKontragentByInnKpp(inn, kpp);
+
+            List<X509Certificate2> personalCertificates = GetPersonalCertificates();
+
+            var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+            var authoritySignDocuments = (from cust in _abt.RefCustomers
+                            where cust.Inn == inn && (cust.Kpp == kpp || kpp == null)
+                            join a in _abt.RefAuthoritySignDocuments
+                            on cust.Id equals a.IdCustomer
+                            select a)?.FirstOrDefault();
+
+            if(authoritySignDocuments != null && !string.IsNullOrEmpty(authoritySignDocuments?.EmchdId))
+            {
+                kontragent.Certificate = personalCertificates
+                    .Where(c => authoritySignDocuments.Inn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c))
+                    .OrderByDescending(c => c.NotBefore).FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
+                kontragent.EmchdId = authoritySignDocuments.EmchdId;
+                kontragent.EmchdBeginDate = authoritySignDocuments.EmchdBeginDate;
+                kontragent.EmchdEndDate = authoritySignDocuments.EmchdEndDate;
+                kontragent.EmchdPersonInn = authoritySignDocuments.Inn;
+                kontragent.EmchdPersonSurname = authoritySignDocuments.Surname;
+                kontragent.EmchdPersonName = authoritySignDocuments.Name;
+                kontragent.EmchdPersonPatronymicSurname = authoritySignDocuments.PatronymicSurname;
+                kontragent.EmchdPersonPosition = authoritySignDocuments.Position;
+            }
+            
+            if(kontragent.Certificate == null || string.IsNullOrEmpty(authoritySignDocuments?.EmchdId))
+            {
+                kontragent.Certificate = personalCertificates
+                    .Where(c => inn == _utils.GetOrgInnFromCertificate(c) && _utils.IsCertificateValid(c))
+                    .OrderByDescending(c => c.NotBefore).FirstOrDefault();
+
+                kontragent.SetNullEmchdValues();
+            }
+
+            if (kontragent.Certificate == null)
+                throw new Exception($"Не найден сертификат организации с ИНН {kontragent.Inn}.");
+
+            return kontragent;
+        }
+
         public async void GetDocuments(bool loadOnlyUnsentDocuments = false)
         {
             _log.Log($"GetDocuments: загрузка документов");
@@ -1211,7 +1292,7 @@ namespace KonturEdoClient.Models
                 };
             }).ToList();
 
-            List < X509Certificate2 > personalCertificates = GetPersonalCertificates().Where(c => c.NotAfter > DateTime.Now)?.ToList() ?? new List<X509Certificate2>();
+            List < X509Certificate2 > personalCertificates = GetPersonalCertificates();
 
             foreach (var org in orgs)
             {
@@ -1286,10 +1367,11 @@ namespace KonturEdoClient.Models
             _log.Log("GetPersonalCertificates: загрузка сертификатов из хранилища Личные.");
             var crypto = new Cryptography.WinApi.WinApiCryptWrapper();
 
-            var certificates = crypto.GetAllGostPersonalCertificates();
+            if(_personalCertificates == null)
+                _personalCertificates = crypto.GetAllGostPersonalCertificates()?.Where(c => c.NotAfter > DateTime.Now)?.ToList();
 
             _log.Log("GetPersonalCertificates: выполнено.");
-            return certificates;
+            return _personalCertificates;
         }
 
         private void LoadXml()
