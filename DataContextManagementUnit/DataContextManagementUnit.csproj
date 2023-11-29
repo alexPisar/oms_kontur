@@ -125,6 +125,7 @@
     <Compile Include="DataAccess\Entities\RefOrderStatus.cs" />
     <Compile Include="DataAccess\Entities\RefShoppingStore.cs" />
     <Compile Include="DataAccess\Entities\RefStore.cs" />
+    <Compile Include="DataAccess\Entities\RefSubdivision.cs" />
     <Compile Include="DataAccess\Entities\RefUserByOrgEdo.cs" />
     <Compile Include="DataAccess\Entities\RefUserEdoPermissions.cs" />
     <Compile Include="DataAccess\Entities\ViewInvoicDetail.cs" />
@@ -172,6 +173,7 @@
     <Compile Include="DataAccess\Mappings\RefPriceTypeConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefShoppingStoreConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefStoreConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefSubdivisionConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefUserByOrgEdoConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\ViewInvoicDetailConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\ViewInvoicHeadConfiguration.cs" />
