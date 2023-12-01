@@ -673,11 +673,11 @@ namespace KonturEdoClient.Models
             return document;
         }
 
-        public Kontragent TryGetConsignorFromDocument(UniversalTransferDocument document)
+        public Kontragent TryGetConsignorFromDocument(UniversalTransferDocument document, IEnumerable<DocGoodsDetailsLabels> labels = null)
         {
             try
             {
-                var kontragent = GetConsignorFromDocument(document);
+                var kontragent = GetConsignorFromDocument(document, labels);
                 return kontragent;
             }
             catch (System.Net.WebException webEx)
@@ -731,9 +731,17 @@ namespace KonturEdoClient.Models
             return consignor;
         }
 
-        public Kontragent GetConsignorFromDocument(UniversalTransferDocument document)
+        public Kontragent GetConsignorFromDocument(UniversalTransferDocument document, IEnumerable<DocGoodsDetailsLabels> labels = null)
         {
             var idSubdivision = document?.IdSubdivision;
+
+            if (labels != null && document.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
+            {
+                idSubdivision = (from l in labels
+                                join d in document.DocJournal.Details
+                                on l.IdGood equals d.IdGood
+                                select d.Good.IdSubdivision).FirstOrDefault();
+            }
 
             if (idSubdivision == null)
                 throw new Exception("Не найдена организация");
@@ -1738,7 +1746,7 @@ namespace KonturEdoClient.Models
 
                 worker.DoWork += (object sender, System.ComponentModel.DoWorkEventArgs e) =>
                 {
-                    var consignor = GetConsignorFromDocument(SelectedDocument);
+                    var consignor = GetConsignorFromDocument(SelectedDocument, labels);
 
                     if (consignor == null)
                         throw new Exception("Не найден комитент.");
@@ -2370,7 +2378,7 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var consignor = TryGetConsignorFromDocument(SelectedDocument);
+            var consignor = TryGetConsignorFromDocument(SelectedDocument, (sender as MarkedCodesWindow)?.SelectedCodes);
 
             if (consignor == null)
                 return;
