@@ -49,6 +49,19 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public decimal? IdSubdivision
+        {
+            get {
+                if (_docJournal == null)
+                    return null;
+
+                if (_docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                    return _docJournal?.DocMaster?.DocGoods?.IdSubdivision;
+                else
+                    return _docJournal?.DocGoods?.IdSubdivision;
+            }
+        }
+
         public object RefEdoGoodChannel
         {
             set {

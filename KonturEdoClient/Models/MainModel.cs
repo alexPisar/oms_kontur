@@ -22,7 +22,7 @@ namespace KonturEdoClient.Models
         private List<UniversalTransferDocument>[] _loadedDocuments;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
         private EdiProcessingUnit.UsersConfig _config;
-        private Kontragent _consignor;
+        private Dictionary<decimal, Kontragent> _consignors;
         private bool _authInHonestMark;
         private List<X509Certificate2> _personalCertificates = null;
 
@@ -76,50 +76,7 @@ namespace KonturEdoClient.Models
             SetDocTypes();
             SetPermissions();
             SetMyOrganizations();
-
-            _consignor = GetMyKontragent(UtilitesLibrary.ConfigSet.Config.GetInstance().ConsignorInn);
-
-            try
-            {
-                _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(_consignor.Certificate, _consignor);
-
-                if (!_authInHonestMark)
-                    throw new Exception("Не удалось авторизоваться в честном знаке");
-            }
-            catch (System.Net.WebException webEx)
-            {
-                var errorWindow = new ErrorWindow(
-                    "Произошла ошибка авторизации в Честном знаке на удалённом сервере.",
-                    new List<string>(
-                        new string[]
-                        {
-                                    webEx.Message,
-                                    webEx.StackTrace
-                        }
-                        ));
-
-                errorWindow.ShowDialog();
-                _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(webEx));
-                _authInHonestMark = false;
-            }
-            catch (Exception ex)
-            {
-                var errorWindow = new ErrorWindow(
-                    "Произошла ошибка авторизации в Честном знаке.",
-                    new List<string>(
-                        new string[]
-                        {
-                                    ex.Message,
-                                    ex.StackTrace
-                        }
-                        ));
-
-                errorWindow.ShowDialog();
-                _log.Log("Ошибка авторизации в Честном знаке: " + _log.GetRecursiveInnerException(ex));
-                _authInHonestMark = false;
-            }
-
-            _log.Log($"Результат авторизации в честном знаке: {_authInHonestMark.ToString()}");
+            _consignors = new Dictionary<decimal, Kontragent>();
         }
 
         public void SetOwner(System.Windows.Window owner)
@@ -716,13 +673,117 @@ namespace KonturEdoClient.Models
             return document;
         }
 
+        public Kontragent TryGetConsignorFromDocument(UniversalTransferDocument document)
+        {
+            try
+            {
+                var kontragent = GetConsignorFromDocument(document);
+                return kontragent;
+            }
+            catch (System.Net.WebException webEx)
+            {
+                var errorWindow = new ErrorWindow(
+                    "Произошла ошибка на удалённом сервере.",
+                    new List<string>(
+                        new string[]
+                        {
+                                    webEx.Message,
+                                    webEx.StackTrace
+                        }
+                        ));
+
+                errorWindow.ShowDialog();
+                _log.Log("Ошибка на удалённом сервере: " + _log.GetRecursiveInnerException(webEx));
+                return null;
+            }
+            catch (Exception ex)
+            {
+                var errorWindow = new ErrorWindow(
+                    "Произошла ошибка поиска комитента.",
+                    new List<string>(
+                        new string[]
+                        {
+                                    ex.Message,
+                                    ex.StackTrace
+                        }
+                        ));
+
+                errorWindow.ShowDialog();
+                _log.Log("Ошибка поиска комитента: " + _log.GetRecursiveInnerException(ex));
+                return null;
+            }
+            finally
+            {
+                _log.Log($"Результат авторизации в честном знаке: {_authInHonestMark.ToString()}");
+            }
+        }
+
+        public RefCustomer GetConsignor(decimal idSubdivision)
+        {
+            var consignor = (from s in _abt.RefSubdivisions where s.Id == idSubdivision
+                             join c in _abt.RefContractors on s.OldId equals c.Id
+                             where c.DefaultCustomer != null join r in _abt.RefCustomers
+                             on c.DefaultCustomer equals r.Id select r)?.FirstOrDefault();
+
+            if (consignor == null)
+                throw new Exception("Не найден комитент");
+
+            return consignor;
+        }
+
+        public Kontragent GetConsignorFromDocument(UniversalTransferDocument document)
+        {
+            var idSubdivision = document?.IdSubdivision;
+
+            if (idSubdivision == null)
+                throw new Exception("Не найдена организация");
+
+            Kontragent kontragent = null;
+
+            if (_consignors.Any(c => c.Key == idSubdivision.Value))
+            {
+                kontragent = _consignors.First(c => c.Key == idSubdivision.Value).Value;
+            }
+            else
+            {
+                RefCustomer consignor = GetConsignor(idSubdivision.Value);
+
+                if (consignor == null)
+                    throw new Exception("Не найден комитент");
+
+                kontragent = GetMyKontragent(consignor.Inn, consignor.Kpp);
+
+                if (kontragent == null)
+                    throw new Exception("Не найден контрагент");
+
+                _consignors.Add(idSubdivision.Value, kontragent);
+            }
+
+            if (kontragent == null)
+                throw new Exception("Не найден контрагент");
+
+            try
+            {
+                _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(kontragent.Certificate, kontragent);
+            }
+            catch (Exception ex)
+            {
+                _authInHonestMark = false;
+                throw ex;
+            }
+
+            if (!_authInHonestMark)
+                throw new Exception("Не удалось авторизоваться в честном знаке");
+
+            return kontragent;
+        }
+
         public Kontragent GetMyKontragent(string inn, string kpp = null)
         {
             var kontragent = Edo.GetInstance().GetKontragentByInnKpp(inn, kpp);
 
             List<X509Certificate2> personalCertificates = GetPersonalCertificates();
 
-            var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
             var authoritySignDocuments = (from cust in _abt.RefCustomers
                             where cust.Inn == inn && (cust.Kpp == kpp || kpp == null)
                             join a in _abt.RefAuthoritySignDocuments
@@ -932,6 +993,21 @@ namespace KonturEdoClient.Models
                             continue;
                         }
 
+                        Exception authInHonestMarkException = null;
+                        try
+                        {
+                            _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
+
+                            if (!_authInHonestMark)
+                                _log.Log("Не удалось авторизоваться в Честном знаке");
+                        }
+                        catch (Exception ex)
+                        {
+                            _authInHonestMark = false;
+                            _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(exception)}");
+                            authInHonestMarkException = ex;
+                        }
+
                         var docProcessings = from doc in _loadedDocuments[index]
                                              where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
                                              ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent
@@ -1043,7 +1119,7 @@ namespace KonturEdoClient.Models
                             }
                         }
 
-                        if (!_authInHonestMark)
+                        if (authInHonestMarkException == null && !_authInHonestMark)
                         {
                             _log.Log($"Для организации {organization.Name} получено документов {_loadedDocuments[index].Count}");
                             index++;
@@ -1052,7 +1128,8 @@ namespace KonturEdoClient.Models
 
                         try
                         {
-                            HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
+                            if (authInHonestMarkException != null)
+                                throw authInHonestMarkException;
 
                             var docProcessingsForReprocessing = (from doc in _loadedDocuments[index]
                                                                  where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
@@ -1172,10 +1249,6 @@ namespace KonturEdoClient.Models
                             string errorMessage = $"Произошла ошибка. \nException: {_log.GetRecursiveInnerException(ex)}";
                             _log.Log(errorMessage);
                             errorsList.Add(ex);
-                        }
-                        finally
-                        {
-                            HonestMark.HonestMarkClient.GetInstance().Authorization(_consignor.Certificate, _consignor);
                         }
 
                         _log.Log($"Для организации {organization.Name} получено документов {_loadedDocuments[index].Count}");
@@ -1514,7 +1587,7 @@ namespace KonturEdoClient.Models
                     sendModel.IsReceivedMarkData = ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus)?.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed ||
                         ((DocComissionEdoProcessing)SelectedDocument.ProcessingStatus)?.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent;
 
-                    if (_consignor.Certificate != null && !sendModel.IsReceivedMarkData)
+                    if (!sendModel.IsReceivedMarkData)
                         sendModel.BeforeSendEventHandler += (object s, EventArgs e) => { SendComissionDocumentForHonestMark(s); };
                 }
 
@@ -1605,9 +1678,6 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (_consignor.Certificate == null)
-                return;
-
             try
             {
                 bool isSentData = false;
@@ -1648,8 +1718,6 @@ namespace KonturEdoClient.Models
                 if (!isSentData)
                     throw new Exception("Попытка отправки данных в Честный знак была отвергнута пользователем.");
 
-                var crypt = new Cryptography.WinApi.WinApiCryptWrapper(_consignor.Certificate);
-
                 var loadContext = new LoadModel();
                 var loadWindow = new LoadWindow();
                 loadWindow.DataContext = loadContext;
@@ -1670,10 +1738,19 @@ namespace KonturEdoClient.Models
 
                 worker.DoWork += (object sender, System.ComponentModel.DoWorkEventArgs e) =>
                 {
-                    string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
-                    var document = CreateShipmentDocument(SelectedDocument.DocJournal, _consignor, SelectedOrganization, labels, SelectedDocument.DocJournal?.Code, employee);
+                    var consignor = GetConsignorFromDocument(SelectedDocument);
 
-                    Edo.GetInstance().Authenticate(false, _consignor.Certificate, _consignor.Inn);
+                    if (consignor == null)
+                        throw new Exception("Не найден комитент.");
+
+                    if (consignor.Certificate == null)
+                        throw new Exception("Не найден сертификат комитента.");
+
+                    var crypt = new Cryptography.WinApi.WinApiCryptWrapper(consignor.Certificate);
+                    string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
+                    var document = CreateShipmentDocument(SelectedDocument.DocJournal, consignor, SelectedOrganization, labels, SelectedDocument.DocJournal?.Code, employee);
+
+                    Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
 
                     loadContext.Text = "Формирование приходного УПД";
                     var generatedFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
@@ -1686,18 +1763,18 @@ namespace KonturEdoClient.Models
 
                     Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
 
-                    if (!string.IsNullOrEmpty(_consignor.EmchdId))
+                    if (!string.IsNullOrEmpty(consignor.EmchdId))
                         consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
                         {
                             UseDefault = false,
                             FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                             {
-                                RegistrationNumber = _consignor.EmchdId,
-                                IssuerInn = _consignor.Inn
+                                RegistrationNumber = consignor.EmchdId,
+                                IssuerInn = consignor.Inn
                             }
                         };
 
-                    var message = Edo.GetInstance().SendXmlDocument(_consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature, consignorPowerOfAttorneyToPost);
+                    var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature, consignorPowerOfAttorneyToPost);
                     var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
 
                     loadContext.Text = "Обработка приходного УПД";
@@ -1739,7 +1816,7 @@ namespace KonturEdoClient.Models
                         MessageId = message.MessageId,
                         EntityId = entity.EntityId,
                         IdDoc = SelectedDocument.CurrentDocJournalId,
-                        SenderInn = _consignor.Inn,
+                        SenderInn = consignor.Inn,
                         ReceiverInn = SelectedOrganization.Inn,
                         DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
@@ -1758,7 +1835,10 @@ namespace KonturEdoClient.Models
                 worker.RunWorkerCompleted += (object sender, System.ComponentModel.RunWorkerCompletedEventArgs e) => 
                 {
                     if (e.Error != null)
+                    {
+                        loadWindow.Close();
                         throw e.Error;
+                    }
 
                     if (model as SendModel != null)
                         ((SendModel)model).ComissionDocument = docProcessing;
@@ -1825,13 +1905,6 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (!_authInHonestMark)
-            {
-                System.Windows.MessageBox.Show(
-                    "Повторная обработка невозможна, так как авторизация в Честном знаке не была успешной.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-
             if (_abt.DocComissionEdoProcessings.Any(d => d.IdDoc == SelectedDocument.CurrentDocJournalId && d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed))
             {
                 System.Windows.MessageBox.Show(
@@ -1857,6 +1930,18 @@ namespace KonturEdoClient.Models
 
             try
             {
+                var consignor = TryGetConsignorFromDocument(SelectedDocument);
+
+                if (!_authInHonestMark)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Повторная обработка невозможна, так как авторизация в Честном знаке не была успешной.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                if (consignor == null)
+                    return;
+
                 HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(processingComissionStatus.FileName);
 
                 processingComissionStatus.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent;
@@ -2277,19 +2362,24 @@ namespace KonturEdoClient.Models
 
         private void ReturnMarkedCodesToStore(object sender, EventArgs e)
         {
-            if (!_authInHonestMark)
-            {
-                if(System.Windows.MessageBox.Show(
-                    "Авторизация в Честном знаке не была успешной.\nПоэтому невозможно проверить коды на владельцев в Честном знаке.\nВы хотите отправить обратно коды?", "Ошибка", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
-                return;
-            }
-
             if (SelectedDocument.ProcessingStatus == null)
             {
                 System.Windows.MessageBox.Show(
                     "Документ с данными кодами маркировки не был ранее отправлен.\n" +
                     "Поэтому по ним невозможно осуществить возврат.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
+            }
+
+            var consignor = TryGetConsignorFromDocument(SelectedDocument);
+
+            if (consignor == null)
+                return;
+
+            if (!_authInHonestMark)
+            {
+                if (System.Windows.MessageBox.Show(
+                    "Авторизация в Честном знаке не была успешной.\nПоэтому невозможно проверить коды на владельцев в Честном знаке.\nВы хотите отправить обратно коды?", "Ошибка", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+                    return;
             }
 
             var processingStatus = (DocComissionEdoProcessing)SelectedDocument.ProcessingStatus;
@@ -2333,7 +2423,7 @@ namespace KonturEdoClient.Models
             {
                 var markedCodesInfo = HonestMark.HonestMarkClient.GetInstance()
                     .GetMarkCodesInfo(HonestMark.ProductGroupsEnum.None, labels.Select(l => l.DmLabel).ToArray())
-                    .Where(m => m?.CisInfo?.OwnerInn != _consignor.Inn);
+                    .Where(m => m?.CisInfo?.OwnerInn != consignor.Inn);
 
                 if(markedCodesInfo.Any(m => m?.CisInfo?.OwnerInn != SelectedOrganization.Inn))
                 {
@@ -2367,7 +2457,7 @@ namespace KonturEdoClient.Models
                         documentNumber = $"{SelectedDocument.DocJournal.Code}-{numberOfReturnDocument}";
 
                     string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
-                    var document = CreateShipmentDocument(SelectedDocument.DocJournal, SelectedOrganization, _consignor, labelsForEdoSend, documentNumber, employee, true);
+                    var document = CreateShipmentDocument(SelectedDocument.DocJournal, SelectedOrganization, consignor, labelsForEdoSend, documentNumber, employee, true);
 
                     bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
 
@@ -2396,29 +2486,29 @@ namespace KonturEdoClient.Models
                             }
                         };
 
-                    var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, _consignor.OrgId, false, generatedFile.Content, "ДОП", signature, selectedOrganizationPowerOfAttorneyToPost);
+                    var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, consignor.OrgId, false, generatedFile.Content, "ДОП", signature, selectedOrganizationPowerOfAttorneyToPost);
                     var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
 
                     loadContext.Text = "Обработка УПД";
-                    Edo.GetInstance().Authenticate(false, _consignor.Certificate, _consignor.Inn);
+                    Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
 
-                    var buyerDocument = CreateBuyerShipmentDocument(_consignor);
+                    var buyerDocument = CreateBuyerShipmentDocument(consignor);
                     var generatedBuyerFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
                     "ДОП", "utd820_05_01_01_hyphen", 1, buyerDocument, message.MessageId, entity.EntityId);
 
-                    crypt.InitializeCertificate(_consignor.Certificate);
+                    crypt.InitializeCertificate(consignor.Certificate);
                     var buyerSignature = crypt.Sign(generatedBuyerFile.Content, true);
 
                     Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
 
-                    if (!string.IsNullOrEmpty(_consignor.EmchdId))
+                    if (!string.IsNullOrEmpty(consignor.EmchdId))
                         consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
                         {
                             UseDefault = false,
                             FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                             {
-                                RegistrationNumber = _consignor.EmchdId,
-                                IssuerInn = _consignor.Inn
+                                RegistrationNumber = consignor.EmchdId,
+                                IssuerInn = consignor.Inn
                             }
                         };
 
