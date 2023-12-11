@@ -432,7 +432,7 @@ namespace KonturEdoClient.Models
                 {
                     new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
                     {
-                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson,
                         FirstName = senderOrganization.EmchdPersonName,
                         MiddleName = senderOrganization.EmchdPersonPatronymicSurname,
                         LastName = senderOrganization.EmchdPersonSurname,
