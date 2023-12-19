@@ -716,6 +716,9 @@ namespace OMS.ViewModels
                 if (detail.IdGood == null)
                     continue;
 
+                if (detail.IsRemoved == "1")
+                    continue;
+
                 string itemPrice = abtContext.SelectSingleValue(
                             $"SELECT Documents_Utils.Get_Good_Price" +
                             $"({detail.IdGood}, {newDocJournal.DocGoods.IdPriceType}, 18101, SYSDATE) FROM dual"
