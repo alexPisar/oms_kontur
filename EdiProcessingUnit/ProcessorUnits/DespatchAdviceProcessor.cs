@@ -63,7 +63,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             // 1. получаем доки из бд
             List<DocOrder> docs = new List<DocOrder>();
 
-            var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-1);
+            var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-2);
             docs = _ediDbContext.DocOrders
                 .Where( doc => doc.Status < 3 && doc.Status > 0 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
                 doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
