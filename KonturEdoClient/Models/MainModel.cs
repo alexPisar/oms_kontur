@@ -789,6 +789,7 @@ namespace KonturEdoClient.Models
                             where cust.Inn == inn && (cust.Kpp == kpp || kpp == null)
                             join a in _abt.RefAuthoritySignDocuments
                             on cust.Id equals a.IdCustomer
+                            where a.IsMainDefault
                             select a)?.FirstOrDefault();
 
             if(authoritySignDocuments != null && !string.IsNullOrEmpty(authoritySignDocuments?.EmchdId))
@@ -1341,7 +1342,7 @@ namespace KonturEdoClient.Models
                             select cust;
 
             var authoritySignDocuments = from a in _abt.RefAuthoritySignDocuments
-                                         where a.EmchdEndDate != null
+                                         where a.EmchdEndDate != null && a.IsMainDefault
                                          join c in customers
                                          on a.IdCustomer equals (c.Id)
                                          select a;

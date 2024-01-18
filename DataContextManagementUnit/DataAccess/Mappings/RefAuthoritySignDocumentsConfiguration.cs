@@ -7,7 +7,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
         public RefAuthoritySignDocumentsConfiguration()
         {
             this
-                .HasKey(r => r.IdCustomer)
+                .HasKey(r => new { r.IdCustomer, r.Inn })
                 .ToTable("REF_AUTHORITY_SIGN_DOCUMENTS", "EDI");
 
             this
@@ -62,6 +62,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
             this
                 .Property(r => r.EmchdEndDate)
                 .HasColumnName(@"EMCHD_END_DATE");
+
+            this
+                .Property(r => r.IsMainDefault)
+                .HasColumnName(@"IS_MAIN_DEFAULT");
         }
     }
 }

@@ -26,6 +26,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string EmchdId { get; set; }
         public virtual global::System.DateTime? EmchdBeginDate { get; set; }
         public virtual global::System.DateTime? EmchdEndDate { get; set; }
+        public virtual bool IsMainDefault { get; set; }
 
         #endregion
 
