@@ -318,9 +318,8 @@ namespace EdiProcessingUnit.Edo
         public Message SendXmlDocument(string senderOrgId, 
             string recipientOrgId,
             bool isOurRecipient,
-            byte[] xmlContent,
+            List<SignedContent> contents,
             string function,
-            byte[] signature = null,
             PowerOfAttorneyToPost powerOfAttorneyToPost = null,
             string comment=null, 
             string customDocumentId = null)
@@ -363,29 +362,25 @@ namespace EdiProcessingUnit.Edo
             }
 
             return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd820_05_01_01_hyphen",
-                xmlContent, signature, comment, customDocumentId, powerOfAttorneyToPost);
+                contents, comment, customDocumentId, powerOfAttorneyToPost);
         }
 
         public Message SendDocumentAttachment(string ourBoxId, string counteragentBoxId, string typeNameId, string function, string version,
-            byte[] xmlContent, byte[] signature = null, string comment = null, string customDocumentId = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null, 
-            string initialMessageId = null, string initialEntityId = null)
+            List<SignedContent> contents, string comment = null, string customDocumentId = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null,
+            DocumentId initialDocumentId = null)
         {
-            var documentAttachment = new DocumentAttachment
+            var messageToPost = new MessageToPost
             {
-                TypeNamedId = typeNameId,
-                Function = function,
-                Version = version,
-                SignedContent = new SignedContent
-                {
-                    Content = xmlContent
-                }
+                FromBoxId = ourBoxId ?? _actualBoxId,
+                ToBoxId = counteragentBoxId
             };
 
-            if(powerOfAttorneyToPost != null)
+            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
+            if (powerOfAttorneyToPost != null)
             {
-                var powerOfAttorneyStatus = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>(() => 
+                powerOfAttorneyStatus = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>(() =>
                 {
-                    return _api.PrevalidatePowerOfAttorney(_authToken, ourBoxId ?? _actualBoxId, 
+                    return _api.PrevalidatePowerOfAttorney(_authToken, ourBoxId ?? _actualBoxId,
                         powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
                         new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
                         {
@@ -399,60 +394,63 @@ namespace EdiProcessingUnit.Edo
                         });
                 }));
 
-                if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
-                    documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
-                else if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                    powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                 {
-                    var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
-
-                    if((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                     {
-                        errorText = errorText + "Список ошибок:\r\n";
+                        var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                        foreach(var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
                         {
-                            errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                        }
-                    }
+                            errorText = errorText + "Список ошибок:\r\n";
 
-                    throw new Exception(errorText);
-                }
-                else
-                {
-                    if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                    {
-                        var errorText = "Список ошибок:\r\n";
-
-                        foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                        {
-                            errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            {
+                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                            }
                         }
+
                         throw new Exception(errorText);
+                    }
+                    else
+                    {
+                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        {
+                            var errorText = "Список ошибок:\r\n";
+
+                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            {
+                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                            }
+                            throw new Exception(errorText);
+                        }
                     }
                 }
             }
 
-            documentAttachment.Comment = comment;
-            documentAttachment.CustomDocumentId = customDocumentId;
-
-            if (signature != null)
-                documentAttachment.SignedContent.Signature = signature;
-
-            if(initialMessageId != null || initialEntityId != null)
-                documentAttachment.InitialDocumentIds.Add(new DocumentId
-                {
-                    MessageId = initialMessageId,
-                    EntityId = initialEntityId
-                });
-
-            var messageToPost = new MessageToPost
+            foreach (var content in contents)
             {
-                FromBoxId = ourBoxId ?? _actualBoxId,
-                ToBoxId = counteragentBoxId
-            };
+                var documentAttachment = new DocumentAttachment
+                {
+                    TypeNamedId = typeNameId,
+                    Function = function,
+                    Version = version,
+                    SignedContent = content
+                };
 
-            messageToPost.DocumentAttachments.Add(documentAttachment);
+                if (powerOfAttorneyStatus != null && powerOfAttorneyToPost != null)
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                        documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
+                documentAttachment.Comment = comment;
+                documentAttachment.CustomDocumentId = customDocumentId;
+
+                if (initialDocumentId != null)
+                    documentAttachment.InitialDocumentIds.Add(initialDocumentId);
+
+                messageToPost.DocumentAttachments.Add(documentAttachment);
+            }
             return CallApiSafe(new Func<Message>(()=> { return _api.PostMessage(_authToken, messageToPost); }));
         }
 

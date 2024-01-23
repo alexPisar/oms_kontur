@@ -331,9 +331,14 @@ namespace EdiTest
             var contentBytes = File.ReadAllBytes(filePath);
             try
             {
+                var content = new Diadoc.Api.Proto.Events.SignedContent
+                {
+                    Content = contentBytes
+                };
+
                 edo.SendXmlDocument("f7f2df36-f192-48c3-8f22-b9f9f77576ec", 
                     "c7acae2e-f301-46b4-a9cc-d8803239c2db", true,
-                    contentBytes, "СЧФДОП");
+                    new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { content }), "СЧФДОП");
             }
             catch(WebException webEx)
             {

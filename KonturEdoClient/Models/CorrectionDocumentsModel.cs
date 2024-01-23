@@ -385,6 +385,13 @@ namespace KonturEdoClient.Models
                     loadContext.Text = "Отправка документа.";
 
                     Diadoc.Api.Proto.Events.Message message;
+
+                    var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                    {
+                        Content = generatedFile.Content,
+                        Signature = signature
+                    };
+
                     if (!string.IsNullOrEmpty(_currentOrganization.EmchdId))
                     {
                         var powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
@@ -397,13 +404,25 @@ namespace KonturEdoClient.Models
                             }
                         };
 
-                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, generatedFile.Content, signature,
-                            null, null, powerOfAttorneyToPost, baseProcessing.MessageId, baseProcessing.EntityId);
+                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, 
+                            new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }),
+                            null, null, powerOfAttorneyToPost, 
+                            new Diadoc.Api.Proto.DocumentId
+                            {
+                                MessageId = baseProcessing.MessageId,
+                                EntityId = baseProcessing.EntityId
+                            });
                     }
                     else
                     {
-                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version, generatedFile.Content, signature,
-                                null, null, null, baseProcessing.MessageId, baseProcessing.EntityId);
+                        message = EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachment(null, counteragentBox, typeNamedId, function, version,
+                            new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }),
+                                null, null, null,
+                                new Diadoc.Api.Proto.DocumentId
+                                {
+                                    MessageId = baseProcessing.MessageId,
+                                    EntityId = baseProcessing.EntityId
+                                });
                     }
 
                     if (message != null)

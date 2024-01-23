@@ -162,7 +162,8 @@ namespace KonturEdoClient.Models
                             {
 
                                 loadContext.Text = "Сохранение в базе данных.";
-                                var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
+                                var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument && 
+                                t?.DocumentInfo?.DocumentNumber == _currentDocument.DocumentNumber);
 
                                 var fileNameLength = entity.FileName.LastIndexOf('.');
 

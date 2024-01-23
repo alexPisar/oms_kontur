@@ -54,7 +54,8 @@ namespace KonturEdoClient.Models
         public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован");
 
         public List<UniversalTransferDocument> Documents { get; set; }
-        public UniversalTransferDocument SelectedDocument { get; set; }
+        public List<UniversalTransferDocument> SelectedDocuments { get; set; }
+        public UniversalTransferDocument SelectedDocument => SelectedDocuments?.FirstOrDefault();
 
         public List<KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalType, string>> DocTypes { get; set; }
         public DataContextManagementUnit.DataAccess.DocJournalType? SelectedDocType => (DataContextManagementUnit.DataAccess.DocJournalType?)(_owner as MainWindow)?.DocTypesBar?.EditValue;
@@ -190,13 +191,13 @@ namespace KonturEdoClient.Models
 
             GetDocuments();
             SelectedOrganization = null;
-            SelectedDocument = null;
+            SelectedDocuments = new List<UniversalTransferDocument>();
             Documents = new List<UniversalTransferDocument>();
             DocumentDetails = new List<UniversalTransferDocumentDetail>();
             OnPropertyChanged("Documents");
             OnPropertyChanged("DocumentDetails");
             OnPropertyChanged("SelectedOrganization");
-            OnPropertyChanged("SelectedDocument");
+            OnPropertyChanged("SelectedDocuments");
         }
 
         private void SetDocTypes()
@@ -1297,13 +1298,13 @@ namespace KonturEdoClient.Models
             {
                 Documents = _loadedDocuments[SelectedOrganization.Index];
                 DocumentDetails = new List<UniversalTransferDocumentDetail>();
-                SelectedDocument = null;
+                SelectedDocuments = new List<UniversalTransferDocument>();
                 SelectedDetail = null;
             }
 
             OnPropertyChanged("Documents");
             OnPropertyChanged("DocumentDetails");
-            OnPropertyChanged("SelectedDocument");
+            OnPropertyChanged("SelectedDocuments");
             OnPropertyChanged("SelectedDetail");
             OnPropertyChanged("IsDocumentMarked");
             OnPropertyChanged("IsSended");
@@ -1809,8 +1810,17 @@ namespace KonturEdoClient.Models
                                 }
                             };
 
-                        var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature, consignorPowerOfAttorneyToPost);
-                        var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
+                        var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                        {
+                            Content = generatedFile.Content
+                        };
+
+                        if (signature != null)
+                            signedContent.Signature = signature;
+
+                        var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }), "ДОП", consignorPowerOfAttorneyToPost);
+                        var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                        t?.DocumentInfo?.DocumentNumber == document.DocumentNumber);
 
                         loadContext.Text = "Обработка приходного УПД";
                         Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
@@ -2549,8 +2559,17 @@ namespace KonturEdoClient.Models
                                     }
                                 };
 
-                            var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, consignor.OrgId, false, generatedFile.Content, "ДОП", signature, selectedOrganizationPowerOfAttorneyToPost);
-                            var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument);
+                            var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                            {
+                                Content = generatedFile.Content
+                            };
+
+                            if (signature != null)
+                                signedContent.Signature = signature;
+
+                            var message = Edo.GetInstance().SendXmlDocument(SelectedOrganization.OrgId, consignor.OrgId, false, new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }), "ДОП", selectedOrganizationPowerOfAttorneyToPost);
+                            var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                            t?.DocumentInfo?.DocumentNumber == document.DocumentNumber);
 
                             loadContext.Text = "Обработка УПД";
                             Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
@@ -3310,13 +3329,13 @@ namespace KonturEdoClient.Models
 
             GetDocuments(true);
             SelectedOrganization = null;
-            SelectedDocument = null;
+            SelectedDocuments = new List<UniversalTransferDocument>();
             Documents = new List<UniversalTransferDocument>();
             DocumentDetails = new List<UniversalTransferDocumentDetail>();
             OnPropertyChanged("Documents");
             OnPropertyChanged("DocumentDetails");
             OnPropertyChanged("SelectedOrganization");
-            OnPropertyChanged("SelectedDocument");
+            OnPropertyChanged("SelectedDocuments");
         }
 
         private void ShowCorrectionDocuments()

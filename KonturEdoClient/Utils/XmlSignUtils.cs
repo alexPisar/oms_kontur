@@ -64,10 +64,15 @@ namespace KonturEdoClient.Utils
 
             generatedFile.SaveContentToFile($"{Properties.Settings.Default.XmlFilesPath}\\{generatedFile.FileName}");
 
+            var content = new Diadoc.Api.Proto.Events.SignedContent
+            {
+                Content = generatedFile.Content
+            };
+
+            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
+
             if (isSign)
             {
-                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
-
                 if (!string.IsNullOrEmpty(sender.EmchdId))
                     powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
                     {
@@ -80,18 +85,14 @@ namespace KonturEdoClient.Utils
                     };
 
                 byte[] signature = crypt.Sign(generatedFile.Content, true);
+                content.Signature = signature;
+            }
 
-                message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
-                    receiver.OrgId, false,
-                    generatedFile.Content,
-                    "СЧФДОП", signature, powerOfAttorneyToPost);
-            }
-            else
-            {
-                message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
-                    receiver.OrgId, false,
-                    generatedFile.Content, "СЧФДОП");
-            }
+            message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
+                receiver.OrgId, false,
+                new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { content }),
+                "СЧФДОП", powerOfAttorneyToPost);
+            
 
             return message;
         }
