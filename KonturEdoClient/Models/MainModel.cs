@@ -1724,6 +1724,8 @@ namespace KonturEdoClient.Models
             if (documents.Count() == 0)
                 return;
 
+            var idDocType = documents.First().DocJournal.IdDocType;
+
             try
             {
                 bool isSentData = false;
@@ -1788,35 +1790,17 @@ namespace KonturEdoClient.Models
 
                 worker.DoWork += (object sender, System.ComponentModel.DoWorkEventArgs e) =>
                 {
-                    foreach (var labelsByDocument in labelsByDocuments)
+                    if (idDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                     {
-                        var labels = labelsByDocument.Value;
-                        IEnumerable<KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>> labelsByConsignors;
+                        if (labelsByDocuments.Any(l => l.Key?.IdSubdivision == null))
+                            throw new Exception("Не для всех документов задана организация-комитент");
 
-                        if (labelsByDocument.Key.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
-                            labelsByConsignors = (from l in labels
-                                                  join d in labelsByDocument.Key.DocJournal.Details
-                                                  on l.IdGood equals d.IdGood
-                                                  where d?.Good?.IdSubdivision != null
-                                                  group l by d.Good.IdSubdivision).Select(g => new KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>(g.Key, g.ToArray()));
-                        else
+                        var docsByConsignors = from l in labelsByDocuments
+                                               group l by l.Key.IdSubdivision;
+
+                        foreach(var docsByConsignor in docsByConsignors)
                         {
-                            var idSubdivision = labelsByDocument.Key?.IdSubdivision;
-
-                            if (idSubdivision == null)
-                                throw new Exception("Не найдена организация");
-
-                            labelsByConsignors = new List<KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>>(new[] {
-                            new KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>(idSubdivision.Value, labels)
-                        });
-                        }
-
-                        int i = 0;
-                        bool manyConsignors = labelsByConsignors.Count() > 1;
-
-                        foreach (var labelsByConsignor in labelsByConsignors)
-                        {
-                            var consignor = GetConsignorFromDocument(labelsByDocument.Key, labelsByConsignor.Key);
+                            var consignor = GetConsignorFromDocument(null, docsByConsignor.Key);
 
                             if (consignor == null)
                                 throw new Exception("Не найден комитент.");
@@ -1824,28 +1808,35 @@ namespace KonturEdoClient.Models
                             if (consignor.Certificate == null)
                                 throw new Exception("Не найден сертификат комитента.");
 
-                            string documentNumber = labelsByDocument.Key.DocJournal?.Code;
-
-                            if (manyConsignors)
-                            {
-                                i++;
-                                documentNumber = $"{documentNumber}-0{i}";
-                            }
-
                             var crypt = new Cryptography.WinApi.WinApiCryptWrapper(consignor.Certificate);
                             string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
-                            var document = CreateShipmentDocument(labelsByDocument.Key.DocJournal, consignor, SelectedOrganization, labelsByConsignor.Value.ToList(), documentNumber, employee, true);
 
+                            loadContext.Text = "Авторизация";
                             Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
-
                             loadContext.Text = "Формирование приходного УПД";
-                            var generatedFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
-                            "ДОП", "utd820_05_01_01_hyphen", 0, document);
+                            var docs = new Dictionary<UniversalTransferDocument, Diadoc.Api.Proto.Events.SignedContent>();
+                            foreach (var labelsByDocument in docsByConsignor)
+                            {
+                                var labels = labelsByDocument.Value;
+                                string documentNumber = labelsByDocument.Key.DocJournal?.Code;
 
-                            loadContext.Text = "Подписание приходного УПД";
-                            byte[] signature = crypt.Sign(generatedFile.Content, true);
+                                var document = CreateShipmentDocument(labelsByDocument.Key.DocJournal, consignor, SelectedOrganization, labels.ToList(), documentNumber, employee, true);
 
-                            loadContext.Text = "Отправка приходного УПД";
+                                var generatedFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 0, document);
+                                byte[] signature = crypt.Sign(generatedFile.Content, true);
+
+                                var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                                {
+                                    Content = generatedFile.Content
+                                };
+
+                                if (signature != null)
+                                    signedContent.Signature = signature;
+
+                                docs.Add(labelsByDocument.Key, signedContent);
+                            }
+
+                            loadContext.Text = "Отправка";
 
                             Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
 
@@ -1860,27 +1851,27 @@ namespace KonturEdoClient.Models
                                     }
                                 };
 
-                            var signedContent = new Diadoc.Api.Proto.Events.SignedContent
-                            {
-                                Content = generatedFile.Content
-                            };
-
-                            if (signature != null)
-                                signedContent.Signature = signature;
-
-                            var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }), "ДОП", consignorPowerOfAttorneyToPost);
-                            var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
-                            t?.DocumentInfo?.DocumentNumber == document.DocumentNumber);
+                            var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, docs?.Select(d => d.Value)?.ToList(), "ДОП", consignorPowerOfAttorneyToPost);
 
                             loadContext.Text = "Обработка приходного УПД";
                             Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
 
                             var buyerDocument = CreateBuyerShipmentDocument(SelectedOrganization);
-                            var generatedBuyerFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
-                            "ДОП", "utd820_05_01_01_hyphen", 1, buyerDocument, message.MessageId, entity.EntityId);
-
                             crypt.InitializeCertificate(SelectedOrganization.Certificate);
-                            var buyerSignature = crypt.Sign(generatedBuyerFile.Content, true);
+
+                            var attachments = message.Entities.Where(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument).Select(entity =>
+                            {
+                                var generatedBuyerFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 1, buyerDocument, message.MessageId, entity.EntityId);
+                                return new Diadoc.Api.Proto.Events.RecipientTitleAttachment
+                                {
+                                    ParentEntityId = entity.EntityId,
+                                    SignedContent = new Diadoc.Api.Proto.Events.SignedContent
+                                    {
+                                        Content = generatedBuyerFile.Content,
+                                        Signature = crypt.Sign(generatedBuyerFile.Content, true)
+                                    }
+                                };
+                            });
 
                             Diadoc.Api.Proto.Events.PowerOfAttorneyToPost selectedOrganizationPowerOfAttorneyToPost = null;
 
@@ -1896,36 +1887,188 @@ namespace KonturEdoClient.Models
                                 };
 
                             Edo.GetInstance().SendPatchRecipientXmlDocument(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
-                                entity.EntityId, generatedBuyerFile.Content, buyerSignature, selectedOrganizationPowerOfAttorneyToPost);
+                                    attachments, selectedOrganizationPowerOfAttorneyToPost);
 
                             loadContext.Text = "Сохранение в базе данных.";
 
-                            var fileNameLength = generatedFile.FileName.LastIndexOf('.');
-
-                            if (fileNameLength < 0)
-                                fileNameLength = generatedFile.FileName.Length;
-
-                            var docProcessing = new DocComissionEdoProcessing
+                            var docComissionEdoProcessings = docsByConsignor.Select(dc => 
                             {
-                                Id = Guid.NewGuid().ToString(),
-                                MessageId = message.MessageId,
-                                EntityId = entity.EntityId,
-                                IdDoc = labelsByDocument.Key.CurrentDocJournalId,
-                                SenderInn = consignor.Inn,
-                                ReceiverInn = SelectedOrganization.Inn,
-                                DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
-                                UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
-                                FileName = generatedFile.FileName.Substring(0, fileNameLength),
-                                DocDate = DateTime.Now,
-                                DeliveryDate = labelsByDocument.Key?.DocJournal?.DeliveryDate
-                            };
+                                var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                                t?.DocumentInfo?.DocumentNumber == dc.Key.DocJournal.Code);
 
-                            if (!labelsByDocument.Key.IsMarked)
-                                docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                                var fileNameLength = entity.DocumentInfo.FileName.LastIndexOf('.');
 
-                            labelsByDocument.Key.ProcessingStatus = docProcessing;
-                            _abt.DocComissionEdoProcessings.Add(docProcessing);
-                            docProcessings.Add(docProcessing);
+                                if (fileNameLength < 0)
+                                    fileNameLength = entity.DocumentInfo.FileName.Length;
+
+                                var docComissionProcessing = new DocComissionEdoProcessing
+                                {
+                                    Id = Guid.NewGuid().ToString(),
+                                    MessageId = message.MessageId,
+                                    EntityId = entity.EntityId,
+                                    IdDoc = dc.Key.CurrentDocJournalId,
+                                    SenderInn = consignor.Inn,
+                                    ReceiverInn = SelectedOrganization.Inn,
+                                    DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
+                                    UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
+                                    FileName = entity.DocumentInfo.FileName.Substring(0, fileNameLength),
+                                    DocDate = DateTime.Now,
+                                    DeliveryDate = dc.Key?.DocJournal?.DeliveryDate
+                                };
+
+                                if (!dc.Key.IsMarked)
+                                    docComissionProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+
+                                dc.Key.ProcessingStatus = docComissionProcessing;
+
+                                return docComissionProcessing;
+                            });
+
+                            _abt.DocComissionEdoProcessings.AddRange(docComissionEdoProcessings);
+                            docProcessings.AddRange(docComissionEdoProcessings);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var labelsByDocument in labelsByDocuments)
+                        {
+                            var labels = labelsByDocument.Value;
+                            IEnumerable<KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>> labelsByConsignors;
+
+                            if (labelsByDocument.Key.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
+                                labelsByConsignors = (from l in labels
+                                                      join d in labelsByDocument.Key.DocJournal.Details
+                                                      on l.IdGood equals d.IdGood
+                                                      where d?.Good?.IdSubdivision != null
+                                                      group l by d.Good.IdSubdivision).Select(g => new KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>(g.Key, g.ToArray()));
+                            else
+                            {
+                                var idSubdivision = labelsByDocument.Key?.IdSubdivision;
+
+                                if (idSubdivision == null)
+                                    throw new Exception("Не найдена организация");
+
+                                labelsByConsignors = new List<KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>>(new[] {
+                            new KeyValuePair<decimal, IEnumerable<DocGoodsDetailsLabels>>(idSubdivision.Value, labels)
+                        });
+                            }
+
+                            int i = 0;
+                            bool manyConsignors = labelsByConsignors.Count() > 1;
+
+                            foreach (var labelsByConsignor in labelsByConsignors)
+                            {
+                                var consignor = GetConsignorFromDocument(labelsByDocument.Key, labelsByConsignor.Key);
+
+                                if (consignor == null)
+                                    throw new Exception("Не найден комитент.");
+
+                                if (consignor.Certificate == null)
+                                    throw new Exception("Не найден сертификат комитента.");
+
+                                string documentNumber = labelsByDocument.Key.DocJournal?.Code;
+
+                                if (manyConsignors)
+                                {
+                                    i++;
+                                    documentNumber = $"{documentNumber}-0{i}";
+                                }
+
+                                var crypt = new Cryptography.WinApi.WinApiCryptWrapper(consignor.Certificate);
+                                string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
+                                var document = CreateShipmentDocument(labelsByDocument.Key.DocJournal, consignor, SelectedOrganization, labelsByConsignor.Value.ToList(), documentNumber, employee, true);
+
+                                Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
+
+                                loadContext.Text = "Формирование приходного УПД";
+                                var generatedFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
+                                "ДОП", "utd820_05_01_01_hyphen", 0, document);
+
+                                loadContext.Text = "Подписание приходного УПД";
+                                byte[] signature = crypt.Sign(generatedFile.Content, true);
+
+                                loadContext.Text = "Отправка приходного УПД";
+
+                                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+
+                                if (!string.IsNullOrEmpty(consignor.EmchdId))
+                                    consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                                    {
+                                        UseDefault = false,
+                                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                                        {
+                                            RegistrationNumber = consignor.EmchdId,
+                                            IssuerInn = consignor.Inn
+                                        }
+                                    };
+
+                                var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                                {
+                                    Content = generatedFile.Content
+                                };
+
+                                if (signature != null)
+                                    signedContent.Signature = signature;
+
+                                var message = Edo.GetInstance().SendXmlDocument(consignor.OrgId, SelectedOrganization.OrgId, false, new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }), "ДОП", consignorPowerOfAttorneyToPost);
+                                var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                                t?.DocumentInfo?.DocumentNumber == document.DocumentNumber);
+
+                                loadContext.Text = "Обработка приходного УПД";
+                                Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
+
+                                var buyerDocument = CreateBuyerShipmentDocument(SelectedOrganization);
+                                var generatedBuyerFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
+                                "ДОП", "utd820_05_01_01_hyphen", 1, buyerDocument, message.MessageId, entity.EntityId);
+
+                                crypt.InitializeCertificate(SelectedOrganization.Certificate);
+                                var buyerSignature = crypt.Sign(generatedBuyerFile.Content, true);
+
+                                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost selectedOrganizationPowerOfAttorneyToPost = null;
+
+                                if (!string.IsNullOrEmpty(SelectedOrganization.EmchdId))
+                                    selectedOrganizationPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                                    {
+                                        UseDefault = false,
+                                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                                        {
+                                            RegistrationNumber = SelectedOrganization.EmchdId,
+                                            IssuerInn = SelectedOrganization.Inn
+                                        }
+                                    };
+
+                                Edo.GetInstance().SendPatchRecipientXmlDocument(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
+                                    entity.EntityId, generatedBuyerFile.Content, buyerSignature, selectedOrganizationPowerOfAttorneyToPost);
+
+                                loadContext.Text = "Сохранение в базе данных.";
+
+                                var fileNameLength = generatedFile.FileName.LastIndexOf('.');
+
+                                if (fileNameLength < 0)
+                                    fileNameLength = generatedFile.FileName.Length;
+
+                                var docProcessing = new DocComissionEdoProcessing
+                                {
+                                    Id = Guid.NewGuid().ToString(),
+                                    MessageId = message.MessageId,
+                                    EntityId = entity.EntityId,
+                                    IdDoc = labelsByDocument.Key.CurrentDocJournalId,
+                                    SenderInn = consignor.Inn,
+                                    ReceiverInn = SelectedOrganization.Inn,
+                                    DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
+                                    UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
+                                    FileName = generatedFile.FileName.Substring(0, fileNameLength),
+                                    DocDate = DateTime.Now,
+                                    DeliveryDate = labelsByDocument.Key?.DocJournal?.DeliveryDate
+                                };
+
+                                if (!labelsByDocument.Key.IsMarked)
+                                    docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+
+                                labelsByDocument.Key.ProcessingStatus = docProcessing;
+                                _abt.DocComissionEdoProcessings.Add(docProcessing);
+                                docProcessings.Add(docProcessing);
+                            }
                         }
                     }
                 };

@@ -628,7 +628,7 @@ namespace EdiTest
         {
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
             var crypto = new WinApiCryptWrapper();
-            var cert = crypto.GetCertificateWithPrivateKey("1AE6FE62C7DEE1C4CA5AAAF9A9B33AFA95640753", false);
+            var cert = crypto.GetCertificateWithPrivateKey("DEEBCA5A51641044D042AEFA0E9569EEA57CE716", false);
             edo.Authenticate(false, cert, "2538150215");
 
             var document = edo.GetDocument("c28f297c-e379-494f-8972-6768c648f279", "555d0768-0f41-436d-b6e4-6f04dab14ea3");
