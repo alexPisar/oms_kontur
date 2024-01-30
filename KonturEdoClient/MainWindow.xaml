@@ -163,8 +163,7 @@
                         </dxg:GridControlBand>
                     </dxg:GridControl.Bands>
                     <dxg:GridControl.View>
-                        <dxg:TableView AllowEditing="False" 
-                               NavigationStyle="Row">
+                        <dxg:TableView>
                             <dxg:TableView.FormatConditions>
                                 <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked] And [ProcessingStatus.DocStatus] != 2 And [ProcessingStatus.DocStatus] != 8 And [ProcessingStatus.IsMainDocumentError] != 1 And [ProcessingStatus.AnnulmentStatus] != 8" >
                                     <dxg:Format Background="#FF27C3E6"/>

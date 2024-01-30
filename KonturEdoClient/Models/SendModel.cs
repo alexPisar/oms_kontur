@@ -14,15 +14,14 @@ namespace KonturEdoClient.Models
     {
         private Kontragent _myOrganization;
         private X509Certificate2 _signerCertificate;
-        private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens _currentDocument;
+        private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> _currentDocuments;
         private AbtDbContext _abt;
         private bool _isSendReceive = false;
         private HonestMark.DocumentProcessStatusesEnum _docStatus = HonestMark.DocumentProcessStatusesEnum.None;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
-        private decimal? _currentIdDoc;
         private DataContextManagementUnit.DataAccess.DocJournalType _docType;
         private bool _authInHonestMark;
-        private DocEdoProcessing _edoProcessing;
+        private List<DocEdoProcessing> _edoProcessings;
 
         public EventHandler BeforeSendEventHandler { get; set; }
 
@@ -34,25 +33,25 @@ namespace KonturEdoClient.Models
         public List<Kontragent> Organizations { get; set; }
         public Kontragent SelectedOrganization { get; set; }
 
-        public DocComissionEdoProcessing ComissionDocument { get; set; }
-        public DocEdoProcessing EdoProcessing {
+        public List<DocComissionEdoProcessing> ComissionDocuments { get; set; }
+        public List<DocEdoProcessing> EdoProcessing {
             get {
-                return _edoProcessing;
+                return _edoProcessings;
             }
         }
 
-        public SendModel(AbtDbContext abt, Kontragent myOrganization, X509Certificate2 signerCertificate, 
-            Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens currentDocument, decimal? currentIdDoc,
+        public SendModel(AbtDbContext abt, Kontragent myOrganization, X509Certificate2 signerCertificate,
+            IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> currentDocuments,
             DataContextManagementUnit.DataAccess.DocJournalType docType, bool authInHonestMark)
         {
             _abt = abt;
             _myOrganization = myOrganization;
             _signerCertificate = signerCertificate;
-            _currentDocument = currentDocument;
-            _currentIdDoc = currentIdDoc;
+            _currentDocuments = currentDocuments;
             _docType = docType;
             _authInHonestMark = authInHonestMark;
-            _edoProcessing = null;
+            _edoProcessings = new List<DocEdoProcessing>();
+            ComissionDocuments = new List<DocComissionEdoProcessing>();
         }
 
         public void SetButtonsEnabled(bool isEnabled)
@@ -73,7 +72,7 @@ namespace KonturEdoClient.Models
                 }
 
                 bool? sendDocument = false;
-                bool isMarked = _currentDocument.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0);
+                bool isMarked = _currentDocuments.Any(u => u.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0));
 
                 if (isMarked && !_authInHonestMark)
                 {
@@ -122,91 +121,107 @@ namespace KonturEdoClient.Models
                     {
                         try
                         {
+                            var currentDocuments = _currentDocuments.Where(c => c.Value != null).Select(c => c.Value);
                             if (_docType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             {
                                 Diadoc.Api.DataXml.RussianAddress receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
-                                new Diadoc.Api.DataXml.RussianAddress
-                                {
-                                    ZipCode = string.IsNullOrEmpty(SelectedOrganization.Address.RussianAddress.ZipCode) ? null : SelectedOrganization.Address.RussianAddress.ZipCode,
-                                    Region = SelectedOrganization.Address.RussianAddress.Region,
-                                    Street = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Street) ? null : SelectedOrganization.Address.RussianAddress.Street,
-                                    City = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.City) ? null : SelectedOrganization.Address.RussianAddress.City,
-                                    Locality = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Locality) ? null : SelectedOrganization.Address.RussianAddress.Locality,
-                                    Territory = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Territory) ? null : SelectedOrganization.Address.RussianAddress.Territory,
-                                    Building = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Building) ? null : SelectedOrganization.Address.RussianAddress.Building
-                                } : null;
-
-                                _currentDocument.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
-                                {
-                                    new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                    new Diadoc.Api.DataXml.RussianAddress
                                     {
-                                        Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                        ZipCode = string.IsNullOrEmpty(SelectedOrganization.Address.RussianAddress.ZipCode) ? null : SelectedOrganization.Address.RussianAddress.ZipCode,
+                                        Region = SelectedOrganization.Address.RussianAddress.Region,
+                                        Street = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Street) ? null : SelectedOrganization.Address.RussianAddress.Street,
+                                        City = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.City) ? null : SelectedOrganization.Address.RussianAddress.City,
+                                        Locality = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Locality) ? null : SelectedOrganization.Address.RussianAddress.Locality,
+                                        Territory = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Territory) ? null : SelectedOrganization.Address.RussianAddress.Territory,
+                                        Building = string.IsNullOrEmpty(SelectedOrganization?.Address?.RussianAddress?.Building) ? null : SelectedOrganization.Address.RussianAddress.Building
+                                    } : null;
+
+                                foreach (var curDoc in currentDocuments)
+                                {
+                                    curDoc.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                                    {
+                                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
                                         {
-                                            Inn = SelectedOrganization.Inn,
-                                            Kpp = string.IsNullOrEmpty(SelectedOrganization.Kpp) ? null : SelectedOrganization.Kpp,
-                                            OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                                            OrgName = SelectedOrganization.Name,
-                                            Address = new Diadoc.Api.DataXml.Address
+                                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
                                             {
-                                                Item = receiverAddress
+                                                Inn = SelectedOrganization.Inn,
+                                                Kpp = string.IsNullOrEmpty(SelectedOrganization.Kpp) ? null : SelectedOrganization.Kpp,
+                                                OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                                OrgName = SelectedOrganization.Name,
+                                                Address = new Diadoc.Api.DataXml.Address
+                                                {
+                                                    Item = receiverAddress
+                                                }
                                             }
                                         }
-                                    }
-                                };
+                                    };
+                                }
                             }
 
                             var message = new XmlSignUtils().SignAndSend(isSign,
-                                _signerCertificate, _myOrganization, SelectedOrganization, _currentDocument);
+                                _signerCertificate, _myOrganization, SelectedOrganization,
+                                currentDocuments.ToList());
 
+                            DocEdoProcessing docProcessing;
                             if (message != null)
                             {
 
                                 loadContext.Text = "Сохранение в базе данных.";
-                                var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument && 
-                                t?.DocumentInfo?.DocumentNumber == _currentDocument.DocumentNumber);
 
-                                var fileNameLength = entity.FileName.LastIndexOf('.');
-
-                                if (fileNameLength < 0)
-                                    fileNameLength = entity.FileName.Length;
-
-                                var fileName = entity.FileName.Substring(0, fileNameLength);
-
-                                var docProcessing = new DocEdoProcessing
+                                foreach (var currentDocument in _currentDocuments)
                                 {
-                                    Id = Guid.NewGuid().ToString(),
-                                    MessageId = message.MessageId,
-                                    EntityId = entity.EntityId,
-                                    FileName = fileName,
-                                    IsReprocessingStatus = 0,
-                                    IdDoc = _currentIdDoc,
-                                    DocDate = DateTime.Now,
-                                    UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
-                                    ReceiverName = SelectedOrganization.Name,
-                                    ReceiverInn = SelectedOrganization.Inn,
-                                    DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
-                                };
+                                    var documentNumber = currentDocument.Value.DocumentNumber;
+                                    var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                                    t?.DocumentInfo?.DocumentNumber == documentNumber);
 
-                                if(isMarked && ComissionDocument == null)
-                                {
-                                    var comDoc = _abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == _currentIdDoc &&
-                                    (d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent));
+                                    var fileNameLength = entity.FileName.LastIndexOf('.');
 
-                                    if (comDoc == null)
-                                        throw new Exception("Не найден комиссионный документ.");
+                                    if (fileNameLength < 0)
+                                        fileNameLength = entity.FileName.Length;
 
-                                    ComissionDocument = comDoc;
-                                }
+                                    var fileName = entity.FileName.Substring(0, fileNameLength);
 
-                                if (ComissionDocument != null)
-                                {
-                                    docProcessing.IdComissionDocument = ComissionDocument.Id;
-                                    docProcessing.ComissionDocument = ComissionDocument;
-                                    ComissionDocument.MainDocuments.Add(docProcessing);
-                                }
-                                else
-                                {
-                                    _abt.DocEdoProcessings.Add(docProcessing);
+                                    docProcessing = new DocEdoProcessing
+                                    {
+                                        Id = Guid.NewGuid().ToString(),
+                                        MessageId = message.MessageId,
+                                        EntityId = entity.EntityId,
+                                        FileName = fileName,
+                                        IsReprocessingStatus = 0,
+                                        IdDoc = currentDocument.Key,
+                                        DocDate = DateTime.Now,
+                                        UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
+                                        ReceiverName = SelectedOrganization.Name,
+                                        ReceiverInn = SelectedOrganization.Inn,
+                                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                    };
+
+                                    var comissionDocument = ComissionDocuments.FirstOrDefault(c => c.IdDoc == currentDocument.Key);
+
+                                    if (comissionDocument == null && currentDocument.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0))
+                                    {
+                                        var comDoc = _abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == currentDocument.Key &&
+                                        (d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent));
+
+                                        if (comDoc == null)
+                                            throw new Exception("Не найден комиссионный документ.");
+
+                                        comissionDocument = comDoc;
+                                    }
+
+                                    if (comissionDocument != null)
+                                    {
+                                        docProcessing.IdComissionDocument = comissionDocument.Id;
+                                        docProcessing.ComissionDocument = comissionDocument;
+                                        comissionDocument.MainDocuments.Add(docProcessing);
+                                    }
+                                    else
+                                    {
+                                        _abt.DocEdoProcessings.Add(docProcessing);
+                                    }
+
+                                    if(isSign)
+                                        _edoProcessings.Add(docProcessing);
                                 }
 
                                 _abt.SaveChanges();
@@ -214,7 +229,6 @@ namespace KonturEdoClient.Models
 
                                 if (isSign)
                                 {
-                                    _edoProcessing = docProcessing;
                                     loadWindow.SetSuccessFullLoad(loadContext, "Подписание и отправка завершены успешно.");
                                 }
                                 else
@@ -223,7 +237,6 @@ namespace KonturEdoClient.Models
                         }
                         catch (Exception ex)
                         {
-                            _edoProcessing = null;
                             exception = ex;
                         }
                     });
