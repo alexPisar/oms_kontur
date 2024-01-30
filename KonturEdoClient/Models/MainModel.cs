@@ -912,6 +912,7 @@ namespace KonturEdoClient.Models
                                                    //let edoGoodChannel = (from refEdoGoodChannel in _abt.RefEdoGoodChannels
                                                    //                      where refEdoGoodChannel.IdChannel == buyerContractor.IdChannel
                                                    //                      select refEdoGoodChannel)
+                                                   let channel = (from c in _abt.RefChannels where c.Id == buyerContractor.IdChannel select c)
                                                        join buyerCustomer in _abt.RefCustomers
                                                    on buyerContractor.DefaultCustomer equals buyerCustomer.Id
                                                    select new UniversalTransferDocument
@@ -940,6 +941,7 @@ namespace KonturEdoClient.Models
                                                        BuyerContractor = buyerContractor,
 
                                                        //RefEdoGoodChannel = edoGoodChannel,
+                                                       Channel = channel,
 
                                                        IsMarked = isMarked
                                                    }).ToList();

@@ -143,6 +143,7 @@
                             <dxg:GridColumn FieldName="DocEdoSendStatus" Header="Статус отправки" Width="130"/>
                         </dxg:GridControlBand>
                         <dxg:GridControlBand Header="Покупатель">
+                            <dxg:GridColumn FieldName="ChannelName" Header="Сеть" Width="100"/>
                             <dxg:GridColumn FieldName="BuyerName" Header="Организация" Width="200"/>
                             <dxg:GridColumn FieldName="BuyerInnKpp" Header="ИНН/КПП" Width="150"/>
                             <dxg:GridColumn FieldName="BuyerAddress" Header="Адрес" Width="250"/>

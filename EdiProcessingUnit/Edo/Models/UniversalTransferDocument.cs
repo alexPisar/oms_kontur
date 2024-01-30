@@ -20,6 +20,7 @@ namespace EdiProcessingUnit.Edo.Models
         private object _status;
         private object _edoProcessing;
         private object _refEdoGoodChannel;
+        private object _channel;
 
         public IEnumerable<UniversalTransferDocumentDetail> Details
         {
@@ -338,5 +339,27 @@ namespace EdiProcessingUnit.Edo.Models
         }
 
         public bool IsMarked { get; set; }
+
+        public object Channel
+        {
+            get 
+                {
+                if (_channel == null)
+                    return null;
+
+                if (_channel as RefChannel != null)
+                    return _channel;
+                else if (_channel as IQueryable<RefChannel> != null)
+                    _channel = (_channel as IQueryable<RefChannel>)?.FirstOrDefault();
+                else if (_channel as IEnumerable<RefChannel> != null)
+                    _channel = (_channel as IEnumerable<RefChannel>)?.FirstOrDefault();
+                else
+                    _channel = null;
+
+                return _channel;
+            }
+            set { _channel = value; }
+        }
+        public string ChannelName => (Channel as RefChannel)?.Name;
     }
 }
