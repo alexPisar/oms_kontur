@@ -888,63 +888,65 @@ namespace KonturEdoClient.Models
                         var senderInnKpp = organization.Inn + "/" + organization.Kpp;
                         var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
 
+                        UniversalTransferDocument.RefChannels = null;
                         if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                        {
+                            UniversalTransferDocument.RefChannels = _abt.RefChannels;
                             _loadedDocuments[index] = (from doc in docs
-                                                   where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
-                                                   join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
-                                                   where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= DateFrom && docMaster.DocDatetime < DateTo
-                                                   join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
-                                                   join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
-                                                   where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
-                                                   let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == docMaster.Id select label).Count() > 0
-                                                   let honestMarkStatus = (from docComissionEdoProcessing in _abt.DocComissionEdoProcessings
-                                                                           where docComissionEdoProcessing.IdDoc == docMaster.Id
-                                                                           orderby docComissionEdoProcessing.DocDate descending
-                                                                           select docComissionEdoProcessing)
-                                                   let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
-                                                                           where docEdo.IdDoc == docMaster.Id && docEdo.DocType == updDocType
-                                                                           orderby docEdo.DocDate descending
-                                                                           select docEdo)
-                                                   where isMarked || !OnlyMarkedOrders
-                                                   where (!loadOnlyUnsentDocuments) || docEdoProcessing.Count() == 0
-                                                   join buyerContractor in _abt.RefContractors
-                                                   on docGoods.IdCustomer equals buyerContractor.Id
-                                                   //let edoGoodChannel = (from refEdoGoodChannel in _abt.RefEdoGoodChannels
-                                                   //                      where refEdoGoodChannel.IdChannel == buyerContractor.IdChannel
-                                                   //                      select refEdoGoodChannel)
-                                                   let channel = (from c in _abt.RefChannels where c.Id == buyerContractor.IdChannel select c)
+                                                       where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
+                                                       join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
+                                                       where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= DateFrom && docMaster.DocDatetime < DateTo
+                                                       join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
+                                                       join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                                       where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
+                                                       let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == docMaster.Id select label).Count() > 0
+                                                       let honestMarkStatus = (from docComissionEdoProcessing in _abt.DocComissionEdoProcessings
+                                                                               where docComissionEdoProcessing.IdDoc == docMaster.Id
+                                                                               orderby docComissionEdoProcessing.DocDate descending
+                                                                               select docComissionEdoProcessing)
+                                                       let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
+                                                                               where docEdo.IdDoc == docMaster.Id && docEdo.DocType == updDocType
+                                                                               orderby docEdo.DocDate descending
+                                                                               select docEdo)
+                                                       where isMarked || !OnlyMarkedOrders
+                                                       where (!loadOnlyUnsentDocuments) || docEdoProcessing.Count() == 0
+                                                       join buyerContractor in _abt.RefContractors
+                                                       on docGoods.IdCustomer equals buyerContractor.Id
+                                                       //let edoGoodChannel = (from refEdoGoodChannel in _abt.RefEdoGoodChannels
+                                                       //                      where refEdoGoodChannel.IdChannel == buyerContractor.IdChannel
+                                                       //                      select refEdoGoodChannel)
                                                        join buyerCustomer in _abt.RefCustomers
                                                    on buyerContractor.DefaultCustomer equals buyerCustomer.Id
-                                                   select new UniversalTransferDocument
-                                                   {
-                                                       Total = doc.DocGoodsI.TotalSumm,
-                                                       Vat = doc.DocGoodsI.TaxSumm,
-                                                       TotalWithVatExcluded = (doc.DocGoodsI.TotalSumm - doc.DocGoodsI.TaxSumm),
-                                                       ProcessingStatus = honestMarkStatus,
-                                                       EdoProcessing = docEdoProcessing,
-                                                       DocJournal = doc,
-                                                       DocJournalNumber = docMaster.Code,
-                                                       DocumentNumber = doc.Code,
-                                                       ActStatus = docMaster.ActStatus,
-                                                       OrgId = organization.OrgId,
+                                                       select new UniversalTransferDocument
+                                                       {
+                                                           Total = doc.DocGoodsI.TotalSumm,
+                                                           Vat = doc.DocGoodsI.TaxSumm,
+                                                           TotalWithVatExcluded = (doc.DocGoodsI.TotalSumm - doc.DocGoodsI.TaxSumm),
+                                                           ProcessingStatus = honestMarkStatus,
+                                                           EdoProcessing = docEdoProcessing,
+                                                           DocJournal = doc,
+                                                           DocJournalNumber = docMaster.Code,
+                                                           DocumentNumber = doc.Code,
+                                                           ActStatus = docMaster.ActStatus,
+                                                           OrgId = organization.OrgId,
 
-                                                       SenderName = organization.Name,
+                                                           SenderName = organization.Name,
 
-                                                       SenderInnKpp = senderInnKpp,
+                                                           SenderInnKpp = senderInnKpp,
 
-                                                       SenderAddress = addressSender,
+                                                           SenderAddress = addressSender,
 
-                                                       BuyerCustomer = buyerCustomer,
+                                                           BuyerCustomer = buyerCustomer,
 
-                                                       SellerContractor = docMaster.DocGoods.Seller,
+                                                           SellerContractor = docMaster.DocGoods.Seller,
 
-                                                       BuyerContractor = buyerContractor,
+                                                           BuyerContractor = buyerContractor,
 
-                                                       //RefEdoGoodChannel = edoGoodChannel,
-                                                       Channel = channel,
+                                                           //RefEdoGoodChannel = edoGoodChannel,
 
-                                                       IsMarked = isMarked
-                                                   }).ToList();
+                                                           IsMarked = isMarked
+                                                       }).ToList();
+                        }
                         else if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             _loadedDocuments[index] = (from doc in docs
                                                        where doc != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && doc.DocDatetime >= DateFrom && doc.DocDatetime < DateTo

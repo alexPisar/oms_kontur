@@ -21,6 +21,7 @@ namespace EdiProcessingUnit.Edo.Models
         private object _edoProcessing;
         private object _refEdoGoodChannel;
         private object _channel;
+        private decimal? _idChannel = null;
 
         public IEnumerable<UniversalTransferDocumentDetail> Details
         {
@@ -271,6 +272,7 @@ namespace EdiProcessingUnit.Edo.Models
         {
             set {
                 _consignee = value?.Name + ", " + value?.Address;
+                _idChannel = value?.IdChannel;
             }
         }
 
@@ -340,12 +342,17 @@ namespace EdiProcessingUnit.Edo.Models
 
         public bool IsMarked { get; set; }
 
+        public static System.Data.Entity.DbSet<RefChannel> RefChannels { get; set; }
+
         public object Channel
         {
             get 
                 {
-                if (_channel == null)
+                if (_idChannel == null || RefChannels == null)
                     return null;
+
+                if (_channel == null)
+                    _channel = from ch in RefChannels where ch.Id == _idChannel.Value select ch;
 
                 if (_channel as RefChannel != null)
                     return _channel;
@@ -354,11 +361,13 @@ namespace EdiProcessingUnit.Edo.Models
                 else if (_channel as IEnumerable<RefChannel> != null)
                     _channel = (_channel as IEnumerable<RefChannel>)?.FirstOrDefault();
                 else
+                {
+                    _idChannel = null;
                     _channel = null;
+                }
 
                 return _channel;
             }
-            set { _channel = value; }
         }
         public string ChannelName => (Channel as RefChannel)?.Name;
     }
