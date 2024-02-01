@@ -214,6 +214,9 @@ namespace KonturEdoClient.Models
                                         docProcessing.IdComissionDocument = comissionDocument.Id;
                                         docProcessing.ComissionDocument = comissionDocument;
                                         comissionDocument.MainDocuments.Add(docProcessing);
+
+                                        if(!_abt.DocEdoProcessings.Any(d => d.Id == docProcessing.Id))
+                                            _abt.DocEdoProcessings.Add(docProcessing);
                                     }
                                     else
                                     {
