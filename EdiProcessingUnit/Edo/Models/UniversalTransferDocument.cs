@@ -342,17 +342,17 @@ namespace EdiProcessingUnit.Edo.Models
 
         public bool IsMarked { get; set; }
 
-        public static System.Data.Entity.DbSet<RefChannel> RefChannels { get; set; }
+        public static AbtDbContext DbContext { get; set; }
 
         public object Channel
         {
             get 
                 {
-                if (_idChannel == null || RefChannels == null)
+                if (_idChannel == null || DbContext == null)
                     return null;
 
                 if (_channel == null)
-                    _channel = from ch in RefChannels where ch.Id == _idChannel.Value select ch;
+                    _channel = from ch in DbContext.RefChannels where ch.Id == _idChannel.Value select ch;
 
                 if (_channel as RefChannel != null)
                     return _channel;

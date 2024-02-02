@@ -158,6 +158,7 @@ namespace KonturEdoClient.Models
             {
                 _abt.Dispose();
                 _abt = null;
+                UniversalTransferDocument.DbContext = null;
             }
 
             if (SelectedFilial != null)
@@ -888,10 +889,9 @@ namespace KonturEdoClient.Models
                         var senderInnKpp = organization.Inn + "/" + organization.Kpp;
                         var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
 
-                        UniversalTransferDocument.RefChannels = null;
                         if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
-                            UniversalTransferDocument.RefChannels = _abt.RefChannels;
+                            UniversalTransferDocument.DbContext = _abt;
                             _loadedDocuments[index] = (from doc in docs
                                                        where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
                                                        join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
@@ -1324,6 +1324,7 @@ namespace KonturEdoClient.Models
         {
             _abt?.Dispose();
             _abt = null;
+            UniversalTransferDocument.DbContext = null;
         }
 
         private List<Kontragent> SetCounteragents()
@@ -1606,10 +1607,13 @@ namespace KonturEdoClient.Models
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
                 var signerDetails = Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
+
+                var refEdoGoodChannel = SelectedDocuments?.FirstOrDefault(s => s.RefEdoGoodChannel != null)?.RefEdoGoodChannel;
+
                 var docs = SelectedDocuments.Where(s => s.CurrentDocJournalId != null)?
                     .Select(s => new KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>(
                     s.CurrentDocJournalId.Value,
-                    GetUniversalDocument(s.DocJournal, SelectedOrganization, employee, signerDetails, s.RefEdoGoodChannel as RefEdoGoodChannel)));
+                    GetUniversalDocument(s.DocJournal, SelectedOrganization, employee, signerDetails, refEdoGoodChannel as RefEdoGoodChannel)));
                 SendModel sendModel = new SendModel(_abt, SelectedOrganization, SelectedOrganization.Certificate, docs, (DataContextManagementUnit.DataAccess.DocJournalType)SelectedDocument.DocJournal.IdDocType, _authInHonestMark);
                 sendModel.SetButtonsEnabled(true);
 
@@ -3523,6 +3527,7 @@ namespace KonturEdoClient.Models
             {
                 _abt.Dispose();
                 _abt = null;
+                UniversalTransferDocument.DbContext = null;
             }
 
             if (SelectedFilial != null)
