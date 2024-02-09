@@ -388,6 +388,10 @@ namespace EdiProcessingUnit.ProcessorUnits
                                         NetPrice = Math.Round((Amount - VATAmount) / UnitsCount, 2, MidpointRounding.AwayFromZero);
                                     else
                                         NetPrice = Math.Round(NetPriceWithVAT * 100 / (taxRate + 100), 2);
+
+                                    if(connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.DesadvInvoic ||
+                                        connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.DesadvRecadvInvoic)
+                                        NetAmount = Amount - VATAmount;
                                 }
                                 else
                                 {
