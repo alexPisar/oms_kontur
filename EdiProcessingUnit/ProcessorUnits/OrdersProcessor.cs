@@ -384,7 +384,7 @@ namespace EdiProcessingUnit.WorkingUnits
 
                     if (connectedBuyer?.IncludedBuyerCodes == 1 && !string.IsNullOrEmpty(item.BuyerCode))
                     {
-                        var glnItemGood = newItem.MapGoodByBuyers.FirstOrDefault();
+                        var glnItemGood = newItem.MapGoodByBuyers.FirstOrDefault(m => m.Gln == glnMainBuyer);
 
                         if (glnItemGood != null && string.IsNullOrEmpty(glnItemGood?.BuyerCode))
                             glnItemGood.BuyerCode = item.BuyerCode;
