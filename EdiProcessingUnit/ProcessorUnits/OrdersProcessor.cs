@@ -381,6 +381,14 @@ namespace EdiProcessingUnit.WorkingUnits
                     var newItem = map.Single( x => x.BarCode == item.Gtin );
                     if (newItem.IdGood != null)
                         item.IdGood = (long)newItem.IdGood;
+
+                    if (connectedBuyer?.IncludedBuyerCodes == 1 && !string.IsNullOrEmpty(item.BuyerCode))
+                    {
+                        var glnItemGood = newItem.MapGoodByBuyers.FirstOrDefault();
+
+                        if (glnItemGood != null && string.IsNullOrEmpty(glnItemGood?.BuyerCode))
+                            glnItemGood.BuyerCode = item.BuyerCode;
+                    }
                 }
                 else
                 {
