@@ -31,6 +31,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string DetailBarCodeUpdId { get; set; }
         public virtual string DocReturnNumberUcdId { get; set; }
         public virtual string DocReturnDateUcdId { get; set; }
+        public virtual string DetailPositionUpdId { get; set; }
+        public virtual string GlnShipToUpdId { get; set; }
         #endregion
 
         #region Navigation Properties

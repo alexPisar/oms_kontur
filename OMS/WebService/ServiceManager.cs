@@ -30,7 +30,7 @@ namespace WebService
         }
 
         public string PostRequest(string url, string contentData, string cookie = null, string contentType = null,
-            Dictionary<string, string> headers = null)
+            Dictionary<string, string> headers = null, Encoding encoding = null, CookieCollection cookies = null)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
 
@@ -46,6 +46,12 @@ namespace WebService
 
             if (cookie != null)
                 request.Headers.Add("Cookie", $"{cookie}");
+
+            if(cookies != null)
+            {
+                request.CookieContainer = new CookieContainer();
+                request.CookieContainer.Add(cookies);
+            }
 
             if (headers != null)
             {
@@ -63,9 +69,19 @@ namespace WebService
 
             string result;
 
-            using (var sr = new System.IO.StreamReader(response.GetResponseStream()))
+            if (encoding == null)
             {
-                result = sr.ReadToEnd();
+                using (var sr = new System.IO.StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+            }
+            else
+            {
+                using (var sr = new System.IO.StreamReader(response.GetResponseStream(), encoding))
+                {
+                    result = sr.ReadToEnd();
+                }
             }
 
             _statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
@@ -73,9 +89,9 @@ namespace WebService
         }
 
         public T PostRequest<T>(string url, string contentData, string cookie = null, string contentType = null, 
-            Dictionary<string, string> headers = null)
+            Dictionary<string, string> headers = null, Encoding encoding = null, CookieCollection cookies = null)
         {
-            string resultAsJsonStr = PostRequest(url, contentData, cookie, contentType, headers);
+            string resultAsJsonStr = PostRequest(url, contentData, cookie, contentType, headers, encoding, cookies);
 
             var result = JsonConvert.DeserializeObject<T>( resultAsJsonStr );
 

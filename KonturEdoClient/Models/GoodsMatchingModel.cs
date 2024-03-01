@@ -17,6 +17,7 @@ namespace KonturEdoClient.Models
         private DTO_RefGoods _selectedRefGood;
         private EdiProcessingUnit.UsersConfig _config;
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocument> _docs;
+        private IEnumerable<RefEdoGoodChannel> _permittedEdoGoodsChannels;
 
         public Action SaveAction;
         public bool PermissionChannelsList { get; set; }
@@ -168,7 +169,7 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var channelsListModel = new ChannelsListModel(_abt, _config, _idFilial, EdoGoodChannels);
+            var channelsListModel = new ChannelsListModel(_abt, _config, _idFilial, _permittedEdoGoodsChannels?.ToList() ?? new List<RefEdoGoodChannel>());
             channelsListModel.Filials = this.Filials;
             channelsListModel.PermissionChannelsSettings = this.PermissionChannelsSettings;
 
@@ -345,11 +346,12 @@ namespace KonturEdoClient.Models
                 {
                     var idFilials = _abt.Database.SqlQuery<decimal>("select Id from abt.ref_filials where Links in('" + string.Join("', '", Filials.Select(f => f.SID)) + "')");
 
-                    EdoGoodChannels = _abt?.RefEdoGoodChannels?.Where(r => idFilials.Any(i => i == r.IdFilial))?.ToList() ?? new List<RefEdoGoodChannel>();
+                    _permittedEdoGoodsChannels = _abt?.RefEdoGoodChannels?.Where(r => idFilials.Any(i => i == r.IdFilial));
                 }
                 else
-                    EdoGoodChannels = _abt?.RefEdoGoodChannels?.Where(r => _idFilial == r.IdFilial || r.PermittedForOtherFilials == 1)?.ToList() ?? new List<RefEdoGoodChannel>();
+                    _permittedEdoGoodsChannels = _abt?.RefEdoGoodChannels?.Where(r => _idFilial == r.IdFilial || r.PermittedForOtherFilials == 1);
 
+                EdoGoodChannels = _permittedEdoGoodsChannels?.Where(r => string.IsNullOrEmpty(r.EdiGln))?.ToList() ?? new List<RefEdoGoodChannel>();
                 ItemsList = new ObservableCollection<RefGoodMatching>();
 
                 RefGoods = _abt.Database.SqlQuery<DTO_RefGoods>(DTO_RefGoods.Sql).ToList();

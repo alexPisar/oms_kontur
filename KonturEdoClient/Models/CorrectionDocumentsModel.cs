@@ -292,6 +292,9 @@ namespace KonturEdoClient.Models
 
                             if (!string.IsNullOrEmpty(refEdoGoodChannel.DetailBarCodeUpdId))
                                 additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+
+                            if (!string.IsNullOrEmpty(refEdoGoodChannel.DetailPositionUpdId))
+                                additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.DetailPositionUpdId, Value = item.OriginalNumber });
                         }
 
                         item.AdditionalInfos = additionalInfos.ToArray();
@@ -344,6 +347,16 @@ namespace KonturEdoClient.Models
 
                         if (!string.IsNullOrEmpty(refEdoGoodChannel.OrderDateUpdId))
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderDateUpdId, Value = _baseDocument?.DocJournal?.DocMaster?.DocDatetime.ToString("dd.MM.yyyy") });
+
+                        if (_baseDocument?.DocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.GlnShipToUpdId))
+                        {
+                            if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
+                            {
+                                var docOrderInfo = WebService.Controllers.FinDbController.GetInstance().GetDocOrderInfoByIdDocAndOrderStatus(_baseDocument.DocJournal.IdDocMaster.Value);
+
+                                additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.GlnShipToUpdId, Value = docOrderInfo.GlnShipTo });
+                            }
+                        }
 
                         foreach (var keyValuePair in refEdoGoodChannel.EdoUcdValuesPairs)
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });

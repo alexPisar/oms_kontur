@@ -20,6 +20,9 @@ namespace KonturEdoClient.Models
         public List<RefChannel> Channels { get; set; }
         public RefChannel SelectedChannel { get; set; }
 
+        public List<WebService.Models.RefEdiChannel> EdiChannels { get; set; }
+        public WebService.Models.RefEdiChannel SelectedEdiChannel { get; set; }
+
         public bool IsPermittedForOtherFilials
         {
             get {
@@ -70,6 +73,9 @@ namespace KonturEdoClient.Models
             }
             else
                 Item = item;
+
+            if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
+                EdiChannels = WebService.Controllers.FinDbController.GetInstance().GetEdiChannels().ToList();
         }
 
         public void AddKeyValue(EdiProcessingUnit.Enums.DocEdoType docEdoType)
@@ -170,7 +176,8 @@ namespace KonturEdoClient.Models
                                         {
                                             Id = Item.Id,
                                             CreateDateTime = DateTime.Now,
-                                            IdChannel = SelectedChannel.Id
+                                            IdChannel = SelectedChannel.Id,
+                                            EdiGln = SelectedEdiChannel?.Gln
                                         };
                                         isCreate = true;
                                     }
@@ -186,6 +193,8 @@ namespace KonturEdoClient.Models
                                     channel.IdFilial = _idFilial.Value;
                                     channel.DocReturnNumberUcdId = Item.DocReturnNumberUcdId;
                                     channel.DocReturnDateUcdId = Item.DocReturnDateUcdId;
+                                    channel.DetailPositionUpdId = Item.DetailPositionUpdId;
+                                    channel.GlnShipToUpdId = Item.GlnShipToUpdId;
 
                                     foreach (var key in Item.EdoValuesPairs)
                                     {
@@ -233,6 +242,7 @@ namespace KonturEdoClient.Models
                         {
                             Item.IdFilial = _idFilial.Value;
                             Item.IdChannel = SelectedChannel.Id;
+                            Item.EdiGln = SelectedEdiChannel?.Gln;
                             _abt.RefEdoGoodChannels.Add(Item);
                         }
 

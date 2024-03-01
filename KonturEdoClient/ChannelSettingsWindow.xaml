@@ -6,9 +6,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
-        Title="{Binding MainWindowText}" Height="970" Width="850" ResizeMode="NoResize">
+        Title="{Binding MainWindowText}" Height="1090" Width="850">
     <Grid>
-        <Grid.RowDefinitions>
+        <ScrollViewer>
+            <Grid>
+            <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
@@ -44,39 +46,63 @@
                     </dxg:LookUpEdit.StyleSettings>
                 </dxg:LookUpEdit>
             </StackPanel>
-            <CheckBox Height="35" x:Name="PermittedCheckBox" Margin="10" Content="Разрешить сопоставление для других филиалов" IsChecked="{Binding IsPermittedForOtherFilials, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Height="45">
+                        <Label Content="Сеть EDI" Width="100" Margin="10 0" VerticalAlignment="Center"/>
+                        <dxg:LookUpEdit Width="600" PopupWidth="900" PopupHeight="500" Margin="0 10"
+                                        ItemsSource="{Binding EdiChannels, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                        SelectedItem="{Binding SelectedEdiChannel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                        DisplayMember="GLN" ValueMember="GLN"
+                                        EditValue="{Binding Item.EdiGln, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                        ImmediatePopup="True" AutoPopulateColumns="False">
+                            <dxg:LookUpEdit.PopupContentTemplate>
+                                <ControlTemplate TargetType="{x:Type ContentControl}">
+                                    <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                                        <dxg:GridControl.Columns>
+                                            <dxg:GridColumn Header="GLN" Width="120" FieldName="Gln"/>
+                                            <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                        </dxg:GridControl.Columns>
+                                    </dxg:GridControl>
+                                </ControlTemplate>
+                            </dxg:LookUpEdit.PopupContentTemplate>
+                        </dxg:LookUpEdit>
+                    </StackPanel>
+                        <CheckBox Height="35" x:Name="PermittedCheckBox" Margin="10" Content="Разрешить сопоставление для других филиалов" IsChecked="{Binding IsPermittedForOtherFilials, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="105" />
+                    <RowDefinition Height="140" />
                 </Grid.RowDefinitions>
                 <GroupBox Header="Название текстовой информации поля факта хозяйственной жизни 1 (ИнфПолФХЖ1)" Grid.Row="0">
-                    <Grid Height="590">
+                    <Grid Height="625">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="180" />
+                            <RowDefinition Height="215" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Vertical" Grid.Row="0">
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля номера УПД" Margin="10 0" Width="350" VerticalAlignment="Center"/>
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.NumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.NumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля номера заказа" Margin="10 0" Width="350" VerticalAlignment="Center"/>
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.OrderNumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.OrderNumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля даты заказа" Margin="10 0" Width="350" VerticalAlignment="Center"/>
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.OrderDateUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.OrderDateUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля номера документа возврата УКД" Margin="10 0" Width="350" VerticalAlignment="Center" />
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.DocReturnNumberUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DocReturnNumberUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля даты документа возврата УКД" Margin="10 0" Width="350" VerticalAlignment="Center" />
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.DocReturnDateUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DocReturnDateUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля GLN отправителя" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.GlnShipToUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Orientation="Vertical" Grid.Row="1">
@@ -126,11 +152,15 @@
                         <StackPanel Orientation="Vertical" Grid.Row="0">
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля номера товара покупателя" Margin="10 0" Width="350" VerticalAlignment="Center"/>
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.DetailBuyerCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailBuyerCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
                                 <Label Content="Название поля номера штрих кода" Margin="10 0" Width="350" VerticalAlignment="Center"/>
-                                <TextBox Width="435" Margin="0 5" Text="{Binding Item.DetailBarCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailBarCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера позиции" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailPositionUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -142,5 +172,7 @@
             <Button Margin="5" Content="Сохранить" Width="90" Click="SaveButton_Click" />
             <Button Margin="5" Content="Отмена" Width="90" Click="CancelButton_Click" />
         </StackPanel>
+    </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

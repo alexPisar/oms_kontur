@@ -84,6 +84,16 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasMaxLength(50);
 
             this
+                .Property(r => r.DetailPositionUpdId)
+                .HasColumnName(@"DETAIL_POSITION_UPD_ID")
+                .HasMaxLength(50);
+
+            this
+                .Property(r => r.GlnShipToUpdId)
+                .HasColumnName(@"GLN_SHIP_TO_UPD_ID")
+                .HasMaxLength(50);
+
+            this
                 .HasMany(r => r.EdoValuesPairs)
                 .WithRequired(p => p.EdoGoodChannel)
                 .HasForeignKey(p => p.IdEdoGoodChannel)

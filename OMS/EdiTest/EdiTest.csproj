@@ -111,6 +111,10 @@
       <Project>{503e3c25-6312-4928-8c3f-2909c7e429a2}</Project>
       <Name>Reporter</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WebService\WebService.csproj">
+      <Project>{ce9f432a-bbc8-45b1-8a7f-3a533c4fb47e}</Project>
+      <Name>WebService</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

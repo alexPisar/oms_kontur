@@ -725,6 +725,50 @@ namespace EdiTest
             //var message = EdiProcessingUnit.Edo.Edo.GetInstance().SendXmlDocument(_consignor.OrgId, SelectedOrganization.OrgId, false, generatedFile.Content, "ДОП", signature);
         }
 
+        [TestMethod]
+        public void FinDbTest()
+        {
+            SetFinDbConfiguration();
+            var finDbController = WebService.Controllers.FinDbController.GetInstance();
+            try
+            {
+                var result = finDbController.GetDocOrderInfoByIdDocAndOrderStatus(1083997900);
+                var ediChannels = finDbController.GetEdiChannels();
+            }
+            catch(WebException webEx)
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void SetFinDbConfiguration()
+        {
+            var finDbController = WebService.Controllers.FinDbController.GetInstance();
+
+            var data = finDbController.GetCipherContentForConnect("KonturEdo");
+            var encBytes = Convert.FromBase64String(data);
+
+            var passwordFileName = finDbController.GetConfigFileName();
+            string currentDirectoryPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var passwordBytes = System.IO.File.ReadAllBytes($"{currentDirectoryPath}\\{passwordFileName}");
+            var password = Encoding.UTF8.GetString(passwordBytes);
+
+            var key = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(password));
+            var iv = System.Security.Cryptography.MD5.Create().ComputeHash(Encoding.UTF8.GetBytes("dm8432n8t392m4x"));
+            var aes = System.Security.Cryptography.Aes.Create();
+
+            aes.Key = key;
+            aes.IV = iv;
+            aes.Mode = System.Security.Cryptography.CipherMode.CBC;
+            aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+            var contentStr = Cryptography.Tools.SymmetricAlgoritm.Decrypt(encBytes, aes);
+            finDbController.InitConfig(contentStr);
+        }
+
         private string ParseCertAttribute(string certData, string attributeName)
         {
             string result = String.Empty;

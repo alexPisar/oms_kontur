@@ -78,6 +78,40 @@ namespace KonturEdoClient.Models
             SetPermissions();
             SetMyOrganizations();
             _consignors = new Dictionary<decimal, Kontragent>();
+            SetFinDbConfiguration();
+        }
+
+        private void SetFinDbConfiguration()
+        {
+            _log.Log("SetFinDbConfiguration: начало метода");
+            var finDbController = WebService.Controllers.FinDbController.GetInstance();
+
+            try
+            {
+                var data = finDbController.GetCipherContentForConnect(Properties.Settings.Default.ApplicationName);
+                var encBytes = Convert.FromBase64String(data);
+
+                var passwordFileName = finDbController.GetConfigFileName();
+                string currentDirectoryPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                var passwordBytes = System.IO.File.ReadAllBytes($"{currentDirectoryPath}\\{passwordFileName}");
+                var password = Encoding.UTF8.GetString(passwordBytes);
+
+                var key = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(password));
+                var iv = System.Security.Cryptography.MD5.Create().ComputeHash(Encoding.UTF8.GetBytes("dm8432n8t392m4x"));
+                var aes = System.Security.Cryptography.Aes.Create();
+
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Mode = System.Security.Cryptography.CipherMode.CBC;
+                aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+                var contentStr = Cryptography.Tools.SymmetricAlgoritm.Decrypt(encBytes, aes);
+                finDbController.InitConfig(contentStr);
+                _log.Log("SetFinDbConfiguration: успешно");
+            }
+            catch(Exception ex)
+            {
+                _log.Log("Ошибка в методе SetFinDbConfiguration. Exception: " + _log.GetRecursiveInnerException(ex));
+            }
         }
 
         public void SetOwner(System.Windows.Window owner)
@@ -1011,7 +1045,7 @@ namespace KonturEdoClient.Models
                         catch (Exception ex)
                         {
                             _authInHonestMark = false;
-                            _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(exception)}");
+                            _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(ex)}");
                             authInHonestMarkException = ex;
                         }
 
@@ -3154,6 +3188,15 @@ namespace KonturEdoClient.Models
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
                         additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
 
+                    if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
+                    {
+                        if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
+                        {
+                            var docOrderInfo = WebService.Controllers.FinDbController.GetInstance().GetDocOrderInfoByIdDocAndOrderStatus(d.IdDocMaster.Value);
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = docOrderInfo.GlnShipTo });
+                        }
+                    }
+
                     foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
                         additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
                 }
@@ -3161,6 +3204,7 @@ namespace KonturEdoClient.Models
                 if (additionalInfoList.Count > 0)
                     document.AdditionalInfoId = new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
 
+                int number = 1;
                 foreach (var docJournalDetail in d.DocGoodsDetailsIs)
                 {
                     var refGood = _abt.RefGoods?
@@ -3282,12 +3326,16 @@ namespace KonturEdoClient.Models
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
                             detailAdditionalInfos.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
                     }
 
                     if(detailAdditionalInfos.Count > 0)
                         detail.AdditionalInfos = detailAdditionalInfos.ToArray();
 
                     details.Add(detail);
+                    number++;
                 }
                 document.Table.Total = details.Sum(i => i.Subtotal);
                 document.Table.Vat = details.Sum(i => i.Vat);
