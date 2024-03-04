@@ -51,7 +51,7 @@
                         <dxg:LookUpEdit Width="600" PopupWidth="900" PopupHeight="500" Margin="0 10"
                                         ItemsSource="{Binding EdiChannels, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                         SelectedItem="{Binding SelectedEdiChannel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                        DisplayMember="GLN" ValueMember="GLN"
+                                        DisplayMember="Gln" ValueMember="Gln"
                                         EditValue="{Binding Item.EdiGln, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
                                         ImmediatePopup="True" AutoPopulateColumns="False">
                             <dxg:LookUpEdit.PopupContentTemplate>
@@ -101,7 +101,7 @@
                                 <TextBox Width="420" Margin="0 5" Text="{Binding Item.DocReturnDateUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Height="35">
-                                <Label Content="Название поля GLN отправителя" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <Label Content="Название поля GLN грузополучателя" Margin="10 0" Width="350" VerticalAlignment="Center" />
                                 <TextBox Width="420" Margin="0 5" Text="{Binding Item.GlnShipToUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
                             </StackPanel>
                         </StackPanel>
