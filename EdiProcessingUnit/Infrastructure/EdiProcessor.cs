@@ -50,7 +50,7 @@ namespace EdiProcessingUnit.Infrastructure
         /// Определяет, нужен ли данный документ в документообороте
         /// </summary>
         /// <param name="gln">ГЛН организации</param>
-        protected virtual bool IsNeedProcessor(string gln)
+        protected virtual bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
         {
             return true;
         }

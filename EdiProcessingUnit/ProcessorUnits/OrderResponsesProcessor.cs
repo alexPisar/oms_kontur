@@ -103,7 +103,12 @@ namespace EdiProcessingUnit.WorkingUnits
                         var orderId = orderLogsByOrder.Key;
                         DocOrder originalEdiDocOrder = _ediDbContext.DocOrders.FirstOrDefault( d => d.Id == orderId );
 
-                        if (!IsNeedProcessor( originalEdiDocOrder.GlnBuyer ))
+                        var connectedBuyer = _ediDbContext?
+                            .RefShoppingStores?
+                            .FirstOrDefault(r => r.BuyerGln == originalEdiDocOrder.GlnBuyer)?
+                            .MainShoppingStore;
+
+                        if (!IsNeedProcessor( originalEdiDocOrder.GlnBuyer, connectedBuyer ))
                             continue;
 
                         try
@@ -212,6 +217,81 @@ namespace EdiProcessingUnit.WorkingUnits
                                     LineItem newOrdrspeLineItem = new LineItem();
                                     DocLineItem origLineItem = originalEdiDocOrder.DocLineItems
                                         .FirstOrDefault( x => x.IdGood == detail.IdGood );
+
+                                    if (origLineItem == null)
+                                    {
+                                        string sql = "select RBC.BAR_CODE FROM ABT.REF_GOODS RG, ABT.REF_BAR_CODES RBC " +
+                                            "WHERE RBC.ID_GOOD = RG.ID and RG.ID=" + detail.IdGood;
+
+                                        List<string> barCodes = _abtDbContext?.Database?
+                                        .SqlQuery<string>(sql)?
+                                        .ToList() ?? new List<string>();
+
+                                        if (barCodes.Count == 0)
+                                            continue;
+
+                                        origLineItem = originalEdiDocOrder.DocLineItems?
+                                            .Where(x => barCodes.Exists(b => b == x.Gtin))?
+                                            .FirstOrDefault();
+
+                                        if (origLineItem != null)
+                                            origLineItem.IdGood = (long)detail.IdGood;
+                                    }
+
+                                    if (origLineItem == null && connectedBuyer?.IncludedBuyerCodes == 1)
+                                    {
+                                        var refBarCode = _abtDbContext?.RefBarCodes?.FirstOrDefault(r => r.IdGood == detail.IdGood && r.IsPrimary == false);
+
+                                        IEnumerable<MapGoodByBuyer> buyerItems = null;
+
+                                        if (refBarCode != null)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.IdGood == detail.IdGood && mapGood.BarCode == refBarCode.BarCode
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (refBarCode == null || buyerItems == null || buyerItems.Count() == 0)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.IdGood == detail.IdGood
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (buyerItems.Count() == 0)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.BarCode == refBarCode.BarCode
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (buyerItems.Count() == 0)
+                                            continue;
+
+                                        var buyerCodes = buyerItems?
+                                        .Where(x => !string.IsNullOrEmpty(x.BuyerCode))?
+                                        .Select(s => s.BuyerCode) ?? new List<string>();
+
+                                        if (buyerCodes.Count() == 0)
+                                            continue;
+
+                                        buyerCodes = buyerCodes.Distinct();
+
+                                        origLineItem = originalEdiDocOrder.DocLineItems?
+                                            .Where(x => buyerCodes.Any(b => b == x.BuyerCode))?
+                                            .FirstOrDefault();
+
+                                        if (origLineItem != null)
+                                        {
+                                            origLineItem.IdGood = (long)detail.IdGood;
+
+                                            if (!string.IsNullOrEmpty(refBarCode?.BarCode))
+                                                origLineItem.Gtin = refBarCode.BarCode;
+                                        }
+                                        else
+                                            continue;
+                                    }
+
                                     if (origLineItem == null)
                                         continue;
                                     double UnitsCount = 0,// отправляемое кол-во
@@ -413,12 +493,13 @@ namespace EdiProcessingUnit.WorkingUnits
         /// Определяет, нужен ли данный документ в документообороте
         /// </summary>
         /// <param name="gln">ГЛН организации</param>
-        protected override bool IsNeedProcessor(string gln)
+        protected override bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
         {
-            var connectedBuyer = _ediDbContext?
-                .RefShoppingStores?
-                .FirstOrDefault( r => r.BuyerGln == gln )?
-                .MainShoppingStore;
+            if(connectedBuyer == null)
+                connectedBuyer = _ediDbContext?
+                    .RefShoppingStores?
+                    .FirstOrDefault( r => r.BuyerGln == gln )?
+                    .MainShoppingStore;
 
             if (connectedBuyer == null)
                 return false;
