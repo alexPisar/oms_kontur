@@ -297,6 +297,13 @@ namespace OMS.ViewModels
                     .FirstOrDefault(r => r.BuyerGln == order.GlnBuyer)?
                     .MainShoppingStore;
 
+                decimal? idSeller = (decimal?)_edi.RefCompanies?
+                    .Where(r => r.Gln == order.GlnSeller)?
+                    .FirstOrDefault()?.IdContractor;
+
+                if (idSeller == null)
+                    throw new Exception("Не удалось определить организацию-продавца из заказа.");
+
                 Dictionary<decimal?, DocJournal> docInfosByManufacturers = new Dictionary<decimal?, DocJournal>();
                 List<decimal?> docsWithoutManufacturers = new List<decimal?>();
 
@@ -307,9 +314,9 @@ namespace OMS.ViewModels
                 if (_abt.RefContractors.Any( r => r.Id == SelectedItem.ShipTo.IdContractor ))
                 {
                     if (connectedBuyer.ExportOrdersByManufacturers == 1)
-                        docInfosByManufacturers = DocExportDataByManufacturers(order, connectedBuyer.IdSeller);
+                        docInfosByManufacturers = DocExportDataByManufacturers(order, idSeller.Value);
                     else
-                        docsWithoutManufacturers = DocExportData(order, connectedBuyer.IdSeller);
+                        docsWithoutManufacturers = DocExportData(order, idSeller.Value);
 
                     try
                     {
@@ -345,7 +352,7 @@ namespace OMS.ViewModels
 
                                     if (connectedBuyer.ExportOrdersByManufacturers == 1)
                                     {
-                                        var docsToTraider = DocExportDataByManufacturers( order, connectedBuyer.IdSeller, abtContext );
+                                        var docsToTraider = DocExportDataByManufacturers( order, idSeller.Value, abtContext );
                                         abtContext.SaveChanges();
 
                                         foreach(var doc in (docsToTraider ?? new Dictionary<decimal?, DocJournal>()))
@@ -353,7 +360,7 @@ namespace OMS.ViewModels
                                     }
                                     else
                                     {
-                                        var idDocsToTrader = DocExportData(order, connectedBuyer.IdSeller, abtContext);
+                                        var idDocsToTrader = DocExportData(order, idSeller.Value, abtContext);
                                         abtContext.SaveChanges();
 
                                         foreach (var idDoc in (idDocsToTrader ?? new List<decimal?>()))

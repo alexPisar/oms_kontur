@@ -32,8 +32,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 
         public int? ExportOrdersByManufacturers { get; set; }
 
-        public decimal IdSeller { get; set; }
-
         public int? IncludedBuyerCodes { get; set; }
         #endregion
 

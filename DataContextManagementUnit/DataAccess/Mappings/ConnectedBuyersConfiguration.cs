@@ -55,10 +55,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasColumnName(@"EXPORT_ORDERS_BY_MANUFACTURERS");
 
             this
-                .Property(c => c.IdSeller)
-                    .HasColumnName(@"ID_SELLER");
-
-            this
                 .Property(c => c.IncludedBuyerCodes)
                     .HasColumnName(@"INCLUDED_BUYER_CODES");
 

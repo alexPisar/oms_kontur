@@ -51,63 +51,9 @@ namespace EdiTest
 		}
 
         [TestMethod]
-        public void TestConnectDataBaseAbt()
-        {
-            AbtDbContext _abtDbContext;
-            using (_abtDbContext = new AbtDbContext( "User Id=redmine;Password=Ecwiegrool;Data Source=192.168.2.37/orcl", true ))
-            {
-                List<DocJournal> traderDocs = _abtDbContext
-                                .DocJournals
-                                .Where( doc => doc.Id == 881296300
-                                    && doc.ActStatus >= 4 )
-                                .ToList();
-
-                var contractors = _abtDbContext.RefContractors.ToList();
-            }
-        }
-
-        [TestMethod]
-        public void TestConnectDataBaseEdi()
-        {
-            EdiDbContext _ediDbContext;
-
-            using (_ediDbContext = new EdiDbContext( "User Id=EDI;Password=byntuhfwbz;Data Source=192.168.2.13/orcl.vladivostok.wera" ))
-            {
-                var connectedBuyers = _ediDbContext.ConnectedBuyers.ToList();
-                var mapGoods = _ediDbContext.MapGoods//.ToList();
-                    .Include( "MapGoodByBuyers" ).ToList();
-            }
-        }
-
-        [TestMethod]
         public void TestChangeGateway()
         {
             ChangeGateway( "192.168.2.15" );
-        }
-
-        [TestMethod]
-        public void ExportExcelDataTest()
-        {
-            var _ediDbContext = new EdiDbContext( "Data Source=192.168.2.18/orcl.findb;User Id=edi;Password=byntuhfwbz" );
-            var orders = _ediDbContext.DocOrders.ToList();
-
-            ExcelColumnCollection columnCollection = new ExcelColumnCollection();
-
-            columnCollection.AddColumn("Id", "ID");
-            columnCollection.AddColumn( "Number", "Номер" );
-            columnCollection.AddColumn( "Status", "Статус", ExcelType.Int64 );
-
-            List<ExcelDocumentData> docs = new List<ExcelDocumentData>();
-
-            var doc = new ExcelDocumentData( columnCollection, orders.ToArray() );
-            doc.SheetName = "Лист1";
-
-            docs.Add( doc );
-
-            ExcelFileWorker worker = new ExcelFileWorker( "C:\\Users\\systech\\Desktop\\export\\Orders.xls", docs );
-
-            worker.ExportData();
-            worker.SaveFile();
         }
 
         [TestMethod]
@@ -135,7 +81,7 @@ namespace EdiTest
         [TestMethod]
         public void SoledPassword()
         {
-            string password = "byntuhfwbz";
+            string password = "pass";
 
             var position = 6;
             var shift = 7;
@@ -347,28 +293,6 @@ namespace EdiTest
         }
 
         [TestMethod]
-        public void ReceiveOrderTest()
-        {
-            string filePath = null;
-
-            if (!string.IsNullOrEmpty(filePath))
-            {
-                var xmlDocument = new System.Xml.XmlDocument();
-                xmlDocument.Load(filePath);
-
-                var ordersProcessor = new OrdersProcessor(new List<string>(new string[]
-                {
-                xmlDocument.LastChild.OuterXml
-                }));
-
-                var ediDbContext = new EdiDbContext("Data Source=192.168.2.18/orcl.findb;User Id=edi;Password=byntuhfwbz");
-
-                ordersProcessor.Init(null, ediDbContext);
-                ordersProcessor.Run();
-            }
-        }
-
-        [TestMethod]
         public void GenerateShipmentDocumentTest()
         {
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
@@ -381,7 +305,7 @@ namespace EdiTest
             var consignor = edo.GetKontragentByInnKpp("2539108495");
             consignor.Certificate = crypto.GetCertificateWithPrivateKey("F88D4A47F8C9E5783535D50D4E20F1B0FB421892", false);
 
-            using (var abt = new AbtDbContext("Data Source=192.168.2.13/orcl.vladivostok.wera;User Id=edi;Password=byntuhfwbz"))
+            using (var abt = new AbtDbContext())
             {
                 string employee = abt.SelectSingleValue("select const_value from ref_const where id = 1200");
                 var d = abt.DocJournals.FirstOrDefault(j => j.Id == 937877300);
@@ -671,7 +595,7 @@ namespace EdiTest
             var receiverOrganization = EdiProcessingUnit.Edo.Edo.GetInstance().GetKontragentByInnKpp("254305893970");
             var signerDetails = EdiProcessingUnit.Edo.Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
 
-            using (var abtDbContext = new AbtDbContext("User Id=EDI;Password=byntuhfwbz;Data Source=192.168.2.13/orcl.vladivostok.wera", true))
+            using (var abtDbContext = new AbtDbContext())
             {
                 decimal idDocJournal = 998537600;
                 var docJournal = abtDbContext.DocJournals.First(d => d.Id == idDocJournal);
@@ -742,6 +666,22 @@ namespace EdiTest
             catch (Exception ex)
             {
 
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteProceduresTest()
+        {
+            using(var ediDbContext = new EdiDbContext())
+            {
+                try
+                {
+                    ediDbContext.ExecuteProcedure("EDI.TRANSFER_GOOD_MAPPING_FROM_EDI");
+                }
+                catch(Exception ex)
+                {
+
+                }
             }
         }
 
@@ -834,106 +774,6 @@ namespace EdiTest
                         var objSetIP = ((System.Management.ManagementObject)objMO).InvokeMethod( "SetGateways", objNewGate, null );
                     }
                 }
-        }
-
-        private void InsertMapGoods(string mainGln, List<string> barCodes)
-        {
-            AbtDbContext _abtDbContext;
-            var barCodesStr = string.Join( "', '", barCodes );
-            var _ediDbContext = new EdiDbContext( "Data Source=192.168.2.18/orcl.findb;User Id=edi;Password=byntuhfwbz" );
-
-            string sql = "SELECT rg.id as ID, rbc.bar_code as BAR_CODE, rg.name as NAME " +
-                "FROM abt.ref_goods rg, ABT.REF_BAR_CODES RBC " +
-                "WHERE RBC.id_good = rg.id AND rbc.bar_code in ('"+ barCodesStr + 
-                "') AND RBC.ID_GOOD IN(SELECT id_object FROM REF_GROUP_ITEMS WHERE ID_PARENT IN " +
-                "(SELECT id FROM ABT.REF_GROUPS CONNECT BY PRIOR id = id_parent START WITH ID = 485596300))";
-
-            using(_abtDbContext = new AbtDbContext( "Data Source=192.168.2.13/orcl.vladivostok.wera;User Id=edi;Password=byntuhfwbz" ))
-            {
-                var command = new Oracle.ManagedDataAccess.Client.OracleCommand();
-                command.Connection = (Oracle.ManagedDataAccess.Client.OracleConnection)_abtDbContext.Database.Connection;
-                command.CommandType = System.Data.CommandType.Text;
-                command.CommandText = sql;
-
-                command.Connection.Open();
-                var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    var mapGood = new MapGood() {
-                        Id = Guid.NewGuid().ToString(),
-                        BarCode = (string)reader["BAR_CODE"],
-                        IdGood = (decimal)reader["ID"],
-                        Name = (string)reader["NAME"],
-                        MapGoodByBuyers = new List<MapGoodByBuyer>()
-                    };
-
-                    _ediDbContext.MapGoods.Add(mapGood);
-
-                    var glnItemGood = new MapGoodByBuyer() {
-                        Gln = mainGln,
-                        IdMapGood = mapGood.Id,
-                        MapGood = mapGood
-                    };
-
-                    mapGood.MapGoodByBuyers.Add( glnItemGood );
-                }
-
-                reader.Close();
-                command.Connection.Close();
-            }
-            _ediDbContext.SaveChanges();
-        }
-
-        private void GetOrdersByNumbers(string buyerGln, List<string> orderNumbers)
-        {
-            var edi = Edi.GetInstance();
-            edi.Authenticate("4607971729990");
-
-            var events = edi.GetNewEvents();
-
-            foreach (var e in events)
-            {
-                if (e?.EventContent?.GetType() != typeof( SkbKontur.EdiApi.Client.Types.Messages.BoxEventsContents.Inbox.NewInboxMessageEventContent ))
-                    continue;
-
-                var content = (SkbKontur.EdiApi.Client.Types.Messages.BoxEventsContents.Inbox.NewInboxMessageEventContent)e.EventContent;
-
-                if (content != null)
-                {
-                    var messageData = edi.NewInboxMessageEventHandler( content );
-                    var messageBodyString = Encoding.UTF8.GetString( messageData.MessageBody, 0, messageData.MessageBody.Length );
-
-                    if (messageBodyString.Contains( "UNH+" ))
-                        continue;
-
-                    if (string.IsNullOrEmpty( messageBodyString ))
-                        continue;
-
-                    var messageString = string.Join( "\n", messageBodyString.Split( '\n' ).Skip( 1 ).ToArray() );
-
-                    var message = Xml.DeserializeString<EDIMessage>( messageString );
-
-                    if (string.IsNullOrEmpty( message?.Order?.Number ))
-                        continue;
-
-                    if (orderNumbers.Exists(n => n==message?.Order?.Number) && buyerGln == message?.Order?.Buyer?.gln)
-                    {
-                        var ordersList = new List<string>();
-                        ordersList.Add( messageBodyString );
-
-                        var ordersProcessor = new OrdersProcessor( ordersList );
-                        var _ediDbContext = new EdiDbContext( "Data Source=192.168.2.18/orcl.findb;User Id=edi;Password=byntuhfwbz" );
-
-                        if (_ediDbContext.DocOrders.FirstOrDefault( d =>
-                          d.GlnBuyer == buyerGln && d.Number == message.Order.Number ) != null)
-                            continue;
-
-                        ordersProcessor.Init( edi, _ediDbContext );
-                        ordersProcessor.Run();
-                    }
-                }
-            }
         }
 
         public string GetOrgInnFromCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2 certificate)

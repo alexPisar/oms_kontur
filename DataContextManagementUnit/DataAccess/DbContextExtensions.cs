@@ -43,7 +43,19 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 			return connection;
 		}
 
-	}
+        public void ExecuteProcedure(string procedureName, params object[] parameters)
+        {
+            var commandText = string.Empty;
+
+            if (parameters != null && parameters?.Count() > 0)
+                foreach (var par in parameters)
+                    commandText += string.IsNullOrEmpty(commandText) ? $"{((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}"
+                        : $", {((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}";
+
+            commandText = $"begin {procedureName}({commandText});END;";
+            var result = Database.ExecuteSqlCommand(commandText, parameters);
+        }
+    }
 }
 
 namespace DataContextManagementUnit.DataAccess.Contexts.Abt

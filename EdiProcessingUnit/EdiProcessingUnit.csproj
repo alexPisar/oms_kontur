@@ -174,6 +174,7 @@
     <Compile Include="Infrastructure\Xml.cs" />
     <Compile Include="Edi\Model\Company.cs" />
     <Compile Include="ProcessorUnits\DespatchAdviceProcessor.cs" />
+    <Compile Include="ProcessorUnits\ExecuteEdiProceduresProcessor.cs" />
     <Compile Include="ProcessorUnits\OrderResponsesProcessor.cs" />
     <Compile Include="ProcessorUnits\OutInvoicesProcessor.cs" />
     <Compile Include="ProcessorUnits\ReceivingAdviceProcessor.cs" />
