@@ -8,13 +8,18 @@ namespace EdiProcessingUnit
 		private Edi.Edi _edi;
 		private EdiDbContext _ediDbContext;
 		private bool _isAuth = false;
-        private string _organizationGln;
+        private string _organizationGln = string.Empty;
 
         public string OrganizationGln {
             set {
                 _organizationGln = value;
                 _edi.ResetParameters();
             }
+        }
+
+        public void ResetAuth()
+        {
+            _isAuth = false;
         }
 		
 		public EdiProcessorFactory()
@@ -34,20 +39,27 @@ namespace EdiProcessingUnit
 		/// <param name="ediProcessor">Интерфейс обработчика EDI-сообщений определённого типа</param>
 		public void RunProcessor(EdiProcessor ediProcessor)
 		{
-			// сначала аутентифицируемся.
-			// делаем это перед каждым вызовом
-			// на свякий случай
-			Auth();
+            if (_organizationGln != null || _isAuth)
+            {
+                // сначала аутентифицируемся.
+                // делаем это перед каждым вызовом
+                // на свякий случай
+                Auth();
 
-			if (_isAuth)
-			{
-				// если токен получен или предыдущий ещё не истёк,
-				// то проинициализируем обработчик и запустим его
-				// по-сути Init(...).Run() - Это фабричный метод 
-				// всё работает так, чтобы на уровне вызова RunProcessor было красиво,
-				// без лишних аргументов
-				ediProcessor.Init( _edi, _ediDbContext ).Run();
-			}
+                if (_isAuth)
+                {
+                    // если токен получен или предыдущий ещё не истёк,
+                    // то проинициализируем обработчик и запустим его
+                    // по-сути Init(...).Run() - Это фабричный метод 
+                    // всё работает так, чтобы на уровне вызова RunProcessor было красиво,
+                    // без лишних аргументов
+                    ediProcessor.Init( _edi, _ediDbContext).Run();
+                }
+            }
+            else
+            {
+                ediProcessor.Init(null, _ediDbContext).Run();
+            }
 		}
 
 

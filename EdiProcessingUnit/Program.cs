@@ -75,6 +75,12 @@ namespace EdiProcessingUnit
                             MailReporter.Add(ex, Console.Title);
                         }
                     }
+
+                    _processorFactory.OrganizationGln = null;
+                    _processorFactory.ResetAuth();
+
+                    RunSafe(_processorFactory, new ExecuteEdiProceduresProcessor());
+                    _utilityLog.Log($"{_timeStamp} - обработчик ExecuteEdiProceduresProcessor завершил работу.");
                 }
                 finally
                 {

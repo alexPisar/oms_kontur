@@ -7,6 +7,11 @@ namespace EdiProcessingUnit.ProcessorUnits
 {
     public class ExecuteEdiProceduresProcessor : EdiProcessor
     {
+        public ExecuteEdiProceduresProcessor()
+        {
+            ProcessorName = "ExecuteEdiProceduresProcessor";
+        }
+
         public override void Run()
         {
             _ediDbContext.ExecuteProcedure("EDI.TRANSFER_GOOD_MAPPING_FROM_EDI");
