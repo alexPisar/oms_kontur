@@ -15,9 +15,12 @@ namespace EdiProcessingUnit.WorkingUnits
 		internal AbtDbContext _abtDbContext;
 		private bool _isTest = Config.GetInstance()?.TestModeEnabled ?? false;
         private List<string> _xmlList = null;
+        private List<DocOrder> _ordersListForSentResponses = null;
+        private bool _isSentResponseForSomeOrders => _ordersListForSentResponses != null && _ordersListForSentResponses?.Count > 0;
 
         public OrderResponsesProcessor(List<string> xmlList) => _xmlList = xmlList;
         public OrderResponsesProcessor() { }
+        public OrderResponsesProcessor(List<DocOrder> orders) => _ordersListForSentResponses = orders;
 
         public override void Run()
 		{
@@ -55,10 +58,14 @@ namespace EdiProcessingUnit.WorkingUnits
             List<DocOrder> docs = new List<DocOrder>();
 
             var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-1);
-            docs = _ediDbContext.DocOrders
-                .Where( doc => doc.Status == 1 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln && 
-                doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
-                .ToList();
+
+            if (_isSentResponseForSomeOrders)
+                docs = _ordersListForSentResponses;
+            else
+                docs = _ediDbContext.DocOrders
+                    .Where( doc => doc.Status == 1 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
+                    doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
+                    .ToList();
 
             List<LogOrder> orderLogs = new List<LogOrder>();
             foreach (var doc in docs)
@@ -504,7 +511,7 @@ namespace EdiProcessingUnit.WorkingUnits
             if (connectedBuyer == null)
                 return false;
 
-            return connectedBuyer.OrderExchangeType == (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp;
+            return _isSentResponseForSomeOrders || connectedBuyer.OrderExchangeType == (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp;
         }
     }
 }

@@ -15,10 +15,13 @@ namespace EdiProcessingUnit.ProcessorUnits
 	{
 		internal AbtDbContext _abtDbContext;
 		private bool _isTest = Config.GetInstance()?.TestModeEnabled ?? false;
+        private List<DocOrder> _ordersListForSentDespatchAdvice = null;
         private List<string> _xmlList = null;
+        public bool _isSentForSomeOrders => _ordersListForSentDespatchAdvice != null && _ordersListForSentDespatchAdvice?.Count > 0;
 
         public DespatchAdviceProcessor(List<string> xmlList) => _xmlList = xmlList;
         public DespatchAdviceProcessor() { }
+        public DespatchAdviceProcessor(List<DocOrder> orders) => _ordersListForSentDespatchAdvice = orders;
 
         public override void Run()
 		{
@@ -60,50 +63,56 @@ namespace EdiProcessingUnit.ProcessorUnits
             if (connectionStringList.Count <= 0)
 				return;
 
-            // 1. получаем доки из бд
-            List<DocOrder> docs = new List<DocOrder>();
-
-            var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-2);
-            docs = _ediDbContext.DocOrders
-                .Where( doc => doc.Status < 3 && doc.Status > 0 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
-                doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
-                .ToList();
-
-            foreach (var doc in docs)
+            if (!_isSentForSomeOrders)
             {
-                var clientGln = doc.GlnBuyer;
-                ConnectedBuyers connectedBuyer = _ediDbContext?
-                    .RefShoppingStores?
-                    .FirstOrDefault( r => r.BuyerGln == doc.GlnBuyer )?
-                    .MainShoppingStore;
+                // 1. получаем доки из бд
+                List<DocOrder> docs = new List<DocOrder>();
 
-                if (connectedBuyer == null)
-                    continue;
+                var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-2);
+                docs = _ediDbContext.DocOrders
+                    .Where( doc => doc.Status < 3 && doc.Status > 0 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
+                   doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
+                    .ToList();
 
-                if (connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.None)
-                    continue;
-
-                if (connectedBuyer.OrderExchangeType ==
-                    (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && doc.Status < 2)
-                    continue;
-
-                var logOrders = doc?.LogOrders ?? new List<LogOrder>();
-                foreach (var log in logOrders)
+                foreach (var doc in docs)
                 {
+                    var clientGln = doc.GlnBuyer;
+                    ConnectedBuyers connectedBuyer = _ediDbContext?
+                        .RefShoppingStores?
+                        .FirstOrDefault( r => r.BuyerGln == doc.GlnBuyer )?
+                        .MainShoppingStore;
+
+                    if (connectedBuyer == null)
+                        continue;
+
+                    if (connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.None)
+                        continue;
+
                     if (connectedBuyer.OrderExchangeType ==
-                    (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && log.OrderStatus < 2)
+                        (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && doc.Status < 2)
                         continue;
 
-                    if (log.OrderStatus > 2)
-                        continue;
+                    var logOrders = doc?.LogOrders ?? new List<LogOrder>();
+                    foreach (var log in logOrders)
+                    {
+                        if (connectedBuyer.OrderExchangeType ==
+                        (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && log.OrderStatus < 2)
+                            continue;
 
-                    if (log.IdDocJournal == null)
-                        continue;
+                        if (log.OrderStatus > 2)
+                            continue;
 
-                    if (!logOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
-                        desadvLogs.Add(log);
+                        if (log.IdDocJournal == null)
+                            continue;
+
+                        if (!logOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
+                            desadvLogs.Add(log);
+                    }
                 }
             }
+            else
+                desadvLogs = _ordersListForSentDespatchAdvice.SelectMany(o => o.LogOrders.Where(l => l.OrderStatus == 1)).ToList();
+
 
             if (desadvLogs.Count <= 0)
                 return;
