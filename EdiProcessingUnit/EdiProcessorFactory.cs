@@ -28,7 +28,14 @@ namespace EdiProcessingUnit
 			_ediDbContext = new EdiDbContext();
 		}
 
-		private void Auth()
+        public EdiProcessorFactory(EdiDbContext ediDbContext)
+        {
+            _edi = Edi.Edi.GetInstance();
+            _ediDbContext = ediDbContext;
+        }
+
+
+        private void Auth()
 		{			
 			_isAuth = _edi.Authenticate(_organizationGln);
 		}

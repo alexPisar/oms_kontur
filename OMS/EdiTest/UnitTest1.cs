@@ -685,6 +685,21 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void SendResponsesTest()
+        {
+            using (var ediDbContext = new EdiDbContext())
+            {
+                var processorFactory = new EdiProcessingUnit.EdiProcessorFactory(ediDbContext);
+                processorFactory.OrganizationGln = "4607971729990";
+
+                var docOrders = ediDbContext.DocOrders.Where(d => 
+                d.Number == "РОТКз068314" && d.GlnSender == "4650093209994" && d.OrderDate > new DateTime(2024, 1, 1)).ToList();
+                //processorFactory.RunProcessor(new OrderResponsesProcessor(docOrders));
+                //processorFactory.RunProcessor(new EdiProcessingUnit.ProcessorUnits.DespatchAdviceProcessor(docOrders));
+            }
+        }
+
         private void SetFinDbConfiguration()
         {
             var finDbController = WebService.Controllers.FinDbController.GetInstance();
