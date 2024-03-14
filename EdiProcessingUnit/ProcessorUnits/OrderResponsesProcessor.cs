@@ -473,7 +473,7 @@ namespace EdiProcessingUnit.WorkingUnits
                                 + $"\r\n Number={originalEdiDocOrder.Number}"
                                 + $"\r\n Buyer ={originalEdiDocOrder.Buyer.IdContractor} {originalEdiDocOrder.GlnBuyer} {originalEdiDocOrder.Buyer.Name}"
                                 + $"\r\n Seller={originalEdiDocOrder.Seller.IdContractor} {originalEdiDocOrder.GlnSeller} {originalEdiDocOrder.Seller.Name}"
-                                + $"\r\n ShipTo={originalEdiDocOrder.ShipTo.IdContractor} {originalEdiDocOrder.GlnShipTo} {originalEdiDocOrder.ShipTo.Name}"
+                                + $"\r\n ShipTo={originalEdiDocOrder.ShipTo.IdContractor} {originalEdiDocOrder.GlnShipTo} {originalEdiDocOrder.NameShipTo}"
                                 + $"\r\n Sender={originalEdiDocOrder.Sender.IdContractor} {originalEdiDocOrder.GlnSender} {originalEdiDocOrder.Sender.Name}"
                                 );
                         }

@@ -166,7 +166,7 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
                     worker.ExportRow(
                         $"Отправитель:  {Item?.Sender?.Name}, " +
-                        $"Получатель:  {Item?.ShipTo?.Name}", sheetName );
+                        $"Получатель:  {Item?.NameShipTo}", sheetName );
 
                     worker.ExportData();
                     worker.SaveFile();

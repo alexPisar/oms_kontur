@@ -125,6 +125,7 @@ namespace EdiProcessingUnit.WorkingUnits
                         newOrderGlnSeller = "",
                         newOrderGlnBuyer = "",
                         newOrderGlnShipTo = "",
+                        newOrderNameShipTo = "",
                         newOrderComment = "",
                         newOrderCurrencyCode = "",
                         newOrderTotalAmount = "",
@@ -177,6 +178,7 @@ namespace EdiProcessingUnit.WorkingUnits
                     {
                         newOrderGlnShipTo = deliveryInfo.ShipTo.gln;
                         relationsProcessor.AddNewCompany( ConvertCompany( deliveryInfo.ShipTo ) );
+                        newOrderNameShipTo = deliveryInfo.ShipTo?.organization?.name;
                     }
 
                     if(!string.IsNullOrEmpty(deliveryInfo.RequestedDeliveryDateTime))
@@ -226,6 +228,12 @@ namespace EdiProcessingUnit.WorkingUnits
                 }
 
                 glnMainReceiver = newOrderMainGlnReceiver;
+
+                if (string.IsNullOrEmpty(newOrderNameShipTo))
+                {
+                    var shipToCompany = _ediDbContext?.RefCompanies?.FirstOrDefault(r => r.Gln == newOrderGlnShipTo);
+                    newOrderNameShipTo = shipToCompany?.Name;
+                }
 
                 // пробегаемся по списку заказываемого
                 foreach (var item in msg.Order.LineItems.LineItem)
@@ -339,6 +347,7 @@ namespace EdiProcessingUnit.WorkingUnits
                     GlnSeller = newOrderGlnSeller,
                     GlnBuyer = newOrderGlnBuyer,
                     GlnShipTo = newOrderGlnShipTo,
+                    NameShipTo = newOrderNameShipTo,
                     Comment = newOrderComment,
                     Number = newOrderNumber,
                     OrderDate = newOrderDate,

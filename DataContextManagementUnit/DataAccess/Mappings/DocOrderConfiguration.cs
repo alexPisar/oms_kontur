@@ -90,6 +90,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasMaxLength(16)
                     .IsUnicode(false);
             this
+                .Property(p => p.NameShipTo)
+                    .HasColumnName(@"NAME_SHIP_TO")
+                    .HasMaxLength(512)
+                    .IsUnicode(false);
+            this
                 .Property(p => p.Comment)
                     .HasColumnName(@"COMMENT")
                     .HasMaxLength(512)

@@ -185,7 +185,7 @@
                     <dxg:GridColumn Header="Покупатель" Width="120" FieldName="Buyer.Name"/>
                     <dxg:GridColumn Header="Отправитель" Width="120" FieldName="Sender.Name"/>
                     <dxg:GridColumn Header="GLN отправителя" Width="120" FieldName="GlnSender"/>
-                    <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="ShipTo.Name"/>
+                    <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="NameShipTo"/>
                     <dxg:GridColumn Header="GLN точки доставки" Width="120" FieldName="GlnShipTo"/>
                     <dxg:GridColumn Header="Коментарий" FieldName="Comment"/>
 
