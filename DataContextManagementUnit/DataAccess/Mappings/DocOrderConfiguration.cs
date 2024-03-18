@@ -123,6 +123,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                 .Property(p => p.Status)
                     .HasColumnName(@"STATUS")
                     .IsRequired();
+            this
+                .Property(p => p.IsMarkedNotExportable)
+                    .HasColumnName(@"IS_MARKED_NOT_EXPORTABLE")
+                    .IsRequired();
             // Associations:
             this
                 .HasMany(p => p.DocLineItems)
