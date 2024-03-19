@@ -214,13 +214,12 @@
                                GroupSummaryDisplayMode="AlignByColumns"
                                    >
 
-                        <!--<dxg:TableView.FormatConditions>
-                            <dxg:FormatCondition ApplyToRow="True" 
-                                                 Expression="[DocumentTypeId] == 0">
-                                <dxg:Format Background="#ffc9c9"/>
+                        <dxg:TableView.FormatConditions>
+                            <dxg:FormatCondition ApplyToRow="True" Expression="[IsMarkedNotExportable] != 0">
+                                <dxg:Format Background="#e69c9c"/>
                             </dxg:FormatCondition>
 
-                            <dxg:FormatCondition ApplyToRow="True" 
+                            <!--<dxg:FormatCondition ApplyToRow="True" 
                                                  Expression="[DocumentTypeId] == 2 and [ACT_STATUS] != NULL">
                                 <dxg:Format Background="#b3e0ff"/>
                             </dxg:FormatCondition>
@@ -233,9 +232,9 @@
                             <dxg:FormatCondition ApplyToRow="True" 
                                                  Expression="[DocumentTypeId] > 2">
                                 <dxg:Format Background="#c1d4f5"/>
-                            </dxg:FormatCondition>
+                            </dxg:FormatCondition>-->
 
-                        </dxg:TableView.FormatConditions>-->
+                        </dxg:TableView.FormatConditions>
 
 
                     </dxg:TableView>

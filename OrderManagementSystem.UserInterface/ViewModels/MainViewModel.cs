@@ -34,6 +34,8 @@ namespace OMS.ViewModels
         public RelayCommand OpenDeliveryPointsCommand => new RelayCommand((o) => { OpenDeliveryPoints(); } );
         public RelayCommand UpdateSettingsCommand => new RelayCommand((o) => { UpdateSettings(); });
         public RelayCommand OpenJuridicalEntitiesCommand => new RelayCommand((o) => { OpenJuridicalEntities(); });
+        public RelayCommand SetExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(0); });
+        public RelayCommand SetNotExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(1); });
         public RelayCommand SaveCommand => new RelayCommand((o) => { Save(); });
         public bool MustShowAllOrders { get; set; } = false;
 		public DocLineItem SelectedDocLineItem { get; set; }
@@ -54,6 +56,8 @@ namespace OMS.ViewModels
         public bool IsMainAccount { get; set; }
 
         public bool IsExportButtonEnabled { get; set; }
+
+        public bool IsNotExportable => SelectedItem?.Status == 0 && SelectedItem?.IsMarkedNotExportable != 0;
 
         public bool PermittedToMatchingGoods { get; set; }
 
@@ -259,6 +263,12 @@ namespace OMS.ViewModels
                 if(SelectedItem.Status != 0)
                 {
                     System.Windows.MessageBox.Show( "Такой заказ уже был экспортирован в трейдер!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
+                    return;
+                }
+
+                if(IsNotExportable)
+                {
+                    System.Windows.MessageBox.Show("Такой заказ помечен как не экспортируемый.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
 
@@ -974,6 +984,28 @@ namespace OMS.ViewModels
 
             SelectedItem.TotalAmount = sum.ToString();
             Refresh();
+        }
+
+        private void ChangeExportableState(int exportableState)
+        {
+            if (SelectedItem == null)
+            {
+                System.Windows.MessageBox.Show("Ошибка! Не выбран заказ!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedItem.IsMarkedNotExportable == 0 && SelectedItem.Status != 0)
+            {
+                System.Windows.MessageBox.Show("Статус Экспорта документа не позволяет пометить его неэкспортируемым.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            SelectedItem.IsMarkedNotExportable = exportableState;
+            Save();
+
+            UpdateProps();
+            OnPropertyChanged("IsExportButtonEnabled");
+            OnPropertyChanged("IsNotExportable");
         }
 
         private void UpdateProps()

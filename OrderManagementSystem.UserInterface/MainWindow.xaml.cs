@@ -28,8 +28,9 @@ namespace OrderManagementSystem.UserInterface
         private void DocOrders_SelectedItemChanged(object sender, DevExpress.Xpf.Grid.SelectedItemChangedEventArgs e)
         {
             ((MainViewModel)DataContext).DocLineItems = ((MainViewModel)DataContext).SelectedItem?.DocLineItems?.Where( d => d.IsRemoved != "1" )?.ToList();
-            ((MainViewModel)DataContext).IsExportButtonEnabled = ((MainViewModel)DataContext)?.SelectedItem?.Status == 0;
+            ((MainViewModel)DataContext).IsExportButtonEnabled = ((MainViewModel)DataContext)?.SelectedItem?.Status == 0 && ((MainViewModel)DataContext)?.SelectedItem?.IsMarkedNotExportable == 0;
             ((MainViewModel)DataContext).OnPropertyChanged( "IsExportButtonEnabled" );
+            ((MainViewModel)DataContext).OnPropertyChanged( "IsNotExportable" );
             ((MainViewModel)DataContext).RefreshDocLines();
         }
 
@@ -59,6 +60,9 @@ namespace OrderManagementSystem.UserInterface
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if ((DataContext as MainViewModel)?.IsMainAccount ?? false)
+                DocumentsDataGrid?.View?.RowCellMenuCustomizations?.Clear();
+
             if (UtilitesLibrary.ConfigSet.Config.GetInstance().SaveWindowSettings)
             {
                 DocumentDetailsDataGrid.SaveLayoutToXml(Properties.Settings.Default.OrderDetailsGridLayoutsFileConfigName);
@@ -74,6 +78,50 @@ namespace OrderManagementSystem.UserInterface
                     DocumentDetailsDataGrid.RestoreLayoutFromXml(Properties.Settings.Default.OrderDetailsGridLayoutsFileConfigName);
                 if (System.IO.File.Exists(Properties.Settings.Default.OrdersDataGridLayoutsFileConfigName))
                     DocumentsDataGrid.RestoreLayoutFromXml(Properties.Settings.Default.OrdersDataGridLayoutsFileConfigName);
+            }
+
+            if ((DataContext as MainViewModel)?.IsMainAccount ?? false)
+            {
+                var rowCellCustomization = DocumentsDataGrid?.View?.RowCellMenuCustomizations;
+                
+                if(rowCellCustomization != null)
+                {
+                    var markNotExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
+                    {
+                        Content = "Пометить не экспортируемым",
+                        ToolTip = "Сделать невозможным экспорт заказа, но сам заказ оставить в списке"
+                    };
+
+                    var enableMarkNotExportableBinding = new System.Windows.Data.Binding
+                    {
+                        Path = new System.Windows.PropertyPath("View.DataContext.IsExportButtonEnabled"),
+                        UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
+                        Mode = System.Windows.Data.BindingMode.OneWay
+                    };
+                    var commandMarkNotExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetNotExportableStateCommand");
+                    markNotExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkNotExportableBinding);
+                    markNotExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkNotExportableBinding);
+
+                    rowCellCustomization.Add(markNotExportableItem);
+
+                    var markExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
+                    {
+                        Content = "Пометить экспортируемым",
+                        ToolTip = "Сделать снова доступным экспорт заказа"
+                    };
+
+                    var enableMarkExportableBinding = new System.Windows.Data.Binding
+                    {
+                        Path = new System.Windows.PropertyPath("View.DataContext.IsNotExportable"),
+                        UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
+                        Mode = System.Windows.Data.BindingMode.OneWay
+                    };
+                    var commandMarkExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetExportableStateCommand");
+                    markExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkExportableBinding);
+                    markExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkExportableBinding);
+
+                    rowCellCustomization.Add(markExportableItem);
+                }
             }
         }
     }
