@@ -994,14 +994,26 @@ namespace OMS.ViewModels
                 return;
             }
 
+            _edi.Entry(SelectedItem)?.Reload();
+
             if (SelectedItem.IsMarkedNotExportable == 0 && SelectedItem.Status != 0)
             {
                 System.Windows.MessageBox.Show("Статус Экспорта документа не позволяет пометить его неэкспортируемым.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
-            SelectedItem.IsMarkedNotExportable = exportableState;
-            Save();
+            if (SelectedItem.IsMarkedNotExportable == exportableState)
+            {
+                if(exportableState == 0)
+                    System.Windows.MessageBox.Show("Заказ уже помечен для экспорта.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                else
+                    System.Windows.MessageBox.Show("Заказ уже помечен как неэкспортируемый.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            else
+            {
+                SelectedItem.IsMarkedNotExportable = exportableState;
+                Save();
+            }
 
             UpdateProps();
             OnPropertyChanged("IsExportButtonEnabled");
