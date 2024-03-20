@@ -60,8 +60,7 @@ namespace OrderManagementSystem.UserInterface
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if ((DataContext as MainViewModel)?.IsMainAccount ?? false)
-                DocumentsDataGrid?.View?.RowCellMenuCustomizations?.Clear();
+            DocumentsDataGrid?.View?.RowCellMenuCustomizations?.Clear();
 
             if (UtilitesLibrary.ConfigSet.Config.GetInstance().SaveWindowSettings)
             {
@@ -80,48 +79,46 @@ namespace OrderManagementSystem.UserInterface
                     DocumentsDataGrid.RestoreLayoutFromXml(Properties.Settings.Default.OrdersDataGridLayoutsFileConfigName);
             }
 
-            if ((DataContext as MainViewModel)?.IsMainAccount ?? false)
+            var rowCellCustomization = DocumentsDataGrid?.View?.RowCellMenuCustomizations;
+
+            if(rowCellCustomization != null)
             {
-                var rowCellCustomization = DocumentsDataGrid?.View?.RowCellMenuCustomizations;
-                
-                if(rowCellCustomization != null)
+                rowCellCustomization.Clear();
+                var markNotExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
                 {
-                    var markNotExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
-                    {
-                        Content = "Пометить не экспортируемым",
-                        ToolTip = "Сделать невозможным экспорт заказа, но сам заказ оставить в списке"
-                    };
+                    Content = "Пометить не экспортируемым",
+                    ToolTip = "Сделать невозможным экспорт заказа, но сам заказ оставить в списке"
+                };
 
-                    var enableMarkNotExportableBinding = new System.Windows.Data.Binding
-                    {
-                        Path = new System.Windows.PropertyPath("View.DataContext.IsExportButtonEnabled"),
-                        UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
-                        Mode = System.Windows.Data.BindingMode.OneWay
-                    };
-                    var commandMarkNotExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetNotExportableStateCommand");
-                    markNotExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkNotExportableBinding);
-                    markNotExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkNotExportableBinding);
+                var enableMarkNotExportableBinding = new System.Windows.Data.Binding
+                {
+                    Path = new System.Windows.PropertyPath("View.DataContext.IsExportButtonEnabled"),
+                    UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
+                    Mode = System.Windows.Data.BindingMode.OneWay
+                };
+                var commandMarkNotExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetNotExportableStateCommand");
+                markNotExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkNotExportableBinding);
+                markNotExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkNotExportableBinding);
 
-                    rowCellCustomization.Add(markNotExportableItem);
+                rowCellCustomization.Add(markNotExportableItem);
 
-                    var markExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
-                    {
-                        Content = "Пометить экспортируемым",
-                        ToolTip = "Сделать снова доступным экспорт заказа"
-                    };
+                var markExportableItem = new DevExpress.Xpf.Bars.BarButtonItem
+                {
+                    Content = "Пометить экспортируемым",
+                    ToolTip = "Сделать снова доступным экспорт заказа"
+                };
 
-                    var enableMarkExportableBinding = new System.Windows.Data.Binding
-                    {
-                        Path = new System.Windows.PropertyPath("View.DataContext.IsNotExportable"),
-                        UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
-                        Mode = System.Windows.Data.BindingMode.OneWay
-                    };
-                    var commandMarkExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetExportableStateCommand");
-                    markExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkExportableBinding);
-                    markExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkExportableBinding);
+                var enableMarkExportableBinding = new System.Windows.Data.Binding
+                {
+                    Path = new System.Windows.PropertyPath("View.DataContext.IsNotExportable"),
+                    UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged,
+                    Mode = System.Windows.Data.BindingMode.OneWay
+                };
+                var commandMarkExportableBinding = new System.Windows.Data.Binding("View.DataContext.SetExportableStateCommand");
+                markExportableItem.SetBinding(System.Windows.ContentElement.IsEnabledProperty, enableMarkExportableBinding);
+                markExportableItem.SetBinding(DevExpress.Xpf.Bars.BarItem.CommandProperty, commandMarkExportableBinding);
 
-                    rowCellCustomization.Add(markExportableItem);
-                }
+                rowCellCustomization.Add(markExportableItem);
             }
         }
     }
