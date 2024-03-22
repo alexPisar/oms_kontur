@@ -530,7 +530,12 @@ namespace EdiProcessingUnit.ProcessorUnits
 
             desadvEdiMsg.DespatchAdvice = new DespatchAdvice();
             desadvEdiMsg.DespatchAdvice.number = reseiveNumber;
-            desadvEdiMsg.DespatchAdvice.date = GetDate(DateTime.Now);
+
+            if(_isSentForSomeOrders)
+                desadvEdiMsg.DespatchAdvice.date = GetDate(deliveryDate.Value);
+            else
+                desadvEdiMsg.DespatchAdvice.date = GetDate(DateTime.Now);
+
             desadvEdiMsg.DespatchAdvice.originOrder = new Identificator();
             desadvEdiMsg.DespatchAdvice.originOrder.Number = origOrder.Number;
             desadvEdiMsg.DespatchAdvice.originOrder.Date = GetDate(origOrder.OrderDate.Value);
@@ -543,7 +548,11 @@ namespace EdiProcessingUnit.ProcessorUnits
             desadvEdiMsg.DespatchAdvice.deliveryInfo = new despatchAdviceDeliveryInfo();
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo = new Company();
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo.gln = origOrder.GlnShipTo;
-            desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            if(_isSentForSomeOrders)
+                desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = deliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            else
+                desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
             if(deliveryDate != null)
                 desadvEdiMsg.DespatchAdvice.deliveryInfo.estimatedDeliveryDateTime = deliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
