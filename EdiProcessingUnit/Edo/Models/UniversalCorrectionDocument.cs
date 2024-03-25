@@ -58,6 +58,8 @@ namespace EdiProcessingUnit.Edo.Models
                         return "Отклонён";
                     case (int)Enums.DocEdoSendStatus.Sent:
                         return "Отправлен";
+                    case (int)Enums.DocEdoSendStatus.PartialSigned:
+                        return "Подписан с расхождениями";
                     default:
                         return "-";
                 }

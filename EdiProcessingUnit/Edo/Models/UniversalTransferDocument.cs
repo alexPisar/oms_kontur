@@ -188,8 +188,12 @@ namespace EdiProcessingUnit.Edo.Models
 
                     if(query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
+                    else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
+                        _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
+                    else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned))
+                        _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
                     else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
                         _edoProcessing = query.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
                     else if (query.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
@@ -209,8 +213,12 @@ namespace EdiProcessingUnit.Edo.Models
 
                     if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
+                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1));
                     else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
+                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
                     else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
                         _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
                     else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Sent && (s.AnnulmentStatus == 0 || s.AnnulmentStatus == -1)))
@@ -252,6 +260,8 @@ namespace EdiProcessingUnit.Edo.Models
                         return "Отклонён";
                     case (int)Enums.DocEdoSendStatus.Sent:
                         return "Отправлен";
+                    case (int)Enums.DocEdoSendStatus.PartialSigned:
+                        return "Подписан с расхождениями";
                     default:
                         return "-";
                 }

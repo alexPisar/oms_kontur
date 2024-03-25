@@ -28,6 +28,8 @@ namespace KonturEdoClient.Models
                         return "Отклонён";
                     case (int)DocEdoSendStatus.Sent:
                         return "Отправлен";
+                    case (int)DocEdoSendStatus.PartialSigned:
+                        return "Подписан с расхождениями";
                     default:
                         return "-";
                 }

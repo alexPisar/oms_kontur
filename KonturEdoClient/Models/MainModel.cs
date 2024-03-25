@@ -51,7 +51,8 @@ namespace KonturEdoClient.Models
         public bool PermissionChannelsSettings { get; set; }
         public bool DocumentWithErrorStatus => ((DocComissionEdoProcessing)SelectedDocument?.ProcessingStatus)?.DocStatus == (int?)HonestMark.DocEdoProcessingStatus.ProcessingError;
         public bool IsSended => WorkWithDocumentsPermission && SelectedDocument?.DocEdoSendStatus != null && SelectedDocument?.DocEdoSendStatus != "-";
-        public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован");
+        public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован" ||
+            SelectedDocument?.DocEdoSendStatus == "Подписан с расхождениями");
 
         public List<UniversalTransferDocument> Documents { get; set; }
         public List<UniversalTransferDocument> SelectedDocuments { get; set; }
@@ -1150,6 +1151,11 @@ namespace KonturEdoClient.Models
                                         docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected;
                                         _abt.SaveChanges();
                                     }
+                                    else if(doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
+                                    {
+                                        docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned;
+                                        _abt.SaveChanges();
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -1197,7 +1203,8 @@ namespace KonturEdoClient.Models
                                         }
                                         else
                                         {
-                                            docProcessing.IsReprocessingStatus = 0;
+                                            if(docProcessing.DocStatus != (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned)
+                                                docProcessing.IsReprocessingStatus = 0;
                                         }
                                     }
                                     catch (Exception ex)
