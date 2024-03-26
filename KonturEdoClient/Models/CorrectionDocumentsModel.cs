@@ -75,13 +75,13 @@ namespace KonturEdoClient.Models
                     var buyerCustomer = _abt.RefCustomers.FirstOrDefault(r => r.Id == buyerContractor.DefaultCustomer);
 
                     var typeNamedId = "UniversalCorrectionDocument";
-                    var function = "КСЧФ";
+                    var function = "КСЧФДИС";
                     var version = "ucd736_05_01_02";
 
                     var correctionDocument = new Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument
                     {
                         Currency = Properties.Settings.Default.DefaultCurrency,
-                        Function = Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocumentFunction.КСЧФ,
+                        Function = Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocumentFunction.КСЧФДИС,
                         DocumentNumber = SelectedDocument.DocumentNumber,
                         DocumentDate = SelectedDocument?.CorrectionDocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                     };
@@ -106,10 +106,6 @@ namespace KonturEdoClient.Models
                     };
 
                     var orgInn = _currentOrganization.Inn;
-                    bool result = EdiProcessingUnit.Edo.Edo.GetInstance().Authenticate(false, _currentOrganization.Certificate, orgInn);
-
-                    if (!result)
-                        throw new Exception("Не удалось авторизоваться в системе по сертификату.");
 
                     var baseDocument = EdiProcessingUnit.Edo.Edo.GetInstance().GetDocument(baseProcessing.MessageId, baseProcessing.EntityId);
 

@@ -37,7 +37,23 @@ namespace EdiProcessingUnit.Edo.Models
 
                 if (EdoProcessing as IEnumerable<DocEdoProcessing> != null)
                 {
-                    _edoProcessing = (EdoProcessing as IEnumerable<DocEdoProcessing>)?.FirstOrDefault();
+                    var collection = EdoProcessing as IEnumerable<DocEdoProcessing>;
+
+                    if (!collection.Any())
+                    {
+                        _edoProcessing = null;
+                        return "-";
+                    }
+
+                    if(collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
+                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
+                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
+                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
+                    else
+                        _edoProcessing = collection.FirstOrDefault();
+
                     EdoProcessing = _edoProcessing;
 
                     if (_edoProcessing == null)
