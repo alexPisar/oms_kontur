@@ -211,7 +211,7 @@ namespace KonturEdoClient.Models
                             {
                                 OriginalValue = baseDetail.Quantity,
                                 OriginalValueSpecified = true,
-                                CorrectedValue = detail.Quantity - baseDetail.Quantity,
+                                CorrectedValue = baseDetail.Quantity - detail.Quantity,
                                 CorrectedValueSpecified = true
                             },
                             TaxRate = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemTaxRate
