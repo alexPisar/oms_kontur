@@ -115,30 +115,88 @@ namespace OrderManagementSystem.UserInterface.ViewModels
                     ExcelColumnCollection columnCollection = new ExcelColumnCollection();
                     string sheetName = "Лист1";
 
-                    columnCollection.AddColumn( "Description", "Описание", ExcelType.String );
-                    columnCollection.AddColumn( "IdGood", "ID товара", ExcelType.String );
-                    columnCollection.AddColumn( "Gtin", "Штрих - код", ExcelType.String );
-                    columnCollection.AddColumn( "ReqQunatity", "Количество", ExcelType.Double );
-                    columnCollection.AddColumn( "NetPrice", "Стоимость единицы товара", ExcelType.Double );
-                    columnCollection.AddColumn( "NetPriceVat", "Стоимость с НДС", ExcelType.Double );
-                    columnCollection.AddColumn( "Amount", "Сумма с НДС", ExcelType.Double );
-
-                    var docLinesData = new ExcelDocumentData( columnCollection, _itemDocLines.ToArray() );
-                    docLinesData.SheetName = sheetName;
-
-                    double totalAmount = 0.0, totalNetAmount = 0.0;
-
-                    foreach(var line in _itemDocLines)
+                    DocLineItem[] result = null;
+                    ExcelDocumentData docLinesData = null;
+                    if (Item.Status == 4)
                     {
-                        double amount, netAmount;
-                        double.TryParse( line.Amount, out amount );
-                        double.TryParse( line.NetAmount, out netAmount );
+                        columnCollection.AddColumn("Description", "Описание", ExcelType.String);
+                        columnCollection.AddColumn("IdGood", "ID товара", ExcelType.String);
+                        columnCollection.AddColumn("Gtin", "Штрих - код", ExcelType.String);
+                        columnCollection.AddColumn("BuyerCode", "Код покупателя", ExcelType.String);
+                        columnCollection.AddColumn("ReqQunatity", "Заказано", ExcelType.Double);
+                        columnCollection.AddColumn("OrdrspQuantity", "Отгружено", ExcelType.Double);
+                        columnCollection.AddColumn("RecadvAcceptQuantity", "Принято", ExcelType.Double);
+                        columnCollection.AddColumn("RecadvAcceptNetPrice", "Стоимость единицы товара", ExcelType.Double);
+                        columnCollection.AddColumn("RecadvAcceptNetPriceVat", "Стоимость с НДС", ExcelType.Double);
+                        columnCollection.AddColumn("RecadvAcceptNetAmount", "Сумма без НДС", ExcelType.Double);
+                        columnCollection.AddColumn("RecadvAcceptAmount", "Сумма с НДС", ExcelType.Double);
 
-                        totalAmount += amount;
-                        totalNetAmount += netAmount;
+                        docLinesData = new ExcelDocumentData(columnCollection, _itemDocLines.ToArray());
+                        docLinesData.SheetName = sheetName;
+
+                        double totalAmount = 0.0, totalNetAmount = 0.0, acceptedTotalQuantity = 0.0;
+
+                        foreach (var line in _itemDocLines)
+                        {
+                            if (!string.IsNullOrEmpty(line.RecadvAcceptAmount))
+                            {
+                                double amount;
+                                double.TryParse(line.RecadvAcceptAmount, out amount);
+                                totalAmount += amount;
+                            }
+
+                            if (!string.IsNullOrEmpty(line.RecadvAcceptNetAmount))
+                            {
+                                double netAmount;
+                                double.TryParse(line.RecadvAcceptNetAmount, out netAmount);
+                                totalNetAmount += netAmount;
+                            }
+
+                            if (!string.IsNullOrEmpty(line.RecadvAcceptQuantity))
+                            {
+                                double quality;
+                                double.TryParse(line.RecadvAcceptQuantity, out quality);
+                                acceptedTotalQuantity += quality;
+                            }
+                        }
+
+                        result = new DocLineItem[] {
+                        new DocLineItem() {
+                            Description = "Итог:",
+                            RecadvAcceptAmount = totalAmount.ToString(),
+                            RecadvAcceptQuantity = acceptedTotalQuantity.ToString(),
+                            RecadvAcceptNetAmount = totalNetAmount.ToString(),
+                            ReqQunatity = TotalQuantity.ToString()
+                        }
+                    };
+                        _log.Log($"инициализирована приёмка: сумма {result?.First()?.RecadvAcceptAmount}, количество {result?.First()?.RecadvAcceptQuantity}");
                     }
+                    else
+                    {
+                        columnCollection.AddColumn( "Description", "Описание", ExcelType.String );
+                        columnCollection.AddColumn( "IdGood", "ID товара", ExcelType.String );
+                        columnCollection.AddColumn( "Gtin", "Штрих - код", ExcelType.String );
+                        columnCollection.AddColumn( "ReqQunatity", "Количество", ExcelType.Double );
+                        columnCollection.AddColumn( "NetPrice", "Стоимость единицы товара", ExcelType.Double );
+                        columnCollection.AddColumn( "NetPriceVat", "Стоимость с НДС", ExcelType.Double );
+                        columnCollection.AddColumn( "Amount", "Сумма с НДС", ExcelType.Double );
 
-                    var result = new DocLineItem[] {
+                        docLinesData = new ExcelDocumentData( columnCollection, _itemDocLines.ToArray() );
+                        docLinesData.SheetName = sheetName;
+
+                        double totalAmount = 0.0, totalNetAmount = 0.0;
+
+                        foreach(var line in _itemDocLines)
+                        {
+                            double amount, netAmount;
+                            double.TryParse( line.Amount, out amount );
+                            double.TryParse( line.NetAmount, out netAmount );
+
+                            totalAmount += amount;
+                            totalNetAmount += netAmount;
+                        }
+
+                        result = new DocLineItem[] {
                         new DocLineItem() {
                             Description = "Итог:",
                             Amount = totalAmount.ToString(),
@@ -147,7 +205,8 @@ namespace OrderManagementSystem.UserInterface.ViewModels
                         }
                     };
 
-                    _log.Log( $"инициализирован итог: сумма {result?.First()?.Amount}, количество {result?.First()?.ReqQunatity}" );
+                        _log.Log( $"инициализирован итог: сумма {result?.First()?.Amount}, количество {result?.First()?.ReqQunatity}" );
+                    }
 
                     var resultData = new ExcelDocumentData( columnCollection, result );
                     resultData.SheetName = sheetName;
@@ -159,7 +218,10 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
                     var worker = new ExcelFileWorker( saveFileDialog.FileName, docs );
 
-                    worker.ExportRow( 
+                    if (Item.Status == 4)
+                        worker.ExportRow("Приёмка со стороны покупателя.", sheetName);
+
+                    worker.ExportRow(
                         $"Номер заказа: {Item?.Number}, " +
                         $"Дата доставки: {Item?.ReqDeliveryDate}, " +
                         $"Дата получения: {Item?.EdiCreationSenderDate}", sheetName );
