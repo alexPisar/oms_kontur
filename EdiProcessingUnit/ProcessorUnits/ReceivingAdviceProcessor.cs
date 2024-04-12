@@ -128,19 +128,51 @@ namespace EdiProcessingUnit.ProcessorUnits
             if (order == null)
                 return;
 
-			var logOrders = order.LogOrders;
+            var connectedBuyer = _ediDbContext?
+                .RefShoppingStores?
+                .FirstOrDefault(r => r.BuyerGln == order.GlnBuyer)?
+                .MainShoppingStore;
 
-			int RecadvAcceptLineCount = 0;
+            bool desadvExportedByManufacturers = connectedBuyer.MultiDesadv == 1 && connectedBuyer.ExportOrdersByManufacturers == 1;
 
-			foreach(var item in order.DocLineItems)
+            if (desadvExportedByManufacturers && order.Status < 3)
+                return;
+
+            if (!IsNeedProcessor(order.GlnBuyer, connectedBuyer))
+                return;
+
+            IEnumerable<DocLineItem> docLineItems;
+
+            if (desadvExportedByManufacturers)
+                docLineItems = from docLineItem in order.DocLineItems
+                               where docLineItem.IdDocJournal != null && docLineItem.IdDocJournal != "" && docLineItem.IdGood != null && docLineItem.IsRemoved != "1"
+                               select docLineItem;
+            else
+                docLineItems = order.DocLineItems;
+
+            int RecadvAcceptLineCount = 0;
+            long? idDocJournal = null;
+
+            foreach(var item in docLineItems)
 			{
 				var currentRecadvItem = recadv?
 					.recadvLineItems?
 					.LineItem?
 					.SingleOrDefault(x=>x.gtin.ToString() == item.Gtin) ?? null;
 
-				if (currentRecadvItem == null)
+                if (currentRecadvItem == null)
+                    currentRecadvItem = recadv?
+                        .recadvLineItems?
+                        .LineItem?
+                        .SingleOrDefault(x => x.internalBuyerCode == item.BuyerCode) ?? null;
+
+                if (currentRecadvItem == null)
 					continue;
+
+                if(idDocJournal == null && desadvExportedByManufacturers)
+                {
+                    idDocJournal = long.Parse(item.IdDocJournal);
+                }
 
 				item.RecadvAcceptAmount = currentRecadvItem.amount.ToString();
 				item.RecadvAcceptNetAmount = currentRecadvItem.netAmount.ToString();
@@ -153,23 +185,55 @@ namespace EdiProcessingUnit.ProcessorUnits
 
 			if (RecadvAcceptLineCount <= 0)
 				return;
-			
-			order.Status = 4;
 
-			_ediDbContext.LogOrders.Add( new LogOrder 
-			{
-				Id = Guid.NewGuid().ToString(),
-				IdOrder = order.Id,
-				IdDocJournal = null,
-				OrderStatus = 4,
-				Datetime = DateTime.Now,
-				MessageId = msg.Id,
-				CircilationId = null
-			} );
+            if (!desadvExportedByManufacturers)
+                order.Status = 4;
+            else
+            {
+                var logOrders = (from logOrder in _ediDbContext.LogOrders
+                                where logOrder.IdOrder == order.Id && logOrder.OrderStatus >= 3 && logOrder.OrderStatus <= 4 && logOrder.IdDocJournal != null
+                                select logOrder)?.ToList() ?? new List<LogOrder>();
+
+                if(idDocJournal != null && logOrders.Count > 0 && 
+                    logOrders.Exists(l => l.OrderStatus == 3 && l.IdDocJournal == idDocJournal) && 
+                    !logOrders.Exists(l => l.OrderStatus == 4 && l.IdDocJournal == idDocJournal))
+                {
+                    var traderDocsWhenDesadvStatus = logOrders?.Where(l => l.OrderStatus == 3)?.Select(l => l.IdDocJournal)?.Distinct()?.Count() ?? 0;
+                    var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal)?.Distinct()?.Count() ?? 0;
+
+                    if(traderDocsWhenDesadvStatus == traderDocsWhenRecadvStatus + 1)
+                        order.Status = 4;
+                }
+            }
+
+            var newLogOrder = new LogOrder
+            {
+                Id = Guid.NewGuid().ToString(),
+                IdOrder = order.Id,
+                IdDocJournal = null,
+                OrderStatus = 4,
+                Datetime = DateTime.Now,
+                MessageId = msg.Id,
+                CircilationId = null
+            };
+
+            if (desadvExportedByManufacturers && idDocJournal != null)
+                newLogOrder.IdDocJournal = idDocJournal;
+
+            _ediDbContext.LogOrders.Add( newLogOrder );
 
 			_ediDbContext.SaveChanges();
 
 		}
 
-	}
+        /// <summary>
+        /// Определяет, нужен ли данный документ в документообороте
+        /// </summary>
+        /// <param name="gln">ГЛН организации</param>
+        protected override bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
+        {
+            return connectedBuyer.ShipmentExchangeType != (int)DataContextManagementUnit.DataAccess.ShipmentType.None;
+        }
+
+    }
 }
