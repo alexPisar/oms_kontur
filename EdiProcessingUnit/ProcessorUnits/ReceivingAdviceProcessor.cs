@@ -20,7 +20,9 @@ namespace EdiProcessingUnit.ProcessorUnits
 	{
 		private string _xmlOrder = null;
 
-		public override void Run()
+        public bool IsSavingLastEventId { get; set; }
+
+        public override void Run()
 		{
 			ProcessorName = "ReceivingAdviceProcessor";
 
@@ -32,34 +34,46 @@ namespace EdiProcessingUnit.ProcessorUnits
 			List<MessageBoxEvent> inboxMessages = new List<MessageBoxEvent>();
 			List<MessageBoxEvent> recadvMessages = new List<MessageBoxEvent>();
 			events = _edi.MessageBoxEvents;
+            IsSavingLastEventId = true;
 
-			if (events.Count() <= 0)
-				events = _edi.GetNewEvents();
+            if (events.Count() <= 0)
+            {
+                IsSavingLastEventId = false;
+                events = _edi.GetNewEvents();
+            }
 
 			if (events.Count() <= 0)
 				return;
 
-			inboxMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage).ToList();
+            try
+            {
+                inboxMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage).ToList();
 
-			recadvMessages = inboxMessages.Where( x => ((NewInboxMessageEventContent)x.EventContent)
-				.InboxMessageMeta.DocumentDetails.DocumentType == DocumentType.Recadv )
-				.ToList();
+                recadvMessages = inboxMessages.Where( x => ((NewInboxMessageEventContent)x.EventContent)
+                   .InboxMessageMeta.DocumentDetails.DocumentType == DocumentType.Recadv )
+                    .ToList();
 
-			if(recadvMessages.Count <= 0)
-			{
-				inboxMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage ).ToList();
+                if(recadvMessages.Count <= 0)
+                {
+                    inboxMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage ).ToList();
 
-				recadvMessages = inboxMessages.Where( x => ((NewInboxMessageEventContent)x.EventContent)
-					.InboxMessageMeta.DocumentDetails.DocumentType == DocumentType.Recadv )
-					.ToList();
+                    recadvMessages = inboxMessages.Where( x => ((NewInboxMessageEventContent)x.EventContent)
+                       .InboxMessageMeta.DocumentDetails.DocumentType == DocumentType.Recadv )
+                        .ToList();
 
-			}
+                }
 
-			foreach (MessageBoxEvent boxEvent in recadvMessages)
-			{
-				NewInboxMessageHandler( boxEvent );
-			}
-		}
+                foreach (MessageBoxEvent boxEvent in recadvMessages)
+                {
+                    NewInboxMessageHandler( boxEvent );
+                }
+            }
+            catch (Exception ex)
+            {
+                IsSavingLastEventId = false;
+                throw ex;
+            }
+        }
 
 		public ReceivingAdviceProcessor() { }
 

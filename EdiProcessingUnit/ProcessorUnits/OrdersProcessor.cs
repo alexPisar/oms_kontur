@@ -14,7 +14,10 @@ namespace EdiProcessingUnit.WorkingUnits
 	public sealed class OrdersProcessor : EdiProcessor
 	{
 		private List<string> _xmlList = null;
-		public OrdersProcessor() { }		
+        private bool _withErrors;
+
+        public bool WithErrors => _withErrors;
+        public OrdersProcessor() { }		
 		public OrdersProcessor(List<string> Xmls) => _xmlList = Xmls;	
 		public override void Run()
 		{
@@ -36,7 +39,7 @@ namespace EdiProcessingUnit.WorkingUnits
             if (events.Count() <= 0)
 				return;
 			var incomingMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage ).ToList();
-            bool withErrors = false;
+            _withErrors = false;
 			foreach (MessageBoxEvent boxEvent in incomingMessages)
 			{
 				try
@@ -45,7 +48,7 @@ namespace EdiProcessingUnit.WorkingUnits
 				}
 				catch(Exception ex)
 				{
-                    withErrors = true;
+                    _withErrors = true;
                     MailReporter.Add( _log.GetRecursiveInnerException(ex)
 						+ "\r\n BoxId=" + boxEvent.BoxId
 						+ "\r\n EventId=" + boxEvent.EventId
@@ -55,9 +58,6 @@ namespace EdiProcessingUnit.WorkingUnits
 						);
 				}
 			}
-
-            if(!withErrors)
-                _edi.SaveLastEventId();
         }
 
 		private void NewInboxMessageHandler(object EventContent)

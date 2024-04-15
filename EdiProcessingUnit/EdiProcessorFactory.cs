@@ -39,6 +39,11 @@ namespace EdiProcessingUnit
 		{			
 			_isAuth = _edi.Authenticate(_organizationGln);
 		}
+
+        public void SaveEdiLastEventId()
+        {
+            _edi.SaveLastEventId();
+        }
 		
 		/// <summary>
 		/// Метод создания и запуска указанного обработчика

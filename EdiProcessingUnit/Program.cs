@@ -112,10 +112,20 @@ namespace EdiProcessingUnit
 		private static void StartHandlers()
 		{
             _utilityLog.Log(_timeStamp + " - Запуск обработчиков сообщений");
-			RunSafe( _processorFactory, new OrdersProcessor() );
+
+            var ordersProcessor = new OrdersProcessor();
+            RunSafe( _processorFactory, ordersProcessor );
             _utilityLog.Log($"{_timeStamp} - обработчик OrdersProcessor завершил работу.");
-            RunSafe( _processorFactory, new ReceivingAdviceProcessor() );
+
+            var receivingAdviceProcessor = new ReceivingAdviceProcessor();
+            RunSafe( _processorFactory, receivingAdviceProcessor );
             _utilityLog.Log($"{_timeStamp} - обработчик ReceivingAdviceProcessor завершил работу.");
+
+            if (receivingAdviceProcessor.IsSavingLastEventId && !ordersProcessor.WithErrors)
+            {
+                _utilityLog.Log($"{_timeStamp} - Сохранение LastEventId.");
+                _processorFactory.SaveEdiLastEventId();
+            }
 
             RunSafe( _processorFactory, new OrderResponsesProcessor() );
             _utilityLog.Log($"{_timeStamp} - обработчик OrderResponsesProcessor завершил работу.");
