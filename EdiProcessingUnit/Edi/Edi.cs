@@ -33,6 +33,7 @@ namespace EdiProcessingUnit.Edi
         //private InternalEdiApiHttpClient _apiInternal { get; set; }
 
         public string CurrentOrgGln => _cache?.Gln;
+        public List<MessageBoxEvent> MessageBoxEvents => _messageBoxEvents ?? new List<MessageBoxEvent>();
 
         public List<MessageBoxEvent> GetNewEvents()
 		{

@@ -31,7 +31,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 			List<MessageBoxEvent> events = new List<MessageBoxEvent>();
 			List<MessageBoxEvent> inboxMessages = new List<MessageBoxEvent>();
 			List<MessageBoxEvent> recadvMessages = new List<MessageBoxEvent>();
-			events = _edi.GetNewEvents();
+			events = _edi.MessageBoxEvents;
 
 			if (events.Count() <= 0)
 				events = _edi.GetNewEvents();
@@ -135,9 +135,6 @@ namespace EdiProcessingUnit.ProcessorUnits
 
             bool desadvExportedByManufacturers = connectedBuyer.MultiDesadv == 1 && connectedBuyer.ExportOrdersByManufacturers == 1;
 
-            if (desadvExportedByManufacturers && order.Status < 3)
-                return;
-
             if (!IsNeedProcessor(order.GlnBuyer, connectedBuyer))
                 return;
 
@@ -188,18 +185,17 @@ namespace EdiProcessingUnit.ProcessorUnits
 
             if (!desadvExportedByManufacturers)
                 order.Status = 4;
-            else
+            else if(order.Status == 3 && idDocJournal != null)
             {
                 var logOrders = (from logOrder in _ediDbContext.LogOrders
                                 where logOrder.IdOrder == order.Id && logOrder.OrderStatus >= 3 && logOrder.OrderStatus <= 4 && logOrder.IdDocJournal != null
                                 select logOrder)?.ToList() ?? new List<LogOrder>();
 
-                if(idDocJournal != null && logOrders.Count > 0 && 
-                    logOrders.Exists(l => l.OrderStatus == 3 && l.IdDocJournal == idDocJournal) && 
+                if(logOrders.Count > 0 && logOrders.Exists(l => l.OrderStatus == 3 && l.IdDocJournal == idDocJournal) && 
                     !logOrders.Exists(l => l.OrderStatus == 4 && l.IdDocJournal == idDocJournal))
                 {
-                    var traderDocsWhenDesadvStatus = logOrders?.Where(l => l.OrderStatus == 3)?.Select(l => l.IdDocJournal)?.Distinct()?.Count() ?? 0;
-                    var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal)?.Distinct()?.Count() ?? 0;
+                    var traderDocsWhenDesadvStatus = logOrders?.Where(l => l.OrderStatus == 3)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
+                    var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
 
                     if(traderDocsWhenDesadvStatus == traderDocsWhenRecadvStatus + 1)
                         order.Status = 4;
