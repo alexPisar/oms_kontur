@@ -95,6 +95,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
             modelBuilder.Configurations.Add( new Mapping.RefShoppingStoreConfiguration() );
             modelBuilder.Configurations.Add(new Mapping.MapGoodManufacturerConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefAgentByEdiClientConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.DocReceivingAdviceConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -118,5 +119,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public virtual DbSet<RefShoppingStore> RefShoppingStores { get; set; }
         public virtual DbSet<MapGoodManufacturer> MapGoodsManufacturers { get; set; }
         public virtual DbSet<RefAgentByEdiClient> RefAgentsByEdiClients { get; set; }
+        public virtual DbSet<DocReceivingAdvice> DocReceivingAdvices { get; set; }
     }
 }

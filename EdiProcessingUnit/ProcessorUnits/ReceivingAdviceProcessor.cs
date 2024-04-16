@@ -126,15 +126,17 @@ namespace EdiProcessingUnit.ProcessorUnits
 		{
 			ReceivingAdvice recadv = msg.ReceivingAdvice;
 
+            var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-2);
             var docOrders = _ediDbContext
                 .DocOrders
-                .Where(
-                x => x.GlnBuyer == msg.ReceivingAdvice.Buyer.gln &&
+                .Where(x => x.ReqDeliveryDate != null &&
+                x.GlnBuyer == msg.ReceivingAdvice.Buyer.gln &&
                 x.GlnSeller == msg.ReceivingAdvice.Seller.gln &&
-                x.Number == msg.ReceivingAdvice.OriginOrder.Number);
+                x.Number == msg.ReceivingAdvice.OriginOrder.Number &&
+                x.ReqDeliveryDate.Value > dateTimeDeliveryFrom);
 
             DocOrder order = docOrders
-				.FirstOrDefault(x => x.Status >= 1 && x.Status < 4 && x.ReqDeliveryDate != null);
+				.FirstOrDefault(x => x.Status >= 1 && x.Status < 4);
 
             if (order == null)
                 order = docOrders.FirstOrDefault();
@@ -227,12 +229,30 @@ namespace EdiProcessingUnit.ProcessorUnits
                 CircilationId = null
             };
 
+            var newDocReceivingAdvice = new DocReceivingAdvice
+            {
+                MessageId = msg.Id,
+                IdOrder = order.Id,
+                RecadvNumber = recadv.Number,
+                TotalAmount = recadv.recadvLineItems?.TotalAmount,
+                TotalVatAmount = recadv.recadvLineItems?.TotalVATAmount,
+                TotalSumExcludeTax = recadv.recadvLineItems?.TotalSumExcludingTaxes
+            };
+
+            if (!string.IsNullOrEmpty(recadv.Date))
+                newDocReceivingAdvice.RecadvDate = DateTime.ParseExact(recadv.Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
             if (desadvExportedByManufacturers && idDocJournal != null)
+            {
                 newLogOrder.IdDocJournal = idDocJournal;
+                newDocReceivingAdvice.IdDocJournal = idDocJournal;
+            }
 
             _ediDbContext.LogOrders.Add( newLogOrder );
+            _ediDbContext.DocReceivingAdvices.Add(newDocReceivingAdvice);
 
-			_ediDbContext.SaveChanges();
+
+            _ediDbContext.SaveChanges();
 
 		}
 

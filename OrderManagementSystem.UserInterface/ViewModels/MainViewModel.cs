@@ -37,6 +37,7 @@ namespace OMS.ViewModels
         public RelayCommand SetExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(0); });
         public RelayCommand SetNotExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(1); });
         public RelayCommand SaveCommand => new RelayCommand((o) => { Save(); });
+        public RelayCommand LoadReestrDocumentsCommand => new RelayCommand((o) => { LoadReestrDocuments(); });
         public bool MustShowAllOrders { get; set; } = false;
 		public DocLineItem SelectedDocLineItem { get; set; }
 
@@ -1018,6 +1019,11 @@ namespace OMS.ViewModels
             UpdateProps();
             OnPropertyChanged("IsExportButtonEnabled");
             OnPropertyChanged("IsNotExportable");
+        }
+
+        private void LoadReestrDocuments()
+        {
+
         }
 
         private void UpdateProps()

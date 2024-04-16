@@ -97,6 +97,7 @@
     <Compile Include="DataAccess\Entities\DocJournalTag.cs" />
     <Compile Include="DataAccess\Entities\DocLineItem.cs" />
     <Compile Include="DataAccess\Entities\DocOrder.cs" />
+    <Compile Include="DataAccess\Entities\DocReceivingAdvice.cs" />
     <Compile Include="DataAccess\Entities\EdiApplicationFromDb.cs" />
     <Compile Include="DataAccess\Entities\LogOrder.cs" />
     <Compile Include="DataAccess\Entities\MapGood.cs" />
@@ -146,6 +147,7 @@
     <Compile Include="DataAccess\Mappings\DocJournalTagConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocLineItemConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocOrderConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\DocReceivingAdviceConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\LogOrderConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\MapGoodByBuyerConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\MapGoodConfiguration.cs" />
