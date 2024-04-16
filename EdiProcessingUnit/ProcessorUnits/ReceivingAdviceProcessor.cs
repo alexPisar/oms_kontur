@@ -211,7 +211,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                     var traderDocsWhenDesadvStatus = logOrders?.Where(l => l.OrderStatus == 3)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
                     var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
 
-                    if(traderDocsWhenDesadvStatus == traderDocsWhenRecadvStatus + 1)
+                    if(traderDocsWhenDesadvStatus <= traderDocsWhenRecadvStatus + 1)
                         order.Status = 4;
                 }
             }
