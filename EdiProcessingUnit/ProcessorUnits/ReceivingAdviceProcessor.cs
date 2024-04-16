@@ -165,6 +165,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 
             int RecadvAcceptLineCount = 0;
             long? idDocJournal = null;
+            double totalAcceptedQuantity = 0.0;
 
             foreach(var item in docLineItems)
 			{
@@ -192,6 +193,13 @@ namespace EdiProcessingUnit.ProcessorUnits
 				item.RecadvAcceptNetPrice = currentRecadvItem.netPrice.ToString();
 				item.RecadvAcceptNetPriceVat = currentRecadvItem.netPriceWithVAT.ToString();
 				item.RecadvAcceptQuantity = currentRecadvItem.acceptedQuantity.Text.ToString();
+
+                if (!string.IsNullOrEmpty(item.RecadvAcceptQuantity))
+                {
+                    double acceptedQuantity = 0.0;
+                    double.TryParse(item.RecadvAcceptQuantity, out acceptedQuantity);
+                    totalAcceptedQuantity += acceptedQuantity;
+                }
 
 				RecadvAcceptLineCount++;
 			}
@@ -236,7 +244,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                 RecadvNumber = recadv.Number,
                 TotalAmount = recadv.recadvLineItems?.TotalAmount,
                 TotalVatAmount = recadv.recadvLineItems?.TotalVATAmount,
-                TotalSumExcludeTax = recadv.recadvLineItems?.TotalSumExcludingTaxes
+                TotalSumExcludeTax = recadv.recadvLineItems?.TotalSumExcludingTaxes,
+                TotalAcceptedQuantity = Convert.ToInt32(totalAcceptedQuantity)
             };
 
             if (!string.IsNullOrEmpty(recadv.Date))

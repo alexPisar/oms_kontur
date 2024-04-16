@@ -62,6 +62,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                 .HasMaxLength(20)
                 .IsUnicode(false);
 
+            this
+                .Property(r => r.TotalAcceptedQuantity)
+                .HasColumnName(@"TOTAL_ACCEPTED_QUANTITY");
+
             OnCreated();
         }
 

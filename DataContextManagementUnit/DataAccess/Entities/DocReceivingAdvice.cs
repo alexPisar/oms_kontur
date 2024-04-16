@@ -23,6 +23,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public virtual string TotalAmount { get; set; }
         public virtual string TotalVatAmount { get; set; }
         public virtual string TotalSumExcludeTax { get; set; }
+        public virtual int? TotalAcceptedQuantity { get; set; }
 
         #endregion
 
