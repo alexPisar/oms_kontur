@@ -73,24 +73,10 @@ namespace EdiProcessingUnit.WorkingUnits
                 if (!IsNeedProcessor( doc.GlnBuyer ))
                     continue;
 
-                foreach (var item in doc.LogOrders)
-                {
-                    /*
-                    0	Новый
-                    1	Экспортирован
-                    2	Отобран
-                    3	Отправлен
-                    4	Принят
-                    5	Принят с расхождением
-                    6	Отправлена корректировка
-                    7	Закрыт
-                    */
-                    if (item.OrderStatus != 1)
-                        continue;
+                var docLogOrders = doc?.LogOrders?.Where(l => l.OrderStatus == 1 && l.IdDocJournal != null) ?? new List<LogOrder>();
 
-                    if (item.IdDocJournal != null /*&& item.IdManufacturer != null*/)
-                        orderLogs.Add( item );
-                }
+                foreach (var item in docLogOrders)
+                    orderLogs.Add(item);
             }
 
             if (orderLogs.Count <= 0)

@@ -92,20 +92,14 @@ namespace EdiProcessingUnit.ProcessorUnits
                         (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && doc.Status < 2)
                         continue;
 
-                    var logOrders = doc?.LogOrders ?? new List<LogOrder>();
+                    var logOrders = doc?.LogOrders?.Where(l => l.OrderStatus < 3 && l.IdDocJournal != null)?.ToList() ?? new List<LogOrder>();
                     foreach (var log in logOrders)
                     {
                         if (connectedBuyer.OrderExchangeType ==
                         (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && log.OrderStatus < 2)
                             continue;
 
-                        if (log.OrderStatus > 2)
-                            continue;
-
-                        if (log.IdDocJournal == null)
-                            continue;
-
-                        if (!logOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
+                        if (!doc.LogOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
                             desadvLogs.Add(log);
                     }
                 }
