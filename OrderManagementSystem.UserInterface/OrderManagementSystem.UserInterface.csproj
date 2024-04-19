@@ -238,6 +238,7 @@
     <Compile Include="GoodsMapView.xaml.cs">
       <DependentUpon>GoodsMapView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Infrastructure\DocJournalByRecadv.cs" />
     <Compile Include="InvoicExportView.xaml.cs">
       <DependentUpon>InvoicExportView.xaml</DependentUpon>
     </Compile>
@@ -402,9 +403,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Infrastructure\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Resource Include="edi-enter.ico" />
   </ItemGroup>

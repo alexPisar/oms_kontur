@@ -134,7 +134,19 @@ namespace FileWorker
                 double result;
 
                 if (valueIsString)
-                    double.TryParse( (string)value, out result );
+                {
+                    if(!double.TryParse((string)value, out result))
+                    {
+                        try
+                        {
+                            result = double.Parse((string)value, System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                        catch(Exception ex)
+                        {
+
+                        }
+                    }
+                }
                 else
                     result = GetResultByValue<double>( value );
 

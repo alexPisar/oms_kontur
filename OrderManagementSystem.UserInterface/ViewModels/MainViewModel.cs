@@ -1021,9 +1021,97 @@ namespace OMS.ViewModels
             OnPropertyChanged("IsNotExportable");
         }
 
-        private void LoadReestrDocuments()
+        private async void LoadReestrDocuments()
         {
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
 
+            saveFileDialog.Filter = "Excel Files(.xlsx)|*.xlsx";
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                var loadWindow = new LoadWindow();
+                var loadContext = new LoadModel();
+                loadWindow.DataContext = loadContext;
+
+                loadWindow.Show();
+
+                Exception exception = null;
+                string errorMessage = null;
+
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        var dateFrom = DateFrom.AddMonths(-1);
+                        var docJournals = (from docJournal in _abt.DocJournals
+                                           where docJournal.ActStatus >= 5 && docJournal.DocDatetime >= dateFrom && docJournal.IdDocType == 2
+                                           select docJournal).ToArray();
+
+                        var docJournalsByRecadv = (from docOrder in _edi.DocOrders
+                                                   where docOrder.Status >= 1 && docOrder.OrderDate != null &&
+                                                   docOrder.OrderDate.Value >= DateFrom && docOrder.OrderDate.Value <= DateTo
+                                                   join recadv in _edi.DocReceivingAdvices
+                                                   on docOrder.Id equals recadv.IdOrder
+                                                   where recadv.IdDocJournal != null
+                                                   select new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv
+                                                   {
+                                                       IdDocJournal = recadv.IdDocJournal.Value,
+                                                       OrderNumber = docOrder.Number,
+                                                       BuyerName = docOrder.Buyer.Name,
+                                                       ShipToName = docOrder.NameShipTo,
+                                                       RecadvTotalAmountStr = recadv.TotalAmount,
+                                                       RecadvTotalQuantity = recadv.TotalAcceptedQuantity.Value
+                                                   })?.ToArray()?.Where(r => r.GetDocJournal(docJournals) != null)?.ToArray() ?? 
+                                                   new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv[] { };
+
+                        if(docJournalsByRecadv.Count() == 0)
+                        {
+                            errorMessage = "Не нашлось приёмок по загруженным заказам.";
+                            return;
+                        }
+
+                        var sheetName = "Лист1";
+                        FileWorker.ExcelColumnCollection columnCollection = new FileWorker.ExcelColumnCollection();
+
+                        columnCollection.AddColumn("OrderNumber", "Номер заказа", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("InvoicNumber", "Номер С/Ф", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("DocJournalNumber", "Номер документа", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("BuyerName", "Покупатель", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("ShipToName", "Точка доставки", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("DocJournalTotalAmount", "Сумма С/Ф", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("RecadvTotalAmount", "Сумма клиента", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("DocJournalTotalQuantity", "Количество С/Ф", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("RecadvTotalQuantity", "Количество у клиента", FileWorker.ExcelType.Double);
+
+                        var docJournalsByRecadvData = new FileWorker.ExcelDocumentData(columnCollection, docJournalsByRecadv);
+                        docJournalsByRecadvData.SheetName = sheetName;
+
+                        var worker = new FileWorker.ExcelFileWorker(saveFileDialog.FileName, new List<FileWorker.ExcelDocumentData>(new[] { docJournalsByRecadvData }));
+                        worker.ExportRow("Реестр документов, принятых клиентами", sheetName);
+
+                        worker.ExportData();
+                        worker.SaveFile();
+                        loadWindow.SetSuccessFullLoad(loadContext, "Данные успешно выгружены");
+                    }
+                    catch(Exception ex)
+                    {
+                        exception = ex;
+                    }
+                });
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    loadWindow.Close();
+                    _log.Log($"LoadReestrDocuments: {errorMessage}");
+                    ShowError(errorMessage);
+                }
+                else if(exception != null)
+                {
+                    loadWindow.Close();
+                    _log.Log(exception);
+                    ShowError(_log.GetRecursiveInnerException(exception));
+                }
+            }
         }
 
         private void UpdateProps()

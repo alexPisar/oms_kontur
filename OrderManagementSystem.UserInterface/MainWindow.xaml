@@ -103,9 +103,9 @@
 
                     <dxr:RibbonPageGroup Caption="Управление документами">
 
-                        <!--<dxb:BarButtonItem Content="Реестр документов" ToolTip="Просмотр вывезенных документов из Трейдера по заказам"
+                        <dxb:BarButtonItem Content="Реестр приёмок" ToolTip="Просмотр принятых документов из Трейдера по заказам"
                                            Command="{Binding LoadReestrDocumentsCommand}"
-                                           RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Export/ExportToXLS.svg}"/>-->
+                                           RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Export/ExportToXLS.svg}"/>
 
                         <dxb:BarButtonItem Content="Экспорт" ToolTip="Создать документ в трейдере" IsEnabled="{Binding Path=IsExportButtonEnabled}"
                                            Command="{Binding ExportToTraderSingleCommand}"

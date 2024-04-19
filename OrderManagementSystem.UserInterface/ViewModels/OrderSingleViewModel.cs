@@ -117,7 +117,7 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
                     DocLineItem[] result = null;
                     ExcelDocumentData docLinesData = null;
-                    if (Item.Status == 4)
+                    if (Item.Status >= 3 && Item.LogOrders.Any(l => l.OrderStatus > 3 && l.IdDocJournal != null))
                     {
                         columnCollection.AddColumn("Description", "Описание", ExcelType.String);
                         columnCollection.AddColumn("IdGood", "ID товара", ExcelType.String);
@@ -218,7 +218,7 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
                     var worker = new ExcelFileWorker( saveFileDialog.FileName, docs );
 
-                    if (Item.Status == 4)
+                    if (Item.Status >= 3 && Item.LogOrders.Any(l => l.OrderStatus > 3 && l.IdDocJournal != null))
                         worker.ExportRow("Приёмка со стороны покупателя.", sheetName);
 
                     worker.ExportRow(
