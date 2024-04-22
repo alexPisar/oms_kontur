@@ -36,8 +36,7 @@ namespace OrderManagementSystem.UserInterface.Infrastructure
         public string ShipToName { get; set; }
         public double DocJournalTotalAmount => _docJournalTotalAmount;
         public int DocJournalTotalQuantity => _docJournalTotalQuantity;
-        public string RecadvTotalAmountStr { get; set; }
-        public double RecadvTotalAmount => string.IsNullOrEmpty(RecadvTotalAmountStr) ? 0 : double.Parse(RecadvTotalAmountStr);
+        public string RecadvTotalAmount { get; set; }
         public int RecadvTotalQuantity { get; set; }
 
         public DocJournal GetDocJournal(IEnumerable<DocJournal> docJournals = null)

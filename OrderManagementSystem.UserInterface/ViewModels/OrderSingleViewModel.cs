@@ -87,8 +87,7 @@ namespace OrderManagementSystem.UserInterface.ViewModels
                     if (line.IsRemoved == "1")
                         continue;
 
-                    double quality;
-                    double.TryParse( line.ReqQunatity, out quality );
+                    double quality = ParseStringToDouble(line.ReqQunatity);
                     TotalQuantity += quality;
                 }
 
@@ -140,22 +139,19 @@ namespace OrderManagementSystem.UserInterface.ViewModels
                         {
                             if (!string.IsNullOrEmpty(line.RecadvAcceptAmount))
                             {
-                                double amount;
-                                double.TryParse(line.RecadvAcceptAmount, out amount);
+                                double amount = ParseStringToDouble(line.RecadvAcceptAmount);
                                 totalAmount += amount;
                             }
 
                             if (!string.IsNullOrEmpty(line.RecadvAcceptNetAmount))
                             {
-                                double netAmount;
-                                double.TryParse(line.RecadvAcceptNetAmount, out netAmount);
+                                double netAmount = ParseStringToDouble(line.RecadvAcceptNetAmount);
                                 totalNetAmount += netAmount;
                             }
 
                             if (!string.IsNullOrEmpty(line.RecadvAcceptQuantity))
                             {
-                                double quality;
-                                double.TryParse(line.RecadvAcceptQuantity, out quality);
+                                double quality = ParseStringToDouble(line.RecadvAcceptQuantity);
                                 acceptedTotalQuantity += quality;
                             }
                         }
@@ -188,9 +184,8 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
                         foreach(var line in _itemDocLines)
                         {
-                            double amount, netAmount;
-                            double.TryParse( line.Amount, out amount );
-                            double.TryParse( line.NetAmount, out netAmount );
+                            double amount = ParseStringToDouble(line.Amount);
+                            double netAmount = ParseStringToDouble(line.NetAmount);
 
                             totalAmount += amount;
                             totalNetAmount += netAmount;

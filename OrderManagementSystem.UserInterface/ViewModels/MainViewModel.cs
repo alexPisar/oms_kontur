@@ -1059,7 +1059,7 @@ namespace OMS.ViewModels
                                                        OrderNumber = docOrder.Number,
                                                        BuyerName = docOrder.Buyer.Name,
                                                        ShipToName = docOrder.NameShipTo,
-                                                       RecadvTotalAmountStr = recadv.TotalAmount,
+                                                       RecadvTotalAmount = recadv.TotalAmount,
                                                        RecadvTotalQuantity = recadv.TotalAcceptedQuantity.Value
                                                    })?.ToArray()?.Where(r => r.GetDocJournal(docJournals) != null)?.ToArray() ?? 
                                                    new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv[] { };
