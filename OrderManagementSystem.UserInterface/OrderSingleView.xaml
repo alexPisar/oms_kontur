@@ -178,6 +178,14 @@
                             </StackPanel>
                         </Button.Content>
                     </Button>
+                    <Button Command="{Binding UnloadReceivingAdviceCommand}" IsEnabled="{Binding IsUnloadReceivingAdviceEnabled}">
+                        <Button.Content>
+                            <StackPanel Orientation="Vertical">
+                                <Image Source="{dx:DXImage SvgImages/Export/ExportToXLS.svg}"/>
+                                <TextBlock>Выгрузить приёмку</TextBlock>
+                            </StackPanel>
+                        </Button.Content>
+                    </Button>
                     <Button Command="{Binding DeleteOrderCommand}" IsEnabled="{Binding IsDeleteOrderButtonEnabled}">
                         <Button.Content>
                             <StackPanel Orientation="Vertical">

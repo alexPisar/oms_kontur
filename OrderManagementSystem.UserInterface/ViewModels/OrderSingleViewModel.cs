@@ -26,9 +26,11 @@ namespace OrderManagementSystem.UserInterface.ViewModels
 
         public RelayCommand RefreshCommand => new RelayCommand((o) => { RefreshOrdersList(); });
         public RelayCommand DeleteOrderCommand => new RelayCommand((o) => { DeleteOrder(); });
+        public RelayCommand UnloadReceivingAdviceCommand => new RelayCommand((o) => { UnloadReceivingAdvice(); });
 
         public bool IsDeleteOrderButtonEnabled => Item.Status == 1;
         public bool IsDocumentShipped => Item.Status >= 3;
+        public bool IsUnloadReceivingAdviceEnabled => Item.Status > 1;
 
         private LogOrder _selectedLogItem;
 		public LogOrder SelectedLogItem
@@ -356,8 +358,122 @@ namespace OrderManagementSystem.UserInterface.ViewModels
             }
         }
 
+        private void UnloadReceivingAdvice()
+        {
+            if (SelectedDocJournal == null)
+            {
+                System.Windows.MessageBox.Show("Не выбран трейдер-документ для выгрузки приёмки!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
 
-		private void UpdateProps()
+            if(SelectedDocJournal.ActStatus < 5)
+            {
+                System.Windows.MessageBox.Show("Статус документа из Трейдера не позволяет выгрузить приёмку.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if(!Item.LogOrders.Any(l => l.OrderStatus == 4 && l.IdDocJournal == SelectedDocJournal.Id))
+            {
+                System.Windows.MessageBox.Show("Не была ранее загружена приёмка от покупателя.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            _log.Log($"Выгрузка приёмки для документа {SelectedDocJournal.Code}.");
+
+            try
+            {
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+
+                saveFileDialog.Filter = "Excel Files(.xlsx)|*.xlsx";
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    ExcelColumnCollection columnCollection = new ExcelColumnCollection();
+                    string sheetName = "Лист1";
+
+                    columnCollection.AddColumn("Description", "Описание", ExcelType.String);
+                    columnCollection.AddColumn("IdGood", "ID товара", ExcelType.String);
+                    columnCollection.AddColumn("Gtin", "Штрих - код", ExcelType.String);
+                    columnCollection.AddColumn("BuyerCode", "Код покупателя", ExcelType.String);
+                    columnCollection.AddColumn("RecadvAcceptQuantity", "Количество", ExcelType.Double);
+                    columnCollection.AddColumn("RecadvAcceptNetPrice", "Стоимость единицы товара", ExcelType.Double);
+                    columnCollection.AddColumn("RecadvAcceptNetPriceVat", "Стоимость с НДС", ExcelType.Double);
+                    columnCollection.AddColumn("RecadvAcceptNetAmount", "Сумма без НДС", ExcelType.Double);
+                    columnCollection.AddColumn("RecadvAcceptAmount", "Сумма с НДС", ExcelType.Double);
+
+                    var docLines = _itemDocLines.Where(i => i.IdDocJournal == SelectedDocJournal.Id.ToString() && !string.IsNullOrEmpty(i.RecadvAcceptQuantity));
+                    var docLinesData = new ExcelDocumentData(columnCollection, docLines.ToArray());
+                    docLinesData.SheetName = sheetName;
+
+                    double totalAmount = 0.0, totalNetAmount = 0.0, acceptedTotalQuantity = 0.0;
+                    foreach(var line in docLines)
+                    {
+                        if (!string.IsNullOrEmpty(line.RecadvAcceptAmount))
+                        {
+                            double amount = ParseStringToDouble(line.RecadvAcceptAmount);
+                            totalAmount += amount;
+                        }
+
+                        if (!string.IsNullOrEmpty(line.RecadvAcceptNetAmount))
+                        {
+                            double netAmount = ParseStringToDouble(line.RecadvAcceptNetAmount);
+                            totalNetAmount += netAmount;
+                        }
+
+                        if (!string.IsNullOrEmpty(line.RecadvAcceptQuantity))
+                        {
+                            double quality = ParseStringToDouble(line.RecadvAcceptQuantity);
+                            acceptedTotalQuantity += quality;
+                        }
+                    }
+
+                    var result = new DocLineItem[]
+                    {
+                        new DocLineItem()
+                        {
+                            Description = "Итог:",
+                            RecadvAcceptAmount = totalAmount.ToString(),
+                            RecadvAcceptQuantity = acceptedTotalQuantity.ToString(),
+                            RecadvAcceptNetAmount = totalNetAmount.ToString()
+                        }
+                    };
+
+                    var resultData = new ExcelDocumentData(columnCollection, result);
+                    resultData.SheetName = sheetName;
+                    resultData.ExportColumnNames = false;
+
+                    var docs = new List<ExcelDocumentData>();
+                    docs.Add(docLinesData);
+                    docs.Add(resultData);
+
+                    var worker = new ExcelFileWorker(saveFileDialog.FileName, docs);
+
+                    worker.ExportRow("Результат приёмки со стороны покупателя.", sheetName);
+                    worker.ExportRow(
+                        $"Номер заказа: {Item?.Number}, " +
+                        $"Номер документа: {SelectedDocJournal?.Code}, " +
+                        $"Дата доставки: {SelectedDocJournal?.DeliveryDate}", sheetName);
+
+                    worker.ExportData();
+                    worker.SaveFile();
+
+                    LoadWindow loadWindow = new LoadWindow();
+                    LoadModel loadContext = new LoadModel();
+                    loadWindow.DataContext = loadContext;
+
+                    loadWindow.SetSuccessFullLoad(loadContext, "Приёмка успешно выгружена.");
+                    loadWindow.Show();
+                }
+            }
+            catch(Exception ex)
+            {
+                ShowError(_log.GetRecursiveInnerException(ex));
+                _log.Log("При выгрузке приёмки произошла ошибка: " + _log.GetRecursiveInnerException(ex));
+            }
+        }
+
+
+        private void UpdateProps()
 		{
 			OnPropertyChanged( nameof( SelectedLogItem ) );
 			OnPropertyChanged( nameof( DocJournalList ) );
