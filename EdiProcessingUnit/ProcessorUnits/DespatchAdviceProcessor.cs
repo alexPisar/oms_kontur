@@ -290,8 +290,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                                     barCodes = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
                                                 where mapGoodByBuyer.Gln == connectedBuyer.Gln
                                                 join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
-                                                where mapGood.IdGood == detail.IdGood && mapGood.BarCode != null && mapGood.BarCode != ""
-                                                select mapGood.BarCode)?.ToList() ?? new List<string>();
+                                                where mapGood.IdGood == detail.IdGood
+                                                select mapGood.BarCode)?.Where(s => s != null)?.ToList() ?? new List<string>();
 
                                     desadvLineItem = origOrder.DocLineItems
                                         .Where(x => barCodes.Exists(b => b == x.Gtin))?
