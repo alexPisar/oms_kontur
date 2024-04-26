@@ -285,6 +285,22 @@ namespace EdiProcessingUnit.ProcessorUnits
                                         desadvLineItem.IdGood = (long)detail.IdGood;
                                 }
 
+                                if(desadvLineItem == null && connectedBuyer.IncludedBuyerCodes != 1)
+                                {
+                                    barCodes = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                where mapGood.IdGood == detail.IdGood && mapGood.BarCode != null && mapGood.BarCode != ""
+                                                select mapGood.BarCode)?.ToList() ?? new List<string>();
+
+                                    desadvLineItem = origOrder.DocLineItems
+                                        .Where(x => barCodes.Exists(b => b == x.Gtin))?
+                                        .FirstOrDefault();
+
+                                    if (desadvLineItem != null)
+                                        desadvLineItem.IdGood = (long)detail.IdGood;
+                                }
+
                                 if (desadvLineItem == null)
                                 {
                                     if (connectedBuyer.IncludedBuyerCodes != 1)

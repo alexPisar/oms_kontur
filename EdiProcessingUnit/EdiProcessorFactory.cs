@@ -44,12 +44,22 @@ namespace EdiProcessingUnit
         {
             _edi.SaveLastEventId();
         }
-		
-		/// <summary>
-		/// Метод создания и запуска указанного обработчика
-		/// </summary>
-		/// <param name="ediProcessor">Интерфейс обработчика EDI-сообщений определённого типа</param>
-		public void RunProcessor(EdiProcessor ediProcessor)
+
+        public System.Collections.IList GetNewEvents()
+        {
+            Auth();
+
+            if (_isAuth)
+                return _edi.GetNewEvents();
+            else
+                throw new System.Exception("Не удалось авторизоваться.");
+        }
+
+        /// <summary>
+        /// Метод создания и запуска указанного обработчика
+        /// </summary>
+        /// <param name="ediProcessor">Интерфейс обработчика EDI-сообщений определённого типа</param>
+        public void RunProcessor(EdiProcessor ediProcessor)
 		{
             if (_organizationGln != null || _isAuth)
             {
