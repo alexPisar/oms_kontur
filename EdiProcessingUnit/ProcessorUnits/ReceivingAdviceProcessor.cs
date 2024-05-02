@@ -139,7 +139,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 				.FirstOrDefault(x => x.Status >= 1 && x.Status < 4);
 
             if (order == null)
-                order = docOrders.FirstOrDefault();
+                order = docOrders.FirstOrDefault(x => x.Status >= 1);
 
             if (order == null)
                 return;

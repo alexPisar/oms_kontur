@@ -113,15 +113,15 @@ namespace EdiProcessingUnit
 		{
             _utilityLog.Log(_timeStamp + " - Запуск обработчиков сообщений");
 
-            var ordersProcessor = new OrdersProcessor();
-            RunSafe( _processorFactory, ordersProcessor );
-            _utilityLog.Log($"{_timeStamp} - обработчик OrdersProcessor завершил работу.");
+            //var ordersProcessor = new OrdersProcessor();
+            //RunSafe( _processorFactory, ordersProcessor );
+            //_utilityLog.Log($"{_timeStamp} - обработчик OrdersProcessor завершил работу.");
 
             var receivingAdviceProcessor = new ReceivingAdviceProcessor();
             RunSafe( _processorFactory, receivingAdviceProcessor );
             _utilityLog.Log($"{_timeStamp} - обработчик ReceivingAdviceProcessor завершил работу.");
 
-            if (receivingAdviceProcessor.IsSavingLastEventId && !ordersProcessor.WithErrors)
+            if (receivingAdviceProcessor.IsSavingLastEventId)// && !ordersProcessor.WithErrors)
             {
                 _utilityLog.Log($"{_timeStamp} - Сохранение LastEventId.");
                 _processorFactory.SaveEdiLastEventId();

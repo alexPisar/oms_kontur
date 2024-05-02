@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptography", "Cryptograph
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdaterKonturEdo", "UpdaterKonturEdo\UpdaterKonturEdo.csproj", "{45243707-2DFF-483C-8943-C368A3F4DA27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceivingEdiOrdersUnit", "..\ReceivingEdiOrdersUnit\ReceivingEdiOrdersUnit.csproj", "{4040B1B3-88BD-466F-939A-486B2C6C0D31}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{45243707-2DFF-483C-8943-C368A3F4DA27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45243707-2DFF-483C-8943-C368A3F4DA27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45243707-2DFF-483C-8943-C368A3F4DA27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4040B1B3-88BD-466F-939A-486B2C6C0D31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4040B1B3-88BD-466F-939A-486B2C6C0D31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4040B1B3-88BD-466F-939A-486B2C6C0D31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4040B1B3-88BD-466F-939A-486B2C6C0D31}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
