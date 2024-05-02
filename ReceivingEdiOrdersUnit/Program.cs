@@ -39,6 +39,8 @@ namespace ReceivingEdiOrdersUnit
                     try
                     {
                         _processorFactory.OrganizationGln = gln;
+
+                        RunSafe(_processorFactory, new EdiProcessingUnit.WorkingUnits.RelationsProcessor());
                         ExecudeProcessings();
                     }
                     catch (Exception ex)

@@ -66,7 +66,7 @@ namespace EdiProcessingUnit
                                 return;
                             }
 
-                            RunSafe(_processorFactory, new RelationsProcessor());
+                            //RunSafe(_processorFactory, new RelationsProcessor());
                             StartHandlers();
                         }
                         catch (Exception ex)
