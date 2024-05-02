@@ -1044,12 +1044,12 @@ namespace OMS.ViewModels
                     {
                         var dateFrom = DateFrom.AddMonths(-1);
                         var docJournals = (from docJournal in _abt.DocJournals
-                                           where docJournal.ActStatus >= 5 && docJournal.DocDatetime >= dateFrom && docJournal.IdDocType == 2
+                                           where docJournal.ActStatus == 5 && docJournal.DocDatetime >= dateFrom && docJournal.IdDocType == 2
                                            select docJournal).ToArray();
 
                         var docJournalsByRecadv = (from docOrder in _edi.DocOrders
                                                    where docOrder.Status >= 1 && docOrder.OrderDate != null &&
-                                                   docOrder.OrderDate.Value >= DateFrom && docOrder.OrderDate.Value <= DateTo
+                                                   docOrder.OrderDate.Value >= dateFrom
                                                    join recadv in _edi.DocReceivingAdvices
                                                    on docOrder.Id equals recadv.IdOrder
                                                    where recadv.IdDocJournal != null
