@@ -33,17 +33,17 @@ namespace EdiProcessingUnit.ProcessorUnits
 			List<MessageBoxEvent> events = new List<MessageBoxEvent>();
 			List<MessageBoxEvent> inboxMessages = new List<MessageBoxEvent>();
 			List<MessageBoxEvent> recadvMessages = new List<MessageBoxEvent>();
-			events = _edi.MessageBoxEvents;
+			events = _edi.GetNewEvents();//_edi.MessageBoxEvents;
             IsSavingLastEventId = true;
+
+            if (events.Count() <= 0)
+                events = _edi.GetNewEvents();
 
             if (events.Count() <= 0)
             {
                 IsSavingLastEventId = false;
-                events = _edi.GetNewEvents();
+                return;
             }
-
-			if (events.Count() <= 0)
-				return;
 
             try
             {
