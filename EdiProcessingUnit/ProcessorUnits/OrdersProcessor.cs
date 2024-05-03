@@ -33,13 +33,24 @@ namespace EdiProcessingUnit.WorkingUnits
 				return;
 			}			
 			List<MessageBoxEvent> events = new List<MessageBoxEvent>();
-			events = _edi.GetNewEvents();// получить новые события в ящике 
-                                         //if (events.Count() <= 0)
-                                         //	events = _edi.GetNewEventsFromDate( DateTime.Today );
+            _withErrors = false;
+
+            try
+            {
+                events = _edi.GetNewEvents();// получить новые события в ящике 
+                                             //if (events.Count() <= 0)
+                                             //	events = _edi.GetNewEventsFromDate( DateTime.Today );
+            }
+            catch(Exception ex)
+            {
+                _withErrors = true;
+                MailReporter.Add(_log.GetRecursiveInnerException(ex));
+                throw ex;
+            }
+
             if (events.Count() <= 0)
 				return;
 			var incomingMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage ).ToList();
-            _withErrors = false;
 			foreach (MessageBoxEvent boxEvent in incomingMessages)
 			{
 				try
