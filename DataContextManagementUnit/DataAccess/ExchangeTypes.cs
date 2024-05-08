@@ -29,6 +29,9 @@ namespace DataContextManagementUnit.DataAccess
     /// </summary>
     public enum ShipmentType
     {
+        /// <summary>
+		/// Только приём RECADV
+		/// </summary>
         None,
 
         /// <summary>

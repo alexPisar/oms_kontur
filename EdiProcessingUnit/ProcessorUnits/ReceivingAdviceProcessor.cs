@@ -225,6 +225,22 @@ namespace EdiProcessingUnit.ProcessorUnits
                         order.Status = 4;
                 }
             }
+            else if(connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.None && idDocJournal != null)
+            {
+                var logOrders = (from logOrder in _ediDbContext.LogOrders
+                                 where logOrder.IdOrder == order.Id && logOrder.OrderStatus >= 1 && logOrder.IdDocJournal != null
+                                 select logOrder)?.ToList() ?? new List<LogOrder>();
+
+                if (logOrders.Count > 0 && logOrders.Exists(l => l.OrderStatus == 1 && l.IdDocJournal == idDocJournal) &&
+                    !logOrders.Exists(l => l.OrderStatus == 4 && l.IdDocJournal == idDocJournal))
+                {
+                    var traderDocsWhenExported = logOrders?.Where(l => l.OrderStatus == 1)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
+                    var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
+
+                    if (traderDocsWhenExported <= traderDocsWhenRecadvStatus + 1)
+                        order.Status = 4;
+                }
+            }
 
             var newLogOrder = new LogOrder
             {
@@ -265,14 +281,14 @@ namespace EdiProcessingUnit.ProcessorUnits
 
 		}
 
-        /// <summary>
-        /// Определяет, нужен ли данный документ в документообороте
-        /// </summary>
-        /// <param name="gln">ГЛН организации</param>
-        protected override bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
-        {
-            return connectedBuyer.ShipmentExchangeType != (int)DataContextManagementUnit.DataAccess.ShipmentType.None;
-        }
+        //// <summary>
+        //// Определяет, нужен ли данный документ в документообороте
+        //// </summary>
+        //// <param name="gln">ГЛН организации</param>
+        //protected override bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
+        //{
+        //    return connectedBuyer.ShipmentExchangeType != (int)DataContextManagementUnit.DataAccess.ShipmentType.None;
+        //}
 
     }
 }
