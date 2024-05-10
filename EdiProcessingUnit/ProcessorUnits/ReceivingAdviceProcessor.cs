@@ -161,7 +161,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                                where docLineItem.IdDocJournal != null && docLineItem.IdDocJournal != "" && docLineItem.IdGood != null && docLineItem.IsRemoved != "1"
                                select docLineItem;
             else
-                docLineItems = order.DocLineItems;
+                docLineItems = order.DocLineItems.Where(d => d.IsRemoved != "1");
 
             int RecadvAcceptLineCount = 0;
             long? idDocJournal = null;
@@ -183,12 +183,15 @@ namespace EdiProcessingUnit.ProcessorUnits
                 if (currentRecadvItem == null)
 					continue;
 
-                if(idDocJournal == null && desadvExportedByManufacturers)
+                if(idDocJournal == null && !string.IsNullOrEmpty(item.IdDocJournal))
                 {
-                    idDocJournal = long.Parse(item.IdDocJournal);
+                    long idDocJ;
+
+                    if (long.TryParse(item.IdDocJournal, out idDocJ))
+                        idDocJournal = idDocJ;
                 }
 
-				item.RecadvAcceptAmount = currentRecadvItem.amount.ToString();
+                item.RecadvAcceptAmount = currentRecadvItem.amount.ToString();
 				item.RecadvAcceptNetAmount = currentRecadvItem.netAmount.ToString();
 				item.RecadvAcceptNetPrice = currentRecadvItem.netPrice.ToString();
 				item.RecadvAcceptNetPriceVat = currentRecadvItem.netPriceWithVAT.ToString();
@@ -267,7 +270,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             if (!string.IsNullOrEmpty(recadv.Date))
                 newDocReceivingAdvice.RecadvDate = DateTime.ParseExact(recadv.Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-            if (desadvExportedByManufacturers && idDocJournal != null)
+            if (idDocJournal != null)
             {
                 newLogOrder.IdDocJournal = idDocJournal;
                 newDocReceivingAdvice.IdDocJournal = idDocJournal;
