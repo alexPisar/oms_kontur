@@ -327,7 +327,7 @@ namespace OMS.ViewModels
                     if (connectedBuyer.ExportOrdersByManufacturers == 1)
                         docInfosByManufacturers = DocExportDataByManufacturers(order, idSeller.Value);
                     else
-                        docsWithoutManufacturers = DocExportData(order, idSeller.Value);
+                        docsWithoutManufacturers = DocExportData(order, idSeller.Value, connectedBuyer.UseSplitDocProcedure == 1);
 
                     try
                     {
@@ -371,7 +371,7 @@ namespace OMS.ViewModels
                                     }
                                     else
                                     {
-                                        var idDocsToTrader = DocExportData(order, idSeller.Value, abtContext);
+                                        var idDocsToTrader = DocExportData(order, idSeller.Value, connectedBuyer.UseSplitDocProcedure == 1, abtContext);
                                         abtContext.SaveChanges();
 
                                         foreach (var idDoc in (idDocsToTrader ?? new List<decimal?>()))
@@ -774,7 +774,7 @@ namespace OMS.ViewModels
             return newDocJournal;
         }
 
-        public List<decimal?> DocExportData(DocOrder order, decimal idSeller, AbtDbContext abtContext = null)
+        public List<decimal?> DocExportData(DocOrder order, decimal idSeller, bool splitDoc = false, AbtDbContext abtContext = null)
         {
             _log.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
 
@@ -786,8 +786,13 @@ namespace OMS.ViewModels
             var doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller);
             abtContext.SaveChanges();
 
-            var ids = SplitDoc(doc.Id);
-            return ids;
+            if (splitDoc)
+            {
+                var ids = SplitDoc(doc.Id);
+                return ids;
+            }
+            else
+                return new List<decimal?>(new decimal?[] { doc.Id });
         }
 
         private List<decimal?> SplitDoc(decimal docId)

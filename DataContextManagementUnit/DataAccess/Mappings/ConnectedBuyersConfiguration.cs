@@ -59,6 +59,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasColumnName(@"INCLUDED_BUYER_CODES");
 
             this
+                .Property(c => c.UseSplitDocProcedure)
+                    .HasColumnName(@"USE_SPLIT_DOC_PROCEDURE");
+
+            this
                 .HasMany(c => c.ShoppingStores)
                 .WithRequired(s => s.MainShoppingStore)
                 .HasForeignKey(c => c.MainGln)

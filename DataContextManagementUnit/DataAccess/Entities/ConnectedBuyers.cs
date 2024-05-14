@@ -33,6 +33,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public int? ExportOrdersByManufacturers { get; set; }
 
         public int? IncludedBuyerCodes { get; set; }
+
+        public int? UseSplitDocProcedure { get; set; }
         #endregion
 
         #region Navigation Properties
