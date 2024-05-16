@@ -1087,6 +1087,7 @@ namespace OMS.ViewModels
                         columnCollection.AddColumn("RecadvTotalAmount", "Сумма клиента", FileWorker.ExcelType.Double);
                         columnCollection.AddColumn("DocJournalTotalQuantity", "Количество С/Ф", FileWorker.ExcelType.Double);
                         columnCollection.AddColumn("RecadvTotalQuantity", "Количество у клиента", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("IsMatchingAmounts", "Сумма совпадает", FileWorker.ExcelType.Int32);
 
                         var docJournalsByRecadvData = new FileWorker.ExcelDocumentData(columnCollection, docJournalsByRecadv);
                         docJournalsByRecadvData.SheetName = sheetName;

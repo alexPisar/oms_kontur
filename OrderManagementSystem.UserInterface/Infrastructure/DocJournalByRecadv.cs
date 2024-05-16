@@ -39,6 +39,30 @@ namespace OrderManagementSystem.UserInterface.Infrastructure
         public string RecadvTotalAmount { get; set; }
         public int RecadvTotalQuantity { get; set; }
 
+        public int IsMatchingAmounts
+        {
+            get {
+                double recadvTotalAmount;
+
+                if (!double.TryParse(RecadvTotalAmount, out recadvTotalAmount))
+                {
+                    try
+                    {
+                        recadvTotalAmount = double.Parse(RecadvTotalAmount, System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    catch (Exception ex)
+                    {
+                        return 0;
+                    }
+                }
+
+                if (recadvTotalAmount == _docJournalTotalAmount)
+                    return 1;
+                else
+                    return 0;
+            }
+        }
+
         public DocJournal GetDocJournal(IEnumerable<DocJournal> docJournals = null)
         {
             if (_docJournal == null && docJournals != null)
