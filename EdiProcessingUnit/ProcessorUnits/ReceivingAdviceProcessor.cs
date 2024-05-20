@@ -272,6 +272,47 @@ namespace EdiProcessingUnit.ProcessorUnits
 
             if (idDocJournal != null)
             {
+                var idFilial = idDocJournal.Value % 100;
+
+                if (idFilial == 0)
+                    idFilial = 1;
+
+                User selectedUser = null;
+                UsersConfig usersConfig = new UsersConfig();
+
+                string sid = _ediDbContext.Database?
+                    .SqlQuery<string>($"select links from ref_filials@orcl.vladivostok.wera where id = {idFilial}")?.FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(sid))
+                    selectedUser = usersConfig?.Users?.FirstOrDefault(u => u.SID == sid);
+
+                if (selectedUser != null)
+                    using (var abtContext = new DataContextManagementUnit.DataAccess.Contexts.Abt.AbtDbContext(usersConfig.GetConnectionStringByUser(selectedUser), true))
+                    {
+                        var totalAmountStr = newDocReceivingAdvice.TotalAmount;
+
+                        abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                        {
+                            IdDoc = (decimal)idDocJournal.Value,
+                            IdTad = 138,
+                            TagValue = totalAmountStr
+                        });
+
+                        if (totalAcceptedQuantity > 0.0)
+                        {
+                            var totalAcceptedQuantityStr = Convert.ToInt32(totalAcceptedQuantity).ToString();
+
+                            abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                            {
+                                IdDoc = (decimal)idDocJournal.Value,
+                                IdTad = 139,
+                                TagValue = totalAcceptedQuantityStr
+                            });
+                        }
+
+                        abtContext.SaveChanges();
+                    }
+
                 newLogOrder.IdDocJournal = idDocJournal;
                 newDocReceivingAdvice.IdDocJournal = idDocJournal;
             }
