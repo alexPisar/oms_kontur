@@ -315,6 +315,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                 newLogOrder.IdDocJournal = idDocJournal;
                 newDocReceivingAdvice.IdDocJournal = idDocJournal;
+                MailReporter.Add($"Приёмка № {recadv.Number} для заказа {order.Number}, GLN=[{order.GlnBuyer}/{order.GlnSender}/{order.GlnShipTo}], ID_DOC_JOURNAL = {idDocJournal.Value}");
             }
 
             _ediDbContext.LogOrders.Add( newLogOrder );
