@@ -287,31 +287,53 @@ namespace EdiProcessingUnit.ProcessorUnits
                     selectedUser = usersConfig?.Users?.FirstOrDefault(u => u.SID == sid);
 
                 if (selectedUser != null)
+                {
                     using (var abtContext = new DataContextManagementUnit.DataAccess.Contexts.Abt.AbtDbContext(usersConfig.GetConnectionStringByUser(selectedUser), true))
                     {
                         var totalAmountStr = newDocReceivingAdvice.TotalAmount;
 
-                        abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                        DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag totalAmountDocJournalTag =
+                            abtContext.DocJournalTags.FirstOrDefault(t => t.IdTad == 138 && t.IdDoc == (decimal)idDocJournal.Value);
+
+                        if (totalAmountDocJournalTag != null)
                         {
-                            IdDoc = (decimal)idDocJournal.Value,
-                            IdTad = 138,
-                            TagValue = totalAmountStr
-                        });
+                            totalAmountDocJournalTag.TagValue = totalAmountStr;
+                        }
+                        else
+                        {
+                            abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                            {
+                                IdDoc = (decimal)idDocJournal.Value,
+                                IdTad = 138,
+                                TagValue = totalAmountStr
+                            });
+                        }
 
                         if (totalAcceptedQuantity > 0.0)
                         {
                             var totalAcceptedQuantityStr = Convert.ToInt32(totalAcceptedQuantity).ToString();
 
-                            abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                            DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag totalQuantityJournalTag =
+                                abtContext.DocJournalTags.FirstOrDefault(t => t.IdTad == 139 && t.IdDoc == (decimal)idDocJournal.Value);
+
+                            if (totalQuantityJournalTag != null)
                             {
-                                IdDoc = (decimal)idDocJournal.Value,
-                                IdTad = 139,
-                                TagValue = totalAcceptedQuantityStr
-                            });
+                                totalQuantityJournalTag.TagValue = totalAcceptedQuantityStr;
+                            }
+                            else
+                            {
+                                abtContext.DocJournalTags.Add(new DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag
+                                {
+                                    IdDoc = (decimal)idDocJournal.Value,
+                                    IdTad = 139,
+                                    TagValue = totalAcceptedQuantityStr
+                                });
+                            }
                         }
 
                         abtContext.SaveChanges();
                     }
+                }
 
                 newLogOrder.IdDocJournal = idDocJournal;
                 newDocReceivingAdvice.IdDocJournal = idDocJournal;
