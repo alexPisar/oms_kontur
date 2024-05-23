@@ -54,6 +54,8 @@ namespace FileWorker
 
         public double HeadRowHeight { get; set; }
 
+        public bool HeadRowAutoFilter { get; set; }
+
         public double DefaultRowHeight { get; set; }
 
         public double DefaultRowWidth { get; set; }

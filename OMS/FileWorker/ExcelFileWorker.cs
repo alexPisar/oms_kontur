@@ -127,11 +127,21 @@ namespace FileWorker
 
                 if (sheet.ExportColumnNames)
                 {
+                    if (sheet.HeadRowHeight == 0)
+                        sheet.HeadRowHeight = sheet.DefaultRowHeight;
+
                     workSheet.Row( _currentRow ).Height = sheet.HeadRowHeight;
 
                     foreach (var col in columns)
                     {
                         workSheet.Cells[_currentRow, col.ColumnNumber].Value = col.ColumnName;
+                    }
+
+                    if (sheet.HeadRowAutoFilter)
+                    {
+                        var minColumnNumber = columns.Min(c => c.ColumnNumber);
+                        var maxColumnNumber = columns.Max(c => c.ColumnNumber);
+                        workSheet.Cells[_currentRow, minColumnNumber, _currentRow, maxColumnNumber].AutoFilter = true;
                     }
 
                     _currentRow++;
@@ -145,6 +155,9 @@ namespace FileWorker
                     {
                         var value = sheet.GetPropertyValueByName( row, col.PropertyName, col.Type );
                         workSheet.Cells[_currentRow, col.ColumnNumber].Value = value;
+
+                        if (col.Type == ExcelType.DateTime)
+                            workSheet.Cells[_currentRow, col.ColumnNumber].Style.Numberformat.Format = "DD.MM.YY";
                     }
 
                     _currentRow++;

@@ -1061,6 +1061,7 @@ namespace OMS.ViewModels
                                                    select new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv
                                                    {
                                                        IdDocJournal = recadv.IdDocJournal.Value,
+                                                       OrderDate = docOrder.OrderDate.Value,
                                                        OrderNumber = docOrder.Number,
                                                        BuyerName = docOrder.Buyer.Name,
                                                        ShipToName = docOrder.NameShipTo,
@@ -1079,6 +1080,7 @@ namespace OMS.ViewModels
                         FileWorker.ExcelColumnCollection columnCollection = new FileWorker.ExcelColumnCollection();
 
                         columnCollection.AddColumn("OrderNumber", "Номер заказа", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("OrderDate", "Дата заказа", FileWorker.ExcelType.DateTime);
                         columnCollection.AddColumn("InvoicNumber", "Номер С/Ф", FileWorker.ExcelType.String);
                         columnCollection.AddColumn("DocJournalNumber", "Номер документа", FileWorker.ExcelType.String);
                         columnCollection.AddColumn("BuyerName", "Покупатель", FileWorker.ExcelType.String);
@@ -1091,6 +1093,7 @@ namespace OMS.ViewModels
 
                         var docJournalsByRecadvData = new FileWorker.ExcelDocumentData(columnCollection, docJournalsByRecadv);
                         docJournalsByRecadvData.SheetName = sheetName;
+                        docJournalsByRecadvData.HeadRowAutoFilter = true;
 
                         var worker = new FileWorker.ExcelFileWorker(saveFileDialog.FileName, new List<FileWorker.ExcelDocumentData>(new[] { docJournalsByRecadvData }));
                         worker.ExportRow("Реестр документов, принятых клиентами", sheetName);

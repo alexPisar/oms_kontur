@@ -27,6 +27,7 @@ namespace OrderManagementSystem.UserInterface.Infrastructure
 
         public long IdDocJournal { get; set; }
         public string OrderNumber { get; set; }
+        public DateTime OrderDate { get; set; }
 
         public string InvoicNumber => InvoiceDocJournal?.Code;
 
