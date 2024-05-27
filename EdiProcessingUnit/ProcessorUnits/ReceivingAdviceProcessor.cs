@@ -290,7 +290,11 @@ namespace EdiProcessingUnit.ProcessorUnits
                 {
                     using (var abtContext = new DataContextManagementUnit.DataAccess.Contexts.Abt.AbtDbContext(usersConfig.GetConnectionStringByUser(selectedUser), true))
                     {
+                        double totalAmountNum;
                         var totalAmountStr = newDocReceivingAdvice.TotalAmount;
+
+                        if(!double.TryParse(totalAmountStr, out totalAmountNum))
+                            throw new Exception($"Для приёмки {newDocReceivingAdvice.RecadvNumber}, ID_DOC_JOURNAL={idDocJournal.Value} не удалось получить числовое значение суммы с НДС.");
 
                         DataContextManagementUnit.DataAccess.Contexts.Abt.DocJournalTag totalAmountDocJournalTag =
                             abtContext.DocJournalTags.FirstOrDefault(t => t.IdTad == 138 && t.IdDoc == (decimal)idDocJournal.Value);
@@ -298,6 +302,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                         if (totalAmountDocJournalTag != null)
                         {
                             totalAmountDocJournalTag.TagValue = totalAmountStr;
+                            totalAmountDocJournalTag.TagValueNum = Math.Round(totalAmountNum, 2);
                         }
                         else
                         {
@@ -305,7 +310,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                             {
                                 IdDoc = (decimal)idDocJournal.Value,
                                 IdTad = 138,
-                                TagValue = totalAmountStr
+                                TagValue = totalAmountStr,
+                                TagValueNum = Math.Round(totalAmountNum, 2)
                             });
                         }
 
@@ -319,6 +325,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                             if (totalQuantityJournalTag != null)
                             {
                                 totalQuantityJournalTag.TagValue = totalAcceptedQuantityStr;
+                                totalQuantityJournalTag.TagValueNum = Math.Round(totalAcceptedQuantity);
                             }
                             else
                             {
@@ -326,7 +333,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                                 {
                                     IdDoc = (decimal)idDocJournal.Value,
                                     IdTad = 139,
-                                    TagValue = totalAcceptedQuantityStr
+                                    TagValue = totalAcceptedQuantityStr,
+                                    TagValueNum = Math.Round(totalAcceptedQuantity)
                                 });
                             }
                         }

@@ -25,6 +25,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasColumnName(@"TAG_VALUE")
                 .HasMaxLength(200);
 
+            this
+                .Property(p => p.TagValueNum)
+                .HasColumnName(@"TAG_VALUE_NUM");
+
             OnCreated();
         }
 

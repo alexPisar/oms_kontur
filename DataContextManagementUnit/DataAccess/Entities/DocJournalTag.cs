@@ -18,6 +18,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual int IdTad { get; set; }
         public virtual decimal IdDoc { get; set; }
         public virtual string TagValue { get; set; }
+        public virtual double? TagValueNum { get; set; }
 
         #endregion
 
