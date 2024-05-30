@@ -148,6 +148,7 @@ namespace EdiProcessingUnit.WorkingUnits
                                 foreach (var logsGroupsByManufacturer in logsGroupsByManufacturers)
                                 {
                                     bool existsDocumentWithNeedStatus = false;
+                                    bool allTraderDocumentsDeleted = true;
                                     // 2. пробегаемся по доступным логам
                                     foreach (LogOrder log in logsGroupsByManufacturer)
                                     {
@@ -178,12 +179,16 @@ namespace EdiProcessingUnit.WorkingUnits
                                                 traderDocs.Add( t );
                                                 existsDocumentWithNeedStatus = true;
                                             }
+
+                                        allTraderDocumentsDeleted = allTraderDocumentsDeleted && trDocs.Count > 0 && 
+                                            trDocs.All(tr => tr.Deleted == 1 && tr.ActStatus == 0) && !existsDocumentWithNeedStatus;
                                     }
 
                                     if (isAbtDataBaseError)
                                         break;
 
-                                    existsManufacturerWithEarlyStatus = existsManufacturerWithEarlyStatus || !existsDocumentWithNeedStatus;
+                                    if(!allTraderDocumentsDeleted)
+                                        existsManufacturerWithEarlyStatus = existsManufacturerWithEarlyStatus || !existsDocumentWithNeedStatus;
                                 }
 
                                 if (existsManufacturerWithEarlyStatus)
