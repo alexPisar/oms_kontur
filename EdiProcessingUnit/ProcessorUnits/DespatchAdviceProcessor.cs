@@ -541,7 +541,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             desadvEdiMsg.DespatchAdvice = new DespatchAdvice();
             desadvEdiMsg.DespatchAdvice.number = reseiveNumber;
 
-            if(_isSentForSomeOrders)
+            if(deliveryDate != null)
                 desadvEdiMsg.DespatchAdvice.date = GetDate(deliveryDate.Value);
             else
                 desadvEdiMsg.DespatchAdvice.date = GetDate(DateTime.Now);
@@ -559,7 +559,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo = new Company();
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo.gln = origOrder.GlnShipTo;
 
-            if(_isSentForSomeOrders)
+            if(deliveryDate != null)
                 desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = deliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
             else
                 desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
