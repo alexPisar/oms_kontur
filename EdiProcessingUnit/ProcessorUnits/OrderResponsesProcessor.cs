@@ -171,7 +171,10 @@ namespace EdiProcessingUnit.WorkingUnits
                                         }
 
                                         if (trDocs == null)
+                                        {
+                                            allTraderDocumentsDeleted = false;
                                             continue;
+                                        }
 
                                         foreach (var t in trDocs)
                                             if ((!traderDocs.Contains( t )) && t.ActStatus >= 4)
