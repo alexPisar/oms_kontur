@@ -183,8 +183,43 @@ namespace EdiProcessingUnit.WorkingUnits
                                                 existsDocumentWithNeedStatus = true;
                                             }
 
-                                        allTraderDocumentsDeleted = allTraderDocumentsDeleted && trDocs.Count > 0 && 
-                                            trDocs.All(tr => tr.Deleted == 1 && tr.ActStatus == 0) && !existsDocumentWithNeedStatus;
+                                        if (allTraderDocumentsDeleted && trDocs.Count > 0 && 
+                                            trDocs.All(tr => /*tr.Deleted == 1 &&*/ tr.ActStatus == 0) && !existsDocumentWithNeedStatus)
+                                        {
+                                            foreach(var tr in trDocs)
+                                            {
+                                                if (!allTraderDocumentsDeleted)
+                                                    continue;
+
+                                                if (tr.Deleted == 1)
+                                                    continue;
+
+                                                var trDocJournalId = tr.Id;
+                                                var trDocDateTime = tr.DocDatetime;
+                                                DateTime? trDocDeliveryDate = tr.DeliveryDate;
+
+                                                var param = new Oracle.ManagedDataAccess.Client.OracleParameter("ID_DOC", trDocJournalId);
+                                                param.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Decimal;
+                                                IEnumerable<DateTime> conductDateTimes = _abtDbContext?.Database?
+                                                    .SqlQuery<DateTime>($"select action_datetime from log_actions where id_object = :ID_DOC and id_action = 0", param);
+
+                                                if (conductDateTimes == null)
+                                                    conductDateTimes = new List<DateTime>();
+
+                                                DateTime? conductDateTime = null;
+
+                                                if (conductDateTimes.Count() > 0)
+                                                    conductDateTime = conductDateTimes.Max().AddDays(1);
+
+                                                allTraderDocumentsDeleted = trDocDeliveryDate != null && 
+                                                    trDocDeliveryDate.Value < DateTime.Now && trDocDateTime < DateTime.Now.Date;
+
+                                                if (conductDateTime != null)
+                                                    allTraderDocumentsDeleted = allTraderDocumentsDeleted && conductDateTime.Value < DateTime.Now;
+                                            }
+                                        }
+                                        else
+                                            allTraderDocumentsDeleted = false;
                                     }
 
                                     if (isAbtDataBaseError)
