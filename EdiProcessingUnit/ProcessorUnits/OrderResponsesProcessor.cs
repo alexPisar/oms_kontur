@@ -215,7 +215,14 @@ namespace EdiProcessingUnit.WorkingUnits
                                                     trDocDeliveryDate.Value < DateTime.Now && trDocDateTime < DateTime.Now.Date;
 
                                                 if (conductDateTime != null)
+                                                {
+                                                    if (conductDateTime.Value.DayOfWeek == DayOfWeek.Saturday)
+                                                        conductDateTime = conductDateTime.Value.AddDays(2);
+                                                    else if (conductDateTime.Value.DayOfWeek == DayOfWeek.Sunday)
+                                                        conductDateTime = conductDateTime.Value.AddDays(1);
+
                                                     allTraderDocumentsDeleted = allTraderDocumentsDeleted && conductDateTime.Value < DateTime.Now;
+                                                }
                                             }
                                         }
                                         else
