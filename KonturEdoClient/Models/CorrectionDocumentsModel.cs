@@ -277,6 +277,14 @@ namespace KonturEdoClient.Models
                             {
                                 var goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.IdChannel == idChannel && r.IdGood == detail.IdGood && r.Disabled == 0);
 
+                                if(goodMatching == null && _baseDocument?.DocJournal?.DocMaster != null)
+                                {
+                                    var docDateTime = _baseDocument.DocJournal.DocMaster.DocDatetime.Date;
+
+                                    goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.DisabledDatetime != null && r.IdChannel == idChannel &&
+                                    r.IdGood == detail.IdGood && r.Disabled == 1 && r.DisabledDatetime.Value >= docDateTime);
+                                }
+
                                 if (goodMatching == null)
                                     throw new Exception("Не все товары сопоставлены с кодами покупателя.");
 

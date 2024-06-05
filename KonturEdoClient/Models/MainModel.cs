@@ -173,8 +173,18 @@ namespace KonturEdoClient.Models
 
                         if (detail.GoodMatching == null)
                             detail.GoodMatching = (from refGoodMatching in _abt.RefGoodMatchings
-                                                  where refGoodMatching.IdChannel == refEdoGoodChannel.IdChannel && refGoodMatching.IdGood == detail.DocDetailI.IdGood
-                                                  select refGoodMatching).FirstOrDefault();
+                                                  where refGoodMatching.IdChannel == refEdoGoodChannel.IdChannel && refGoodMatching.IdGood == detail.DocDetailI.IdGood && refGoodMatching.Disabled == 0
+                                                   select refGoodMatching).FirstOrDefault();
+
+                        if(detail.GoodMatching == null && SelectedDocument?.DocJournal?.DocMaster != null)
+                        {
+                            var docDateTime = SelectedDocument.DocJournal.DocMaster.DocDatetime.Date;
+
+                            detail.GoodMatching = (from refGoodMatching in _abt.RefGoodMatchings.Where(r => r.DisabledDatetime != null)
+                                                   where refGoodMatching.IdChannel == refEdoGoodChannel.IdChannel && refGoodMatching.IdGood == detail.DocDetailI.IdGood && 
+                                                   refGoodMatching.Disabled == 1 && refGoodMatching.DisabledDatetime.Value >= docDateTime
+                                                   select refGoodMatching).FirstOrDefault();
+                        }
                     }
                 }
             }
@@ -3321,6 +3331,14 @@ namespace KonturEdoClient.Models
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBuyerCodeUpdId))
                         {
                             var goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.IdChannel == idChannel && r.IdGood == refGood.Id && r.Disabled == 0);
+
+                            if(goodMatching == null)
+                            {
+                                var docDateTime = d.DocMaster.DocDatetime.Date;
+
+                                goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.DisabledDatetime != null && r.IdChannel == idChannel && 
+                                r.IdGood == refGood.Id && r.Disabled == 1 && r.DisabledDatetime.Value >= docDateTime);
+                            }
 
                             if (goodMatching == null)
                                 throw new Exception("Не все товары сопоставлены с кодами покупателя.");
