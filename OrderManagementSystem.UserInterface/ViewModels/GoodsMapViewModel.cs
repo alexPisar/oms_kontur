@@ -110,66 +110,68 @@ FROM REF_GROUP_ITEMS WHERE ID_PARENT IN (SELECT id FROM ABT.REF_GROUPS CONNECT B
                 SelectedItem.IdGood = idGood;
             }
 
-            var glns = _edi?.RefShoppingStores?
-                .Where(r => r.MainGln == SelectedCompany.Gln)?
-                .Select(s => s.BuyerGln)?.ToList();
-            List<DocOrder> unprocessedDocs = _edi.DocOrders.Where( x => x.Status == 0 && glns.FirstOrDefault(g => g == x.GlnBuyer) != null ).ToList();
+            List<DocOrder> unprocessedDocs = _edi.DocOrders.Where( x => x.Status == 0 && 
+            x.DocLineItems.Any(i => i.Gtin == SelectedItem.BarCode) && (x.GlnBuyer == SelectedCompany.Gln || x.GlnSender == SelectedCompany.Gln) ).ToList();
             List<long> addedMapGoodsManufacturers = new List<long>();
             foreach(var doc in unprocessedDocs)
-                foreach(var item in doc.DocLineItems.Where( i => i.Gtin == SelectedItem.BarCode ))
+            {
+                var item = doc.DocLineItems.FirstOrDefault(i => i.Gtin == SelectedItem.BarCode);
+
+                if (item == null)
+                    continue;
+
+                decimal? idManufacturer = null;
+                if (SelectedRefGood != null)
                 {
-                    decimal? idManufacturer = null;
-                    if (SelectedRefGood != null)
+                    item.IdGood = (long?)SelectedRefGood.Id;
+                    item.Manufacturer = SelectedRefGood.Manufacturer;
+                    idManufacturer = SelectedRefGood.Id_Manufacturer;
+                }
+                else
+                {
+                    item.IdGood = (long?)SelectedItem.IdGood;
+
+                    if(item.IdGood != null && item.IdGood != 0)
                     {
-                        item.IdGood = (long?)SelectedRefGood.Id;
-                        item.Manufacturer = SelectedRefGood.Manufacturer;
-                        idManufacturer = SelectedRefGood.Id_Manufacturer;
-                    }
-                    else
-                    {
-                        item.IdGood = (long?)SelectedItem.IdGood;
-
-                        if(item.IdGood != null && item.IdGood != 0)
-                        {
-                            var idGood = item.IdGood;
-                            var refGood = _abt?.RefGoods?.FirstOrDefault(r => r.Id == idGood);
-                            item.Manufacturer = refGood?.Manufacturer?.Name;
-                            idManufacturer = refGood?.Manufacturer?.Id;
-                        }
-                    }
-
-                    if (idManufacturer == null || item.IdGood == null)
-                        continue;
-
-                    if (idManufacturer <= 0 || item.IdGood <= 0)
-                        continue;
-
-                    if (addedMapGoodsManufacturers.
-                        Exists(d => d == item.IdGood))
-                        continue;
-
-                    var mapManufacturerGood = _edi?
-                        .MapGoodsManufacturers?
-                        .FirstOrDefault(m => m.IdGood == item.IdGood);
-
-                    if(mapManufacturerGood == null)
-                    {
-                        mapManufacturerGood = new MapGoodManufacturer()
-                        {
-                            IdGood = (decimal)item.IdGood,
-                            IdManufacturer = idManufacturer,
-                            Name = item.Manufacturer
-                        };
-
-                        _edi?.MapGoodsManufacturers?.Add(mapManufacturerGood);
-                        addedMapGoodsManufacturers.Add(item.IdGood ?? 0);
-                    }
-                    else
-                    {
-                        mapManufacturerGood.IdManufacturer = idManufacturer;
-                        mapManufacturerGood.Name = item.Manufacturer;
+                        var idGood = item.IdGood;
+                        var refGood = _abt?.RefGoods?.FirstOrDefault(r => r.Id == idGood);
+                        item.Manufacturer = refGood?.Manufacturer?.Name;
+                        idManufacturer = refGood?.Manufacturer?.Id;
                     }
                 }
+
+                if (idManufacturer == null || item.IdGood == null)
+                    continue;
+
+                if (idManufacturer <= 0 || item.IdGood <= 0)
+                    continue;
+
+                if (addedMapGoodsManufacturers.
+                    Exists(d => d == item.IdGood))
+                    continue;
+
+                var mapManufacturerGood = _edi?
+                    .MapGoodsManufacturers?
+                    .FirstOrDefault(m => m.IdGood == item.IdGood);
+
+                if(mapManufacturerGood == null)
+                {
+                    mapManufacturerGood = new MapGoodManufacturer()
+                    {
+                        IdGood = (decimal)item.IdGood,
+                        IdManufacturer = idManufacturer,
+                        Name = item.Manufacturer
+                    };
+
+                    _edi?.MapGoodsManufacturers?.Add(mapManufacturerGood);
+                    addedMapGoodsManufacturers.Add(item.IdGood ?? 0);
+                }
+                else
+                {
+                    mapManufacturerGood.IdManufacturer = idManufacturer;
+                    mapManufacturerGood.Name = item.Manufacturer;
+                }
+            }
 
 			_edi.SaveChanges();
 			Refresh();
