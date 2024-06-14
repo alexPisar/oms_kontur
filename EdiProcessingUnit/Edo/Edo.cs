@@ -28,7 +28,7 @@ namespace EdiProcessingUnit.Edo
 		private readonly UtilitesLibrary.ConfigSet.Config _config = UtilitesLibrary.ConfigSet.Config.GetInstance();
 		private string _authToken => _cache.Token ?? "";
 		private string _partyId => _cache.PartyId ?? "";
-        private string _orgCertInn;
+        private string _orgInn;
         private string _actualBoxId;
 		private DiadocHttpApi _api;
 		private X509Certificate2 _certificate;
@@ -779,36 +779,14 @@ namespace EdiProcessingUnit.Edo
             kAgent.Address = organization.Address;
         }
 
-        private void SetBoxId(bool forLogin)
+        private void SetBoxId()
 		{
-            if (forLogin)
-            {
-                if (string.IsNullOrEmpty(_actualBoxId))
-                {
-                    string BoxId = null;
-
-                    if (_config != null)
-                    {
-                        if (_config.EdoBoxId != null)
-                        {
-                            _actualBoxId = _config.EdoBoxId;
-                            return;
-                        }
-                    }
-                    if (BoxId == null)
-                    {
-                        OrganizationList MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
-                        _config.Save(_config, UtilitesLibrary.ConfigSet.Config.ConfFileName);
-                    }
-                    _actualBoxId = BoxId;
-                }
-            }
-            else if(!string.IsNullOrEmpty(_orgCertInn))
+            if(!string.IsNullOrEmpty(_orgInn))
             {
                 OrganizationList myOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
 
                 var organization = myOrganizations?.Organizations?
-                    .FirstOrDefault(k => k.Inn == _orgCertInn && k.IsRoaming == false);
+                    .FirstOrDefault(k => k.Inn == _orgInn && k.IsRoaming == false);
 
                 _actualBoxId = organization?
                     .Boxes?
@@ -820,12 +798,12 @@ namespace EdiProcessingUnit.Edo
 		/// <summary>
 		/// Получить токен аутентификации
 		/// </summary>
-		public bool Authenticate(bool byLogin = false, X509Certificate2 cert = null, string orgCertInn = null)
+		public bool Authenticate(bool byLogin = false, X509Certificate2 cert = null, string orgInn = null)
 		{
+            _orgInn = orgInn;
+
             if (!byLogin)
             {
-                _orgCertInn = orgCertInn;
-
                 if (cert != null)
                     _certificate = cert;
                 else
@@ -838,7 +816,7 @@ namespace EdiProcessingUnit.Edo
 
 			if (_cache != null && !IsTokenExpired)
 			{
-                SetBoxId(byLogin);
+                SetBoxId();
 
 				return true;
 			}
@@ -865,7 +843,7 @@ namespace EdiProcessingUnit.Edo
                     _cache.Save(_cache, _certificate.Thumbprint);
                 }
 
-                SetBoxId(byLogin);
+                SetBoxId();
 
 				return true;
 			}

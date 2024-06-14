@@ -147,8 +147,22 @@ namespace EdiProcessingUnit
 
 			}
 		}
-		
-		public static string GetParameterValue(string[] args, string parameter, string defaultParameterValue)
+
+        public static void RunSafe(EdoProcessor processor)
+        {
+            try
+            {
+                _utilityLog.Log(processor.ProcessorName + ".Run()");
+                processor.Run();
+            }
+            catch(Exception ex)
+            {
+                _utilityLog.Log(ex);
+                MailReporter.Add(ex, Console.Title);
+            }
+        }
+
+        public static string GetParameterValue(string[] args, string parameter, string defaultParameterValue)
 		{
 			if (args.Contains( parameter ))
 			{

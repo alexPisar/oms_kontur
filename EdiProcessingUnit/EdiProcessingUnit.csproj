@@ -170,10 +170,12 @@
     <Compile Include="Enums\DocEdoSendStatus.cs" />
     <Compile Include="Enums\DocEdoType.cs" />
     <Compile Include="Infrastructure\EdiProcessor.cs" />
+    <Compile Include="Infrastructure\EdoProcessor.cs" />
     <Compile Include="Infrastructure\MailReporter.cs" />
     <Compile Include="Infrastructure\Xml.cs" />
     <Compile Include="Edi\Model\Company.cs" />
     <Compile Include="ProcessorUnits\DespatchAdviceProcessor.cs" />
+    <Compile Include="ProcessorUnits\DiadocEdoProcessor.cs" />
     <Compile Include="ProcessorUnits\ExecuteEdiProceduresProcessor.cs" />
     <Compile Include="ProcessorUnits\OrderResponsesProcessor.cs" />
     <Compile Include="ProcessorUnits\OutInvoicesProcessor.cs" />
