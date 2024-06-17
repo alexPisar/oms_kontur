@@ -1136,46 +1136,6 @@ namespace KonturEdoClient.Models
                             _abt.SaveChanges();
                         }
 
-                        var sendedDocsEdoProcessing = from doc in _loadedDocuments[index]
-                                                      join docProc in _abt.DocEdoProcessings
-                                                      on doc.CurrentDocJournalId equals docProc.IdDoc
-                                                      where docProc.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Sent
-                                                      select docProc;
-
-                        if(sendedDocsEdoProcessing.Count() > 0)
-                        {
-                            foreach(var docProcessing in sendedDocsEdoProcessing)
-                            {
-                                try
-                                {
-                                    var doc = Edo.GetInstance().GetDocument(docProcessing.MessageId, docProcessing.EntityId);
-
-                                    _abt.Entry(docProcessing)?.Reload();
-                                    if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature)
-                                    {
-                                        docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed;
-                                        _abt.SaveChanges();
-                                    }
-                                    else if(doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
-                                    {
-                                        docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected;
-                                        _abt.SaveChanges();
-                                    }
-                                    else if(doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
-                                    {
-                                        docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned;
-                                        _abt.SaveChanges();
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    string errorMessage = $"Произошла ошибка проверки статуса отправки документа с ID {docProcessing.Id}\r\nException: {_log.GetRecursiveInnerException(ex)}";
-                                    _log.Log(errorMessage);
-                                    errorsList.Add(ex);
-                                }
-                            }
-                        }
-
                         if (authInHonestMarkException == null && !_authInHonestMark)
                         {
                             _log.Log($"Для организации {organization.Name} получено документов {_loadedDocuments[index].Count}");
