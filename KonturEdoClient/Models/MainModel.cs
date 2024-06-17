@@ -1591,10 +1591,10 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if(SelectedDocuments.Count > 40)
+            if(SelectedDocuments.Count > 30)
             {
                 System.Windows.MessageBox.Show(
-                    "Превышен лимит по количеству документов - не более 40.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    "Превышен лимит по количеству документов - не более 30.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
