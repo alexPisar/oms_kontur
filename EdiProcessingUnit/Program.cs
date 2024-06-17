@@ -79,6 +79,9 @@ namespace EdiProcessingUnit
                     _processorFactory.OrganizationGln = null;
                     _processorFactory.ResetAuth();
 
+                    RunSafe(new DiadocEdoProcessor());
+                    _utilityLog.Log($"{_timeStamp} - обработчик DiadocEdoProcessor завершил работу.");
+
                     RunSafe(_processorFactory, new ExecuteEdiProceduresProcessor());
                     _utilityLog.Log($"{_timeStamp} - обработчик ExecuteEdiProceduresProcessor завершил работу.");
                 }
@@ -153,6 +156,7 @@ namespace EdiProcessingUnit
             try
             {
                 _utilityLog.Log(processor.ProcessorName + ".Run()");
+                processor.Init();
                 processor.Run();
             }
             catch(Exception ex)
