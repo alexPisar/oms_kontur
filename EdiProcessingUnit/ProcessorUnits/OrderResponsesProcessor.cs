@@ -195,7 +195,6 @@ namespace EdiProcessingUnit.WorkingUnits
                                                     continue;
 
                                                 var trDocJournalId = tr.Id;
-                                                var trDocDateTime = tr.DocDatetime;
                                                 DateTime? trDocDeliveryDate = tr.DeliveryDate;
 
                                                 var param = new Oracle.ManagedDataAccess.Client.OracleParameter("ID_DOC", trDocJournalId);
@@ -212,7 +211,7 @@ namespace EdiProcessingUnit.WorkingUnits
                                                     conductDateTime = conductDateTimes.Max().AddDays(1);
 
                                                 allTraderDocumentsDeleted = trDocDeliveryDate != null && 
-                                                    trDocDeliveryDate.Value < DateTime.Now && trDocDateTime < DateTime.Now.Date;
+                                                    trDocDeliveryDate.Value < DateTime.Now;
 
                                                 if (conductDateTime != null)
                                                 {
