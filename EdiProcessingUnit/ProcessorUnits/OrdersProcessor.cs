@@ -137,6 +137,7 @@ namespace EdiProcessingUnit.WorkingUnits
                         newOrderGlnBuyer = "",
                         newOrderGlnShipTo = "",
                         newOrderNameShipTo = "",
+                        newOrderAddressShipTo = "",
                         newOrderComment = "",
                         newOrderCurrencyCode = "",
                         newOrderTotalAmount = "",
@@ -190,6 +191,22 @@ namespace EdiProcessingUnit.WorkingUnits
                         newOrderGlnShipTo = deliveryInfo.ShipTo.gln;
                         relationsProcessor.AddNewCompany( ConvertCompany( deliveryInfo.ShipTo ) );
                         newOrderNameShipTo = deliveryInfo.ShipTo?.organization?.name;
+
+                        if (deliveryInfo.ShipTo.russianAddress != null)
+                        {
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.city))
+                                newOrderAddressShipTo = deliveryInfo.ShipTo.russianAddress.city;
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.street))
+                                newOrderAddressShipTo = string.IsNullOrEmpty(newOrderAddressShipTo) ? deliveryInfo.ShipTo.russianAddress.street
+                                    : $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.street}";
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.house))
+                                newOrderAddressShipTo = $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.house}";
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.flat))
+                                newOrderAddressShipTo = $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.flat}";
+                        }
                     }
 
                     if(!string.IsNullOrEmpty(deliveryInfo.RequestedDeliveryDateTime))
@@ -359,6 +376,7 @@ namespace EdiProcessingUnit.WorkingUnits
                     GlnBuyer = newOrderGlnBuyer,
                     GlnShipTo = newOrderGlnShipTo,
                     NameShipTo = newOrderNameShipTo,
+                    AddressShipTo = newOrderAddressShipTo,
                     Comment = newOrderComment,
                     Number = newOrderNumber,
                     OrderDate = newOrderDate,

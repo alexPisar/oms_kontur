@@ -55,6 +55,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 
         public virtual string NameShipTo { get; set; }
 
+        public virtual string AddressShipTo { get; set; }
+
         public virtual string Comment { get; set; }
 
         public virtual string CurrencyCode { get; set; }
