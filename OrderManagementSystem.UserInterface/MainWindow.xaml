@@ -191,6 +191,7 @@
                     <dxg:GridColumn Header="GLN отправителя" Width="120" FieldName="GlnSender"/>
                     <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="NameShipTo"/>
                     <dxg:GridColumn Header="GLN точки доставки" Width="120" FieldName="GlnShipTo"/>
+                    <dxg:GridColumn Header="Адрес точки" Width="120" FieldName="AddressShipTo"/>
                     <dxg:GridColumn Header="Коментарий" FieldName="Comment"/>
 
                     <dxg:GridColumn ReadOnly="True" FieldName="TotalAmount" Header="Сумма с НДС">
