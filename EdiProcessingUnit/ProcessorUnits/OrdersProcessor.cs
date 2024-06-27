@@ -197,6 +197,10 @@ namespace EdiProcessingUnit.WorkingUnits
                             if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.city))
                                 newOrderAddressShipTo = deliveryInfo.ShipTo.russianAddress.city;
 
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.settlement))
+                                newOrderAddressShipTo = string.IsNullOrEmpty(newOrderAddressShipTo) ? deliveryInfo.ShipTo.russianAddress.settlement
+                                    : $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.settlement}";
+
                             if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.street))
                                 newOrderAddressShipTo = string.IsNullOrEmpty(newOrderAddressShipTo) ? deliveryInfo.ShipTo.russianAddress.street
                                     : $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.street}";
