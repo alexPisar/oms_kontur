@@ -536,6 +536,10 @@ namespace EdiProcessingUnit.ProcessorUnits
                 desadvEdiMsg.InterchangeHeader.CreationDateTime = GetDate(ordersDateTime);
             }
             else
+                reseiveNumber = traderDocs.First()
+                    .DocJournals?.FirstOrDefault(d => d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)?.Code;
+
+            if(string.IsNullOrEmpty(reseiveNumber))
                 reseiveNumber = traderDocs.First().Code;
 
             desadvEdiMsg.DespatchAdvice = new DespatchAdvice();
