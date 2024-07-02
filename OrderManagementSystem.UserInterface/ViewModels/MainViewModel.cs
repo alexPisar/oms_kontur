@@ -23,7 +23,6 @@ namespace OMS.ViewModels
 		//public RelayCommand ExportSCHFDOPPRCommand => new RelayCommand( (o) => { ExportSCHFDOPPR(); } );
 		public RelayCommand OpenGoodsMapCommand => new RelayCommand( (o) => { OpenGoodsMap(); } );
 		public RelayCommand OpenOrderViewCommand => new RelayCommand( (o) => { OpenOrderView(); } );
-        public RelayCommand SummWithNdsCommand => new RelayCommand( (o) => { SummWithNds(); } );
         public RelayCommand OpenCompanyMapCommand => new RelayCommand( (o) => { OpenCompanyMap(); } );
 		public RelayCommand OpenInvoicesCommand => new RelayCommand( (o) => { OpenInvoices(); } );
 		public RelayCommand SendGoodsMapCommand => new RelayCommand((o) => { SendGoodsMap(); } );
@@ -985,31 +984,6 @@ namespace OMS.ViewModels
                 ShowError(_log.GetRecursiveInnerException(ex));
                 var ediErr = _edi.GetValidationErrors();
             }
-        }
-
-        private void SummWithNds()
-        {
-            if(SelectedItem == null)
-            {
-                System.Windows.MessageBox.Show( "Ошибка! Не выбран заказ для расчёта!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
-                return;
-            }
-
-            if(!string.IsNullOrEmpty(SelectedItem?.TotalAmount))
-            {
-                System.Windows.MessageBox.Show( "Ошибка! Сумма с НДС для данного заказа уже рассчитана!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
-                return;
-            }
-
-            double sum = 0.0;
-
-            foreach(var l in SelectedItem.DocLineItems)
-            {
-                sum += Convert.ToDouble(l.Amount);
-            }
-
-            SelectedItem.TotalAmount = sum.ToString();
-            Refresh();
         }
 
         private void ChangeExportableState(int exportableState)

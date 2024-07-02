@@ -124,9 +124,6 @@
                         <dxb:BarButtonItem Content="Просмотреть заказ" ToolTip="Просмотреть заказ"
                                            Command="{Binding OpenOrderViewCommand}"
                                            RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/XAF/State_ItemVisibility_Show.svg}" />
-                        <dxb:BarButtonItem Content="Рассчёт суммы с НДС" ToolTip="Рассчитать итоговую сумму с НДС"
-                                           Command="{Binding SummWithNdsCommand}"
-                                           RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Snap/Summary.svg}" />
                         <dxb:BarButtonItem Content="Удалить заказ" ToolTip="Удалить заказ из списка"
                                            IsEnabled="{Binding Path=PermittedToMatchingGoods}" Command="{Binding DeleteOrderCommand}"
                                            RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Delete.svg}" />
