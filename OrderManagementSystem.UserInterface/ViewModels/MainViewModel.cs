@@ -279,6 +279,26 @@ namespace OMS.ViewModels
                     return;
                 }
 
+                if (DocLineItems.Exists(d => DocLineItems.FirstOrDefault(l => l.IdGood == d.IdGood && l.Id != d.Id) != null))
+                {
+                    long? duplicateIdGood = null;
+
+                    foreach (var docLineItem in DocLineItems)
+                    {
+                        if (duplicateIdGood == null || duplicateIdGood == 0)
+                        {
+                            duplicateIdGood = DocLineItems?.FirstOrDefault(l => l.IdGood == docLineItem.IdGood && l.Id != docLineItem.Id)?.IdGood;
+                            continue;
+                        }
+
+                        break;
+                    }
+
+                    string duplicateIdGoodStr = duplicateIdGood != null ? duplicateIdGood.ToString() : "";
+                    System.Windows.MessageBox.Show($"Ошибка! В списке товаров есть дубль ID товара {duplicateIdGoodStr}!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
                 if(SelectedItem?.ShipTo?.IdContractor == null)
                 {
                     System.Windows.MessageBox.Show( "Ошибка! GLN получателя не сопоставлен с точкой доставки!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
