@@ -368,6 +368,20 @@ namespace EdiProcessingUnit.WorkingUnits
                 }
                 if (orderLineItems.Count <= 0)      // если что-то пошло не так и список товаров пустой то вывалимся в ошибку		
                     throw new NullReferenceException( "Заказываемые товары входящего заказа отсутствуют" );
+
+                if (string.IsNullOrEmpty(newOrderTotalAmount) && orderLineItems.All(l => !string.IsNullOrEmpty(l.Amount)))
+                {
+                    try
+                    {
+                        double calculatedTotalAmount = orderLineItems.Sum(l => double.Parse(l.Amount));
+                        newOrderTotalAmount = Math.Round(calculatedTotalAmount, 2).ToString();
+                    }
+                    catch(Exception ex)
+                    {
+                        newOrderTotalAmount = null;
+                    }
+                }
+
                 newOrder = new DocOrder() { // определим тело заказа куда и список товаров запихаем
                     Id = IdOrder,
                     DocType = newOrderDocType,
