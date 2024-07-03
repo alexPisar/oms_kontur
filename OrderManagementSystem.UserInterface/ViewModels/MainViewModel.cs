@@ -802,7 +802,28 @@ namespace OMS.ViewModels
 
             var idFilial = Decimal.Parse(abtContext?.SelectSingleValue($"select id_filial from profiles where profile_gln = '{_usersConfig.SelectedUser.UserGLN}'"));
 
-            var doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller);
+            DocJournal doc;
+
+            if (splitDoc)
+            {
+                doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller);
+            }
+            else
+            {
+                var docLineItem = order.DocLineItems.FirstOrDefault();
+
+                if (docLineItem?.IdGood == null)
+                    return new List<decimal?>();
+
+                var param = new Oracle.ManagedDataAccess.Client.OracleParameter("IdGood", docLineItem.IdGood);
+
+                var idManufacturer = abtContext?.Database?.SqlQuery<decimal?>(
+                    $"select Id_Manufacturer from abt.ref_goods where Id = :IdGood", param)?
+                    .FirstOrDefault();
+
+                doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller, idManufacturer);
+            }
+
             abtContext.SaveChanges();
 
             if (splitDoc)
