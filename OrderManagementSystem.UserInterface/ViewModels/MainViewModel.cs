@@ -789,6 +789,13 @@ namespace OMS.ViewModels
             abtContext.DocJournals.Add( newDocJournal );
             var docJournalTag = new DocJournalTag { IdDoc = newDocJournal.Id, IdTad = 137, TagValue = order.Number };
             abtContext.DocJournalTags.Add(docJournalTag);
+
+            if (!string.IsNullOrEmpty(order.GlnShipTo))
+            {
+                var shipToGlnJournalTag = new DocJournalTag { IdDoc = newDocJournal.Id, IdTad = 222, TagValue = order.GlnShipTo };
+                abtContext.DocJournalTags.Add(shipToGlnJournalTag);
+            }
+
             //abtContext.DocGoods.Add( newDocJournal.DocGoods );
             return newDocJournal;
         }
