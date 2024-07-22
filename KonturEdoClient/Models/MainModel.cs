@@ -3159,6 +3159,10 @@ namespace KonturEdoClient.Models
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
                     {
                         var docJournalTag = _abt.DocJournalTags.FirstOrDefault(t => t.IdDoc == d.IdDocMaster && t.IdTad == 137);
+
+                        if (docJournalTag == null)
+                            throw new Exception("Отсутствует номер заказа покупателя.");
+
                         additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
                     }
 
@@ -3167,11 +3171,21 @@ namespace KonturEdoClient.Models
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
                     {
-                        if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
+                        string glnShipTo = null;
+                        var shipToGlnJournalTag = _abt.DocJournalTags.FirstOrDefault(t => t.IdDoc == d.IdDocMaster && t.IdTad == 222);
+
+                        if(shipToGlnJournalTag != null)
+                        {
+                            glnShipTo = shipToGlnJournalTag.TagValue;
+                        }
+                        else if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
                         {
                             var docOrderInfo = WebService.Controllers.FinDbController.GetInstance().GetDocOrderInfoByIdDocAndOrderStatus(d.IdDocMaster.Value);
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = docOrderInfo.GlnShipTo });
+                            glnShipTo = docOrderInfo?.GlnShipTo;
                         }
+
+                        if(!string.IsNullOrEmpty(glnShipTo))
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = glnShipTo });
                     }
 
                     foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
