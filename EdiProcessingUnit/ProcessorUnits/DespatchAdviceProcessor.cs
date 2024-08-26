@@ -389,7 +389,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                                 if (connectedBuyer.PriceIncludingVat == 1)
                                 {
-                                    NetPriceWithVAT = detail.Price;
+                                    NetPriceWithVAT = detail.Price - detail.DiscountSumm;
                                     Amount = Math.Round(NetPriceWithVAT * UnitsCount, 2);
 
                                     var taxRate = traderInvoice?
