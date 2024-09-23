@@ -700,6 +700,17 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void GetDocumentTypesTest()
+        {
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            var crypto = new WinApiCryptWrapper();
+            var cert = crypto.GetCertificateWithPrivateKey("DEEBCA5A51641044D042AEFA0E9569EEA57CE716", false);
+            edo.Authenticate(false, cert, "2504000010");
+            var docType = edo.GetDocumentTypes().DocumentTypes.FirstOrDefault(d => d.Name == "Torg2");
+            var document = edo.GetDocument("13d9568b-5e35-4084-9e9e-2435ca788554", "e527de5d-c092-43a4-98b8-6117d64c54d2");
+        }
+
         private void SetFinDbConfiguration()
         {
             var finDbController = WebService.Controllers.FinDbController.GetInstance();

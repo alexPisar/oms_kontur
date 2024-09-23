@@ -132,6 +132,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                 .Property(p => p.IsMarkedNotExportable)
                     .HasColumnName(@"IS_MARKED_NOT_EXPORTABLE")
                     .IsRequired();
+            this
+                .Property(p => p.OrderDeliveryDate)
+                    .HasColumnName(@"ORDER_DELIVERY_DATE")
+                    .HasPrecision(0);
             // Associations:
             this
                 .HasMany(p => p.DocLineItems)

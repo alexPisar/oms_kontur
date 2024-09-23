@@ -553,6 +553,12 @@ namespace EdiProcessingUnit.Edo
             return document;
         }
 
+        public Diadoc.Api.Proto.Documents.Types.GetDocumentTypesResponseV2 GetDocumentTypes()
+        {
+            var docTypes = CallApiSafe(new Func<Diadoc.Api.Proto.Documents.Types.GetDocumentTypesResponseV2>(() => _api.GetDocumentTypesV2(_authToken, _actualBoxId)));
+            return docTypes;
+        }
+
         public Message GetMessage(string messageId, string entityId, bool includedContent = false)
         {
             var message = CallApiSafe(new Func<Message>(() => _api.GetMessage(_authToken, _actualBoxId, messageId, entityId, false, includedContent)));

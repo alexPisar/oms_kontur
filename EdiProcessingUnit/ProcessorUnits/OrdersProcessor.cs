@@ -389,6 +389,7 @@ namespace EdiProcessingUnit.WorkingUnits
                     EdiCreationDate = newOrderEdiCreationDate,
                     EdiCreationSenderDate = newOrderEdiCreationSenderDate,
                     ReqDeliveryDate = newOrderReqDeliveryDate,
+                    OrderDeliveryDate = newOrderReqDeliveryDate,
                     GlnSender = newOrderGlnSender,
                     GlnSeller = newOrderGlnSeller,
                     GlnBuyer = newOrderGlnBuyer,

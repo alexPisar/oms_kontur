@@ -71,6 +71,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 
         public virtual int IsMarkedNotExportable { get; set; }
 
+        public virtual global::System.DateTime? OrderDeliveryDate { get; set; }
+
         #endregion
 
         #region Navigation Properties
