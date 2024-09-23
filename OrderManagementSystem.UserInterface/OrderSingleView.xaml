@@ -18,7 +18,7 @@
             <Grid>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="200"/>
+                    <RowDefinition Height="210"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="130"/>
                 </Grid.RowDefinitions>
@@ -60,6 +60,10 @@
                         <StackPanel Orientation="Horizontal">
                             <Label Content="Покупатель:" Width="110"  FontWeight="Bold"/>
                             <Label Content="{Binding Item.GlnBuyer}"  Width="250"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Дата доставки из заказа:" Width="150" FontWeight="Bold"/>
+                            <Label Content="{Binding Item.OrderDeliveryDate}"  Width="210"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label Content="Точка доставки:" Width="110"  FontWeight="Bold"/>
