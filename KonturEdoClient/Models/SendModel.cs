@@ -165,7 +165,7 @@ namespace KonturEdoClient.Models
                             DocEdoProcessing docProcessing;
                             if (message != null)
                             {
-
+                                _log.Log($"Сохранение в базе данных {_currentDocuments.Count()} документов, Id сообщения {message?.MessageId}");
                                 loadContext.Text = "Сохранение в базе данных.";
 
                                 foreach (var currentDocument in _currentDocuments)
@@ -223,11 +223,14 @@ namespace KonturEdoClient.Models
                                         _abt.DocEdoProcessings.Add(docProcessing);
                                     }
 
+                                    _log.Log($"Документ {docProcessing.EntityId ?? string.Empty} добавлен в базу.");
+
                                     if(isSign)
                                         _edoProcessings.Add(docProcessing);
                                 }
 
                                 _abt.SaveChanges();
+                                _log.Log($"SaveChanges: успешно.");
 
 
                                 if (isSign)
@@ -236,6 +239,10 @@ namespace KonturEdoClient.Models
                                 }
                                 else
                                     loadWindow.SetSuccessFullLoad(loadContext, "Отправка завершена успешно.");
+                            }
+                            else
+                            {
+                                _log.Log($"Не удалось идентифицировать отправленное сообщение.");
                             }
                         }
                         catch (Exception ex)

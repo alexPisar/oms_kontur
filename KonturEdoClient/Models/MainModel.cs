@@ -53,6 +53,7 @@ namespace KonturEdoClient.Models
         public bool IsSended => WorkWithDocumentsPermission && SelectedDocument?.DocEdoSendStatus != null && SelectedDocument?.DocEdoSendStatus != "-";
         public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован" ||
             SelectedDocument?.DocEdoSendStatus == "Подписан с расхождениями");
+        public bool IsShowCorrectionDocuments => IsSigned && SelectedDocument?.DocJournal?.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction;
 
         public List<UniversalTransferDocument> Documents { get; set; }
         public List<UniversalTransferDocument> SelectedDocuments { get; set; }
@@ -252,6 +253,7 @@ namespace KonturEdoClient.Models
 
             DocTypes.Add(new KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalType, string>(DataContextManagementUnit.DataAccess.DocJournalType.Invoice, "Счёт-фактура"));
             DocTypes.Add(new KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalType, string>(DataContextManagementUnit.DataAccess.DocJournalType.Translocation, "Перемещение"));
+            //DocTypes.Add(new KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalType, string>(DataContextManagementUnit.DataAccess.DocJournalType.Correction, "Корректировка"));
         }
 
         private void SetPermissions()
@@ -933,6 +935,7 @@ namespace KonturEdoClient.Models
 
                         var senderInnKpp = organization.Inn + "/" + organization.Kpp;
                         var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
+                        var ucdDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Ucd;
 
                         if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
