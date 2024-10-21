@@ -81,7 +81,6 @@
                     <dxb:BarButtonItem Content="Отправить корректировку"
                                        RibbonStyle="Large" 
                                        LargeGlyph="{dx:DXImage SvgImages/XAF/Action_Edit.svg}"
-                                       IsEnabled="{Binding IsSigned}"
                                        Command="{Binding ShowCorrectionDocumentsCommand}" />
                     <dxb:BarButtonItem Content="Обработать повторно"
                                        RibbonStyle="Large" 

@@ -53,7 +53,7 @@ namespace KonturEdoClient.Models
         public bool IsSended => WorkWithDocumentsPermission && SelectedDocument?.DocEdoSendStatus != null && SelectedDocument?.DocEdoSendStatus != "-";
         public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован" ||
             SelectedDocument?.DocEdoSendStatus == "Подписан с расхождениями");
-        public bool IsShowCorrectionDocuments => IsSigned && SelectedDocument?.DocJournal?.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction;
+        
 
         public List<UniversalTransferDocument> Documents { get; set; }
         public List<UniversalTransferDocument> SelectedDocuments { get; set; }
@@ -3636,50 +3636,8 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (SelectedDocument == null)
-            {
-                System.Windows.MessageBox.Show(
-                    "Не выбран документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-
-            if (SelectedDocuments.Count > 1)
-            {
-                System.Windows.MessageBox.Show(
-                    "Для корректировки нужно выбрать только один документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-
             try
             {
-                var updNumber = SelectedDocument.DocJournal.Code;
-
-                var docsCollection = from correctionDocJournal in _abt.DocJournals
-                                     where correctionDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction
-                                     && correctionDocJournal.CreateInvoice == 1 && correctionDocJournal.IdDocMaster == SelectedDocument.DocJournal.IdDocMaster
-                                     orderby correctionDocJournal.DocDatetime
-                                     let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
-                                                             where docEdo.IdDoc == correctionDocJournal.Id && docEdo.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Ucd
-                                                             orderby docEdo.DocDate descending
-                                                             select docEdo)
-                                     let docJournalTags = (from docJournalTag in _abt.DocJournalTags
-                                                           where docJournalTag.IdTad == 109 && docJournalTag.IdDoc == correctionDocJournal.Id
-                                                           select docJournalTag)
-                                     select new UniversalCorrectionDocument
-                                     {
-                                         CorrectionDocJournal = correctionDocJournal,
-                                         DocumentNumber = updNumber + "-КОР",
-                                         DocJournalTag = docJournalTags,
-                                         EdoProcessing = docEdoProcessing
-                                     };
-
-                if (docsCollection.Count() == 0)
-                {
-                    System.Windows.MessageBox.Show(
-                        "Не найдены корректировочные документы в системе.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return;
-                }
-
                 bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
 
                 if (!result)
@@ -3692,59 +3650,14 @@ namespace KonturEdoClient.Models
                 if (_owner != null)
                     loadWindow.Owner = _owner;
 
-                loadWindow.Show();
-                //loadWindow.Activate();
+                var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization);
+                correctionDocumentsModel.DateTo = this.DateTo;
+                correctionDocumentsModel.DateFrom = this.DateFrom;
 
-                Exception exception = null;
+                if(SelectedDocuments.Count == 1)
+                    correctionDocumentsModel.SearchInvoiceNumber = SelectedDocument.DocJournal.Code;
 
-                await Task.Run(() =>
-                {
-                    try
-                    {
-                        foreach (var corDoc in docsCollection)
-                        {
-                            if (corDoc?.EdoProcessing as IEnumerable<DocEdoProcessing> == null)
-                                continue;
-
-                            var docProcessings = (corDoc.EdoProcessing as IEnumerable<DocEdoProcessing>)?
-                            .Where(d => d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Sent) ?? new List<DocEdoProcessing>();
-
-                            foreach (var docProcessing in docProcessings)
-                            {
-                                var correctionDocument = Edo.GetInstance().GetDocument(docProcessing.MessageId, docProcessing.EntityId);
-
-                                _abt.Entry(docProcessing)?.Reload();
-                                if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature)
-                                {
-                                    docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed;
-                                    _abt.SaveChanges();
-                                }
-                                else if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
-                                {
-                                    docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected;
-                                    _abt.SaveChanges();
-                                }
-                                else if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
-                                {
-                                    docProcessing.DocStatus = (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned;
-                                    _abt.SaveChanges();
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        exception = ex;
-                    }
-                });
-
-                loadWindow.Close();
-
-                if (exception != null)
-                    throw exception;
-
-                var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization, SelectedDocument);
-                correctionDocumentsModel.Documents = new System.Collections.ObjectModel.ObservableCollection<UniversalCorrectionDocument>(docsCollection);
+                await correctionDocumentsModel.Refresh();
 
                 var correctionDocumentsWindow = new ShowCorrectionDocumentsWindow();
                 correctionDocumentsWindow.DataContext = correctionDocumentsModel;

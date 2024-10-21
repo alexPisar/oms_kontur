@@ -39,5 +39,32 @@ namespace KonturEdoClient
         {
             (DataContext as Models.CorrectionDocumentsModel)?.OnPropertyChanged("Details");
         }
+
+        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dataContext = DataContext as Models.CorrectionDocumentsModel;
+            try
+            {
+                var task = dataContext?.Refresh();
+                await task;
+            }
+            catch(Exception ex)
+            {
+                var log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
+                log.Log($"SearchButton Exception: {log.GetRecursiveInnerException(ex)}");
+
+                var errorWindow = new ErrorWindow(
+                            "Произошла ошибка загрузки корректировочных документов.",
+                            new List<string>(
+                                new string[]
+                                {
+                                    ex.Message,
+                                    ex.StackTrace
+                                }
+                                ));
+
+                errorWindow.ShowDialog();
+            }
+        }
     }
 }

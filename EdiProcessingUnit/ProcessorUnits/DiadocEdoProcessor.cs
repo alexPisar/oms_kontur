@@ -31,6 +31,7 @@ namespace EdiProcessingUnit.ProcessorUnits
         private void ExecuteChecks(RefCustomer company)
         {
             var updDocType = (int)Enums.DocEdoType.Upd;
+            var ucdDocType = (int)Enums.DocEdoType.Ucd;
             var dateTimeFrom = DateTime.Now.AddMonths(-6);
 
             var sentStatusDocEdoProcessings = (from docEdoProcessing in _abtDbContext.DocEdoProcessings
@@ -55,6 +56,32 @@ namespace EdiProcessingUnit.ProcessorUnits
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
                 {
                     SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Документ {docEdoProcessing.IdDoc} подписан с расхождениями.");
+                }
+            }
+
+            var correctionDocEdoProcessings = (from correctionDocEdoProcessing in _abtDbContext.DocEdoProcessings
+                                               where correctionDocEdoProcessing.DocType == ucdDocType && correctionDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Sent && correctionDocEdoProcessing.DocDate > dateTimeFrom
+                                               join corDocJournal in _abtDbContext.DocJournals on correctionDocEdoProcessing.IdDoc equals corDocJournal.Id where corDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction
+                                               join docGoods in _abtDbContext.DocGoods on corDocJournal.IdDocMaster equals docGoods.IdDoc
+                                               join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                               where customer.Inn == company.Inn && customer.Kpp == company.Kpp select correctionDocEdoProcessing);
+
+
+            foreach (var docProcessing in correctionDocEdoProcessings)
+            {
+                var correctionDocument = _edo.GetDocument(docProcessing.MessageId, docProcessing.EntityId);
+
+                if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature)
+                {
+                    SetEdoStatus(docProcessing, (int)Enums.DocEdoSendStatus.Signed, $"Корректировка {docProcessing.IdDoc} подписана контрагентом.");
+                }
+                else if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
+                {
+                    SetEdoStatus(docProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Корректировка {docProcessing.IdDoc} отклонена контрагентом.");
+                }
+                else if (correctionDocument.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
+                {
+                    SetEdoStatus(docProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Корректировка {docProcessing.IdDoc} подписана с расхождениями.");
                 }
             }
         }

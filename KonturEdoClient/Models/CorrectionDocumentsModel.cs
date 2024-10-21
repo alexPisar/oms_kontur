@@ -12,7 +12,6 @@ namespace KonturEdoClient.Models
 {
     public class CorrectionDocumentsModel : Base.ModelBase
     {
-        private UniversalTransferDocument _baseDocument;
         private AbtDbContext _abt;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
         private Kontragent _currentOrganization;
@@ -24,15 +23,83 @@ namespace KonturEdoClient.Models
 
         public List<DocGoodsDetail> Details => SelectedDocument?.CorrectionDocJournal?.Details;
 
-        public CorrectionDocumentsModel(AbtDbContext abt, Kontragent currentOrganization, UniversalTransferDocument baseDocument)
+        public DateTime DateFrom { get; set; }
+        public DateTime DateTo { get; set; }
+
+        public string SearchDocumentNumber { get; set; }
+        public string SearchInvoiceNumber { get; set; }
+
+        public CorrectionDocumentsModel(AbtDbContext abt, Kontragent currentOrganization)
         {
-            _baseDocument = baseDocument;
             _abt = abt;
 
             if (currentOrganization?.Certificate == null)
                 throw new Exception("Не задан сертификат для организации.");
 
             _currentOrganization = currentOrganization;
+        }
+
+        public async Task Refresh()
+        {
+            var loadContext = new LoadModel();
+            var loadWindow = new LoadWindow();
+            loadWindow.DataContext = loadContext;
+
+            if (Owner != null)
+                loadWindow.Owner = Owner;
+
+            loadWindow.Show();
+            //loadWindow.Activate();
+
+            Exception exception = null;
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
+                    IEnumerable<UniversalCorrectionDocument> docsCollection = (from correctionDocJournal in _abt.DocJournals
+                                         where correctionDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction && correctionDocJournal.CreateInvoice == 1
+                                         && correctionDocJournal.DocDatetime >= DateFrom && correctionDocJournal.DocDatetime < DateTo
+                                         && _abt.DocEdoProcessings.Any(d => d.IdDoc == correctionDocJournal.IdDocMaster && d.DocType == updDocType && 
+                                         (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned))
+                                         join invoice in _abt.DocJournals on correctionDocJournal.IdDocMaster equals invoice.IdDocMaster
+                                         where invoice.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice
+                                         join docGoods in _abt.DocGoods on invoice.IdDocMaster equals docGoods.IdDoc
+                                         join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                         where customer.Inn == _currentOrganization.Inn && customer.Kpp == _currentOrganization.Kpp
+                                         let docJournalTags = (from docJournalTag in _abt.DocJournalTags
+                                                               where docJournalTag.IdTad == 109 && docJournalTag.IdDoc == correctionDocJournal.Id
+                                                               select docJournalTag)
+                                         let updNumber = invoice.Code
+                                         select new UniversalCorrectionDocument
+                                         {
+                                             CorrectionDocJournal = correctionDocJournal,
+                                             DocumentNumber = updNumber + "-КОР",
+                                             InvoiceDocJournal = invoice,
+                                             DocJournalTag = docJournalTags
+                                         });
+
+                    if (!string.IsNullOrEmpty(SearchDocumentNumber))
+                        docsCollection = docsCollection.Where(d => d.CorrectionDocJournal.Code.Contains(SearchDocumentNumber));
+
+                    if (!string.IsNullOrEmpty(SearchInvoiceNumber))
+                        docsCollection = docsCollection.Where(d => d.InvoiceDocJournal.Code.Contains(SearchInvoiceNumber));
+
+                    docsCollection = from d in docsCollection.AsParallel() select d.Init(_abt);//.ToList();
+                    Documents = new ObservableCollection<UniversalCorrectionDocument>(docsCollection);
+                    OnPropertyChanged("Documents");
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+            });
+
+            loadWindow.Close();
+
+            if (exception != null)
+                throw exception;
         }
 
         public async void SendDocument()
@@ -44,7 +111,14 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var baseProcessing = _baseDocument.EdoProcessing as DocEdoProcessing;
+            if(SelectedDocument?.CorrectionDocJournal?.IdDocMaster == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не найден корректировочный документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            var baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
             var buyerContractor = SelectedDocument.CorrectionDocJournal?.DocGoods?.Customer;
 
             if (buyerContractor?.DefaultCustomer == null)
@@ -164,17 +238,31 @@ namespace KonturEdoClient.Models
 
                     correctionDocument.DocumentCreator = $"{signer.First().LastName} {signer.First().FirstName} {signer.First().MiddleName}";
 
+                    var idChannel = SelectedDocument?.InvoiceDocJournal?.DocMaster?.DocGoods?.Customer?.IdChannel;
+
+                    RefEdoGoodChannel refEdoGoodChannel = null;
+                    if (idChannel != null && idChannel != 99001)
+                        refEdoGoodChannel = (from r in _abt.RefContractors
+                                             where r.IdChannel == idChannel
+                                             join s in (from c in _abt.RefContractors
+                                                        where c.DefaultCustomer != null
+                                                        join refEdo in _abt.RefEdoGoodChannels on c.IdChannel equals (refEdo.IdChannel)
+                                                        select new { RefEdoGoodChannel = refEdo, RefContractor = c })
+                                                        on r.DefaultCustomer equals (s.RefContractor.DefaultCustomer)
+                                             where s != null
+                                             select s.RefEdoGoodChannel).FirstOrDefault();
+
                     var itemDetails = new List<Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItem>();
                     foreach (var detail in Details)
                     {
-                        var baseDetail = _baseDocument.DocJournal.DocGoodsDetailsIs.FirstOrDefault(d => d.IdGood == detail.IdGood);
+                        var baseDetail = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.FirstOrDefault(d => d.IdGood == detail.IdGood);
 
                         if (baseDetail == null)
                             throw new Exception($"Не найден товар в исходном документе {detail.Good.Name}, ID {detail.IdGood}");
 
                         var additionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
 
-                        int baseIndex = _baseDocument.DocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
+                        int baseIndex = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
 
                         var barCode = _abt.RefBarCodes?
                         .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == false)?
@@ -269,17 +357,15 @@ namespace KonturEdoClient.Models
                                 additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "регистрационный номер декларации на товары", Value = detail.Good.CustomsNo });
                         }
 
-                        if(_baseDocument.RefEdoGoodChannel as RefEdoGoodChannel != null)
+                        if (refEdoGoodChannel != null)
                         {
-                            var refEdoGoodChannel = _baseDocument.RefEdoGoodChannel as RefEdoGoodChannel;
-                            var idChannel = refEdoGoodChannel.IdChannel;
                             if (!string.IsNullOrEmpty(refEdoGoodChannel.DetailBuyerCodeUpdId))
                             {
                                 var goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.IdChannel == idChannel && r.IdGood == detail.IdGood && r.Disabled == 0);
 
-                                if(goodMatching == null && _baseDocument?.DocJournal?.DocMaster != null)
+                                if(goodMatching == null && SelectedDocument?.InvoiceDocJournal?.DocMaster != null)
                                 {
-                                    var docDateTime = _baseDocument.DocJournal.DocMaster.DocDatetime.Date;
+                                    var docDateTime = SelectedDocument.InvoiceDocJournal.DocMaster.DocDatetime.Date;
 
                                     goodMatching = _abt.RefGoodMatchings.FirstOrDefault(r => r.DisabledDatetime != null && r.IdChannel == idChannel &&
                                     r.IdGood == detail.IdGood && r.Disabled == 1 && r.DisabledDatetime.Value >= docDateTime);
@@ -331,32 +417,31 @@ namespace KonturEdoClient.Models
                     {
                         new Diadoc.Api.DataXml.Ucd736.InvoiceForCorrectionInfo
                         {
-                            Date = _baseDocument?.DocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy"),
-                            Number = _baseDocument?.DocJournal?.Code
+                            Date = SelectedDocument?.InvoiceDocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy"),
+                            Number = SelectedDocument?.InvoiceDocJournal?.Code
                         }
                     };
 
                     var additionalInfoList = new List<Diadoc.Api.DataXml.AdditionalInfo>();
-                    if (_baseDocument.RefEdoGoodChannel as RefEdoGoodChannel != null)
+                    if (refEdoGoodChannel != null)
                     {
-                        var refEdoGoodChannel = _baseDocument.RefEdoGoodChannel as RefEdoGoodChannel;
                         if (!string.IsNullOrEmpty(refEdoGoodChannel.NumberUpdId))
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.NumberUpdId, Value = _baseDocument?.DocJournal?.Code });
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.NumberUpdId, Value = SelectedDocument?.InvoiceDocJournal?.Code });
 
-                        if (_baseDocument?.DocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.OrderNumberUpdId))
+                        if (SelectedDocument?.InvoiceDocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.OrderNumberUpdId))
                         {
-                            var docJournalTag = _abt.DocJournalTags.FirstOrDefault(t => t.IdDoc == _baseDocument.DocJournal.IdDocMaster && t.IdTad == 137);
+                            var docJournalTag = _abt.DocJournalTags.FirstOrDefault(t => t.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && t.IdTad == 137);
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
                         }
 
                         if (!string.IsNullOrEmpty(refEdoGoodChannel.OrderDateUpdId))
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderDateUpdId, Value = _baseDocument?.DocJournal?.DocMaster?.DocDatetime.ToString("dd.MM.yyyy") });
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.OrderDateUpdId, Value = SelectedDocument?.InvoiceDocJournal?.DocMaster?.DocDatetime.ToString("dd.MM.yyyy") });
 
-                        if (_baseDocument?.DocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.GlnShipToUpdId))
+                        if (SelectedDocument?.InvoiceDocJournal?.IdDocMaster != null && !string.IsNullOrEmpty(refEdoGoodChannel.GlnShipToUpdId))
                         {
                             if (WebService.Controllers.FinDbController.GetInstance().LoadedConfig)
                             {
-                                var docOrderInfo = WebService.Controllers.FinDbController.GetInstance().GetDocOrderInfoByIdDocAndOrderStatus(_baseDocument.DocJournal.IdDocMaster.Value);
+                                var docOrderInfo = WebService.Controllers.FinDbController.GetInstance().GetDocOrderInfoByIdDocAndOrderStatus(SelectedDocument.InvoiceDocJournal.IdDocMaster.Value);
 
                                 additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.GlnShipToUpdId, Value = docOrderInfo.GlnShipTo });
                             }

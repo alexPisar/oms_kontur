@@ -13,7 +13,11 @@ namespace EdiProcessingUnit.Edo.Models
         private string _docNumber;
 
         public DocJournal CorrectionDocJournal { get; set; }
-        public object EdoProcessing { get; set; }
+        public DocJournal InvoiceDocJournal { get; set; }
+        public object EdoProcessing
+        {
+            set { _edoProcessing = value as DocEdoProcessing; }
+        }
         public object DocJournalTag { get; set; }
         public string DocumentNumber
         {
@@ -31,39 +35,14 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string InvoiceNumber => InvoiceDocJournal?.Code;
+        public string CorrectionDocJournalNumber => CorrectionDocJournal?.Code;
+
         public string DocEdoSendStatus
         {
             get {
 
-                if (EdoProcessing as IEnumerable<DocEdoProcessing> != null)
-                {
-                    var collection = EdoProcessing as IEnumerable<DocEdoProcessing>;
-
-                    if (!collection.Any())
-                    {
-                        _edoProcessing = null;
-                        return "-";
-                    }
-
-                    if(collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
-                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
-                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned))
-                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
-                    else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
-                        _edoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
-                    else
-                        _edoProcessing = collection.FirstOrDefault();
-
-                    EdoProcessing = _edoProcessing;
-
-                    if (_edoProcessing == null)
-                        return "-";
-                }
-                else if (EdoProcessing as DocEdoProcessing != null)
-                {
-                    _edoProcessing = EdoProcessing as DocEdoProcessing;
-                }
-                else
+                if (_edoProcessing == null)
                     return "-";
 
                 switch (_edoProcessing.DocStatus)
@@ -80,6 +59,31 @@ namespace EdiProcessingUnit.Edo.Models
                         return "-";
                 }
             }
+        }
+
+        public UniversalCorrectionDocument Init(AbtDbContext abtContext)
+        {
+            var collection = (from docEdo in abtContext.DocEdoProcessings
+                              where docEdo.IdDoc == CorrectionDocJournal.Id && docEdo.DocType == (int)Enums.DocEdoType.Ucd
+                              orderby docEdo.DocDate descending select docEdo);
+
+            if (!collection.Any())
+            {
+                EdoProcessing = null;
+            }
+            else
+            {
+                if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed))
+                    EdoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Signed);
+                else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned))
+                    EdoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
+                else if (collection.Any(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected))
+                    EdoProcessing = collection.FirstOrDefault(s => s.DocStatus == (int)Enums.DocEdoSendStatus.Rejected);
+                else
+                    EdoProcessing = collection.FirstOrDefault();
+            }
+
+            return this;
         }
     }
 }
