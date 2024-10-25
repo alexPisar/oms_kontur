@@ -14,6 +14,9 @@ namespace EdiProcessingUnit.Edo.Models
 
         public DocJournal CorrectionDocJournal { get; set; }
         public DocJournal InvoiceDocJournal { get; set; }
+
+        public bool IsMarked { get; set; }
+
         public object EdoProcessing
         {
             set { _edoProcessing = value as DocEdoProcessing; }
@@ -32,6 +35,52 @@ namespace EdiProcessingUnit.Edo.Models
             }
             set {
                 _docNumber = value;
+            }
+        }
+
+        public string DocType
+        {
+            get {
+
+                switch (CorrectionDocJournal?.IdDocType)
+                {
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer:
+                        return "Возврат от покупателя";
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
+                        return "Корректировочная с/ф";
+                    default:
+                        return "";
+                }
+            }
+        }
+
+        public string BuyerName
+        {
+            get {
+                switch (CorrectionDocJournal?.IdDocType)
+                {
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer:
+                        return CorrectionDocJournal?.DocGoods?.Seller?.Name;
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
+                        return InvoiceDocJournal?.DocMaster?.DocGoods?.Customer?.Name;
+                    default:
+                        return "";
+                }
+            }
+        }
+
+        public string SellerName
+        {
+            get {
+                switch (CorrectionDocJournal?.IdDocType)
+                {
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer:
+                        return CorrectionDocJournal?.DocGoods?.Customer?.Name;
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
+                        return InvoiceDocJournal?.DocMaster?.DocGoods?.Seller?.Name;
+                    default:
+                        return "";
+                }
             }
         }
 
@@ -67,7 +116,7 @@ namespace EdiProcessingUnit.Edo.Models
                               where docEdo.IdDoc == CorrectionDocJournal.Id && docEdo.DocType == (int)Enums.DocEdoType.Ucd
                               orderby docEdo.DocDate descending select docEdo);
 
-            if (!collection.Any())
+            if (!(collection?.Any() ?? true))
             {
                 EdoProcessing = null;
             }
@@ -82,6 +131,8 @@ namespace EdiProcessingUnit.Edo.Models
                 else
                     EdoProcessing = collection.FirstOrDefault();
             }
+
+            IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocReturn == CorrectionDocJournal.Id select label).Count() > 0;
 
             return this;
         }

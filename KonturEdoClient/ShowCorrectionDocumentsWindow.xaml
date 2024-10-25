@@ -11,7 +11,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
-        Title="Отправить корректировку" Height="550" Width="800">
+        Title="Отправить корректировку" Height="550" Width="900">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="100"/>
@@ -38,11 +38,17 @@
                 <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
                     <StackPanel Orientation="Horizontal">
                         <Label Content="Номер счёта-фактуры" Width="125" Margin="5"/>
-                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="250" />
+                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Label Content="Номер документа" Width="125" Margin="5"/>
-                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchDocumentNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="250" />
+                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchDocumentNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Тип документа" Width="90" Margin="5"/>
+                        <dxe:ComboBoxEdit x:Name="DocTypesBar" ItemsSource="{Binding DocTypes}" DisplayMember="Value" ValueMember="Key" EditValue="{Binding SelectedDocType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Width="150"/>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
@@ -54,19 +60,29 @@
                     <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy HH:mm:ss"/>
                 </dxg:GridColumn.EditSettings>
             </dxg:GridColumn>
+            <dxg:GridColumn Header="Тип" Width="120" FieldName="DocType" />
             <dxg:GridColumn Header="Номер документа" Width="80" FieldName="CorrectionDocJournalNumber" />
             <dxg:GridColumn Header="Номер корректировки" Width="80" FieldName="DocumentNumber" />
             <dxg:GridColumn Header="Номер счёта-фактуры" Width="80" FieldName="InvoiceNumber" />
             <dxg:GridColumn Header="Статус в ЭДО" Width="80" FieldName="DocEdoSendStatus" />
-            <dxg:GridColumn Header="Возвращает" Width="160" FieldName="CorrectionDocJournal.DocGoods.Seller.Name" />
-            <dxg:GridColumn Header="Принимает" Width="160" FieldName="CorrectionDocJournal.DocGoods.Customer.Name" />
+            <dxg:GridColumn Header="{Binding BuyerGridColumnName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="160" FieldName="BuyerName" />
+            <dxg:GridColumn Header="{Binding SellerGridColumnName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="160" FieldName="SellerName" />
+            <dxg:GridControl.View>
+                <dxg:TableView>
+                    <dxg:TableView.FormatConditions>
+                        <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked]">
+                            <dxg:Format Background="#FF27C3E6"/>
+                        </dxg:FormatCondition>
+                    </dxg:TableView.FormatConditions>
+                </dxg:TableView>
+            </dxg:GridControl.View>
         </dxg:GridControl>
         <GridSplitter Grid.Row="2"
                       Height="5"
                       ShowsPreview="False"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Center"/>
-        <dxg:GridControl Grid.Row="3" ItemsSource="{Binding Details, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+        <dxg:GridControl Grid.Row="3" ItemsSource="{Binding CorrectionDocumentDetails, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
             <dxg:GridColumn Header="ID товара" Width="80" FieldName="IdGood" />
             <dxg:GridColumn Header="Наименование" Width="160" FieldName="Good.Name" />
             <dxg:GridColumn Header="Количество" Width="80" FieldName="Quantity" />

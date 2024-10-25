@@ -37,7 +37,7 @@ namespace KonturEdoClient
 
         private void GridControl_SelectedItemChanged(object sender, DevExpress.Xpf.Grid.SelectedItemChangedEventArgs e)
         {
-            (DataContext as Models.CorrectionDocumentsModel)?.OnPropertyChanged("Details");
+            (DataContext as Models.CorrectionDocumentsModel)?.OnPropertyChanged("CorrectionDocumentDetails");
         }
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)

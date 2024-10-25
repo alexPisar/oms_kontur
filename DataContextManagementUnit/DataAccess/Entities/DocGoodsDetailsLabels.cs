@@ -19,9 +19,13 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
 
         public virtual string SaleDmLabel { get; set; }
 
+        public virtual decimal? IdDocReturn { get; set; }
+
         public virtual DateTime InsertDateTime { get; set; }
 
         public virtual DateTime? SaleDateTime { get; set; }
+
+        public virtual DateTime? ReturnDateTime { get; set; }
         #endregion
     }
 }
