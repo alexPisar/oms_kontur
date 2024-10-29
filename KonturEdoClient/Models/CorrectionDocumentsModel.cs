@@ -196,12 +196,14 @@ namespace KonturEdoClient.Models
             if (SelectedDocument.CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
             {
                 sellerContractor = SelectedDocument.CorrectionDocJournal?.DocGoods?.Customer;
-                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
+                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
+                (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
             }
             else if (SelectedDocument.CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
             {
                 sellerContractor = SelectedDocument.InvoiceDocJournal?.DocMaster?.DocGoods?.Seller;
-                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
+                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
+                (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
             }
 
             if (sellerContractor?.DefaultCustomer == null)
