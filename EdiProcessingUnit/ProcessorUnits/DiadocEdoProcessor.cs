@@ -63,9 +63,11 @@ namespace EdiProcessingUnit.ProcessorUnits
                                                where correctionDocEdoProcessing.DocType == ucdDocType && correctionDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Sent && correctionDocEdoProcessing.DocDate > dateTimeFrom
                                                join corDocJournal in _abtDbContext.DocJournals on correctionDocEdoProcessing.IdDoc equals corDocJournal.Id
                                                where (corDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer || corDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
-                                               join docGoods in _abtDbContext.DocGoods on corDocJournal.IdDocMaster equals docGoods.IdDoc
-                                               join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
-                                               where customer.Inn == company.Inn && customer.Kpp == company.Kpp select correctionDocEdoProcessing);
+                                               let docGoodsSeller = (from docGoods in _abtDbContext.DocGoods where corDocJournal.IdDocMaster == docGoods.IdDoc select docGoods.IdSeller)
+                                               let docGoodsISeller = (from docGoodsI in _abtDbContext.DocGoodsIs where corDocJournal.IdDocMaster == docGoodsI.IdDoc select docGoodsI.IdSeller)
+                                               let customers = (from customer in _abtDbContext.RefCustomers where customer.Inn == company.Inn && customer.Kpp == company.Kpp select customer)
+                                               where customers.Any(c => docGoodsSeller.Any(d => d == c.IdContractor) || docGoodsISeller.Any(d => d == c.Id))
+                                               select correctionDocEdoProcessing);
 
 
             foreach (var docProcessing in correctionDocEdoProcessings)
