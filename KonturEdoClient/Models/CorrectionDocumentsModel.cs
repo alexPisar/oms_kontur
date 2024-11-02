@@ -242,7 +242,7 @@ namespace KonturEdoClient.Models
                         Currency = Properties.Settings.Default.DefaultCurrency,
                         Function = Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocumentFunction.КСЧФДИС,
                         DocumentNumber = SelectedDocument.DocumentNumber,
-                        DocumentDate = SelectedDocument?.CorrectionDocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                        DocumentDate = SelectedDocument?.CorrectionDocJournal?.DocDatetime.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                     };
 
                     correctionDocument.Seller = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
