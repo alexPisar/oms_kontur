@@ -124,6 +124,7 @@
     <Compile Include="DataAccess\Entities\RefGoodMatching.cs" />
     <Compile Include="DataAccess\Entities\RefItem.cs" />
     <Compile Include="DataAccess\Entities\RefOrderStatus.cs" />
+    <Compile Include="DataAccess\Entities\RefRefTag.cs" />
     <Compile Include="DataAccess\Entities\RefShoppingStore.cs" />
     <Compile Include="DataAccess\Entities\RefStore.cs" />
     <Compile Include="DataAccess\Entities\RefSubdivision.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="DataAccess\Mappings\RefItemConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefOrderStatusConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefPriceTypeConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefRefTagConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefShoppingStoreConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefStoreConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefSubdivisionConfiguration.cs" />

@@ -22,6 +22,7 @@ namespace EdiProcessingUnit.Edo.Models
         private object _refEdoGoodChannel;
         private object _channel;
         private decimal? _idChannel = null;
+        private string _actStatusForSendFromTraderStr;
 
         public IEnumerable<UniversalTransferDocumentDetail> Details
         {
@@ -380,5 +381,16 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
         public string ChannelName => (Channel as RefChannel)?.Name;
+        //public int ActStatusForSendFromTrader => Int32.Parse(_actStatusForSendFromTraderStr ?? "5");
+        public string ActStatusForSendFromTraderStr
+        {
+            get {
+                return _actStatusForSendFromTraderStr;
+            }
+
+            set {
+                _actStatusForSendFromTraderStr = value;
+            }
+        }
     }
 }

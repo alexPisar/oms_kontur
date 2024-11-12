@@ -11,9 +11,9 @@ namespace EdiProcessingUnit.Infrastructure
 {
     abstract public class EdoProcessor
     {
-        internal Edo.Edo _edo;
-        internal UtilityLog _log = UtilityLog.GetInstance();
-        internal Config _conf = Config.GetInstance();
+        protected Edo.Edo _edo;
+        protected UtilityLog _log = UtilityLog.GetInstance();
+        protected Config _conf = Config.GetInstance();
 
         public virtual string ProcessorName { get; }
 

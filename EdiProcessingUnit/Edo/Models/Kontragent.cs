@@ -9,6 +9,7 @@ namespace EdiProcessingUnit.Edo.Models
 {
     public class Kontragent
     {
+        public Kontragent() { }
         public Kontragent(string name, string inn, string kpp)
         {
             Name = name;
