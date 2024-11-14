@@ -231,8 +231,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                             throw new Exception("Не удалось сформировать документ.");
 
                                         var message = 
-                                            new Utils.XmlCertificateUtil().SignAndSend(myOrganization.Certificate, myOrganization, receiver, new List<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>
-                                            (new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens[]{ universalDocument }));
+                                            new Utils.XmlCertificateUtil().SignAndSend(myOrganization.Certificate, myOrganization, receiver, new List<object>(new object[]{ universalDocument }));
 
                                         DocEdoProcessing docProcessing = null;
                                         if (message != null)

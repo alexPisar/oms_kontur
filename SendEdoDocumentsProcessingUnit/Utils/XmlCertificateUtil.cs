@@ -27,7 +27,7 @@ namespace SendEdoDocumentsProcessingUnit.Utils
 
         public Diadoc.Api.Proto.Events.Message SignAndSend(X509Certificate2 signerCertificate,
             Kontragent sender, Kontragent receiver,
-            List<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens> documents)
+            List<object> documents)
         {
             _log.Log("SignAndSend: отправка с подписанием.");
             if (documents == null || documents.Count == 0)
@@ -57,10 +57,20 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             {
                 if (!string.IsNullOrEmpty(receiver.FnsParticipantId))
                 {
-                    var orgData = document.Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails;
+                    if (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
+                    {
+                        var orgData = (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails;
 
-                    if (orgData != null)
-                        orgData.FnsParticipantId = receiver.FnsParticipantId;
+                        if (orgData != null)
+                            orgData.FnsParticipantId = receiver.FnsParticipantId;
+                    }
+                    else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                    {
+                        var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.ExtendedOrganizationDetailsUtd970;
+
+                        if (orgData != null)
+                            orgData.FnsParticipantId = receiver.FnsParticipantId;
+                    }
                 }
 
                 var generatedFile = GetGeneratedFile(document);
@@ -84,10 +94,17 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             return message;
         }
 
-        public Diadoc.Api.Proto.Events.GeneratedFile GetGeneratedFile(Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens document)
+        public Diadoc.Api.Proto.Events.GeneratedFile GetGeneratedFile(object document)
         {
+            string version = null;
+
+            if(document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
+                version = "utd820_05_01_01_hyphen";
+            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                version = "utd970_05_02_01";
+
             return EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
-                    "СЧФДОП", "utd820_05_01_01_hyphen", 0, document);
+                    "СЧФДОП", version, 0, document);
         }
 
         public string ParseCertAttribute(string certData, string attributeName)
