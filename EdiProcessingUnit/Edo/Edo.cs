@@ -315,6 +315,35 @@ namespace EdiProcessingUnit.Edo
                 letterId, documentId);
         }
 
+        public async Task<GeneratedFile> GenerateTitleXmlAsync(string typeNameId,
+            string function,
+            string version,
+            int titleIndex,
+            object userDocument,
+            string letterId = null, string documentId = null)
+        {
+            byte[] userDataContract = null;
+
+            if (userDocument as UniversalTransferDocumentWithHyphens != null)
+                userDataContract = ((UniversalTransferDocumentWithHyphens)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else throw new Exception("Неопределённый тип документа");
+
+            return await _api.GenerateTitleXmlAsync(_authToken,
+                _actualBoxId,
+                typeNameId,
+                function,
+                version,
+                titleIndex,
+                userDataContract, false, null,
+                letterId, documentId);
+        }
+
         public Message SendXmlDocument(string senderOrgId, 
             string recipientOrgId,
             bool isOurRecipient,
@@ -454,6 +483,139 @@ namespace EdiProcessingUnit.Edo
             return CallApiSafe(new Func<Message>(()=> { return _api.PostMessage(_authToken, messageToPost); }));
         }
 
+        public async Task<Message> SendXmlDocumentAsync(string senderOrgId,
+            string recipientOrgId,
+            bool isOurRecipient,
+            SignedContent content,
+            string function,
+            PowerOfAttorneyToPost powerOfAttorneyToPost = null)
+        {
+            //MessageToPost postMessage = null;
+
+            //postMessage = await Task.Run(async () =>
+            //{
+                OrganizationList myOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
+
+                if ((myOrganizations?.Organizations?.Count ?? 0) == 0)
+                    throw new Exception("Не найдены свои организации по токену.");
+
+                var senderOrganization = myOrganizations.Organizations.FirstOrDefault(o => o.OrgId == senderOrgId);
+
+                if (senderOrganization == null)
+                    throw new Exception($"Не найдена организация с ID отправителя {senderOrgId}");
+
+                var senderBox = senderOrganization?.Boxes?.First();
+                string senderBoxId = senderBox?.BoxId ?? _actualBoxId;
+                string senderBoxIdGuid = senderBox?.BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+
+                Organization recipientOrganization;
+
+                if (isOurRecipient)
+                {
+                    recipientOrganization = myOrganizations.Organizations.FirstOrDefault(o => o.OrgId == recipientOrgId);
+
+                    if (recipientOrganization == null)
+                        throw new Exception($"Не найдена своя организация-отправитель с ID {recipientOrgId}");
+                }
+                else
+                {
+                    var counteragents = await GetKontragentsAsync(senderBoxIdGuid, myOrganizations);
+
+                    counteragents = counteragents.Where(c => c.Organization?.OrgId == recipientOrgId)?
+                        .ToList() ?? new List<Counteragent>();
+
+                    if (counteragents.Count == 0)
+                        throw new Exception("Не найдены контрагенты");
+
+                    var counteragent = counteragents.First();
+
+                    if (counteragent?.Organization == null)
+                        throw new Exception("Не найдена организация");
+
+                    recipientOrganization = counteragent.Organization;
+                }
+
+                var messageToPost = new MessageToPost
+                {
+                    FromBoxId = senderBoxId,
+                    ToBoxId = recipientOrganization?.Boxes?.First().BoxId
+                };
+
+                string typeNameId = "UniversalTransferDocument";
+                string version = "utd820_05_01_01_hyphen";
+
+                Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
+                if (powerOfAttorneyToPost != null)
+                {
+                    powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async () =>
+                    {
+                        return await _api.PrevalidatePowerOfAttorneyAsync(_authToken, messageToPost.FromBoxId,
+                            powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
+                            new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                            {
+                                ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
+                                {
+                                    Content = new Content_v3
+                                    {
+                                        Content = _certificate.RawData
+                                    }
+                                }
+                            });
+                    }));
+
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                    {
+                        if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
+                            powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        {
+                            var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
+
+                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                            {
+                                errorText = errorText + "Список ошибок:\r\n";
+
+                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                                {
+                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                }
+                            }
+
+                            throw new Exception(errorText);
+                        }
+                        else
+                        {
+                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                            {
+                                var errorText = "Список ошибок:\r\n";
+
+                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                                {
+                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                }
+                                throw new Exception(errorText);
+                            }
+                        }
+                    }
+                }
+
+                var documentAttachment = new DocumentAttachment
+                {
+                    TypeNamedId = typeNameId,
+                    Function = function,
+                    Version = version,
+                    SignedContent = content
+                };
+
+                if (powerOfAttorneyStatus != null && powerOfAttorneyToPost != null)
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                        documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
+                messageToPost.DocumentAttachments.Add(documentAttachment);
+            //    return messageToPost;
+            //});
+            return await CallApiSafeAsync(new Func<Task<Message>>(async () => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
+        }
+
         public List<Counteragent> GetKontragents(string orgId = null)
         {
             CounteragentList list;
@@ -483,6 +645,41 @@ namespace EdiProcessingUnit.Edo
                     .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
 
                     if(list.Counteragents.Count >= 100)
+                        currentIndexKey = list.Counteragents.Last().IndexKey;
+                }
+            }
+            while (!string.IsNullOrEmpty(currentIndexKey));
+
+            return result;
+        }
+
+        public async Task<List<Counteragent>> GetKontragentsAsync(string boxId = null, OrganizationList MyOrganizations = null)
+        {
+            List<Counteragent> result = new List<Counteragent>();
+
+            string currentIndexKey = null;
+
+            if (string.IsNullOrEmpty(boxId))
+            {
+                if (MyOrganizations == null)
+                    MyOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
+
+                Organization myOrganization = MyOrganizations.Organizations.First();
+                boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+            }
+
+            do
+            {
+                var list = await CallApiSafeAsync(new Func<Task<CounteragentList>>(async () => { return await _api.GetCounteragentsV3Async(_authToken, boxId, "IsMyCounteragent", currentIndexKey); }));
+
+                currentIndexKey = null;
+
+                if (list?.Counteragents != null)
+                {
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
+                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+
+                    if (list.Counteragents.Count >= 100)
                         currentIndexKey = list.Counteragents.Last().IndexKey;
                 }
             }
@@ -927,5 +1124,38 @@ namespace EdiProcessingUnit.Edo
 			throw new Exception( "метод не получилось вызвать более 15 раз" );
 		}
 
-	}
+        private async Task<TOut> CallApiSafeAsync<TOut>(Func<Task<TOut>> CallingDelegate) where TOut : new()
+        {
+            _log.Log("SafeCall: " + CallingDelegate.Method.Name);
+
+            TOut ret;
+            int tries = 15;
+            Exception ex = null;
+
+            while (tries-- >= 0)
+            {
+                try
+                {
+                    ret = await CallingDelegate.Invoke();
+                    return ret;
+                }
+                catch (WebException webEx)
+                {
+                    _log.Error(webEx);
+                    ex = webEx;
+                }
+                catch (Exception e)
+                {
+                    _log.Error(e);
+                    ex = e;
+                }
+            }
+
+            if (ex != null)
+                throw ex;
+
+            throw new Exception("метод не получилось вызвать более 15 раз");
+        }
+
+    }
 }

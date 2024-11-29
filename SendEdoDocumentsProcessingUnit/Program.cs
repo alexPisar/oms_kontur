@@ -30,7 +30,8 @@ namespace SendEdoDocumentsProcessingUnit
 
             try
             {
-                RunSafe(new Processors.ClientEdoProcessor());
+                var result = (new Processors.ClientEdoProcessor().Init() as Processors.ClientEdoProcessor).TestSend().Result;
+                //RunSafe(new Processors.ClientEdoProcessor());
             }
             finally
             {

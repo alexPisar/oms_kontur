@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>9AA1821500F9AEE4584D1C238F70E706A23E55A2</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>EdiProcessingUnit_TemporaryKey.pfx</ManifestKeyFile>
@@ -68,7 +68,7 @@
   <ItemGroup>
     <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-	  <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
+      <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>

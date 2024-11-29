@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>9AA1821500F9AEE4584D1C238F70E706A23E55A2</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>OrderManagementSystem.UserInterface_TemporaryKey.pfx</ManifestKeyFile>

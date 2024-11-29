@@ -12,9 +12,9 @@ namespace EdiProcessingUnit.Edo.Models
         private DocJournal _docJournal;
         private IEnumerable<UniversalTransferDocumentDetail> _details;
         private decimal? _docJournalId;
-        private string _shipper;
-        private string _consignee;
-        private string _buyerInnKpp;
+        private string _shipper, _shipperName, _shipperAddress;
+        private string _consignee, _consigneeName, _consigneeAddress;
+        private string _buyerInnKpp, _buyerInn, _buyerKpp;
         private string _buyerName;
         private string _buyerAddress;
         private object _status;
@@ -276,6 +276,8 @@ namespace EdiProcessingUnit.Edo.Models
         {
             set {
                 _shipper = value?.Name + ", " + value?.Address;
+                _shipperName = value?.Name;
+                _shipperAddress = value?.Address;
             }
         }
 
@@ -283,6 +285,8 @@ namespace EdiProcessingUnit.Edo.Models
         {
             set {
                 _consignee = value?.Name + ", " + value?.Address;
+                _consigneeName = value?.Name;
+                _consigneeAddress = value?.Address;
                 _idChannel = value?.IdChannel;
             }
         }
@@ -291,6 +295,8 @@ namespace EdiProcessingUnit.Edo.Models
         {
             set {
                 _buyerInnKpp = value?.Inn + "/" + value?.Kpp;
+                _buyerInn = value?.Inn;
+                _buyerKpp = value?.Kpp;
                 _buyerName = value?.Name;
                 _buyerAddress = value?.Address;
             }
@@ -323,6 +329,20 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string BuyerInn
+        {
+            get {
+                return _buyerInn;
+            }
+        }
+
+        public string BuyerKpp
+        {
+            get {
+                return _buyerKpp;
+            }
+        }
+
         public string BuyerName {
             get 
                 {
@@ -344,10 +364,38 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string ShipperName
+        {
+            get {
+                return _shipperName;
+            }
+        }
+
+        public string ShipperAddress
+        {
+            get {
+                return _shipperAddress;
+            }
+        }
+
         public string Consignee {
             get 
                 {
                 return _consignee;
+            }
+        }
+
+        public string ConsigneeName
+        {
+            get {
+                return _consigneeName;
+            }
+        }
+
+        public string ConsigneeAddress
+        {
+            get {
+                return _consigneeAddress;
             }
         }
 
@@ -391,6 +439,56 @@ namespace EdiProcessingUnit.Edo.Models
             set {
                 _actStatusForSendFromTraderStr = value;
             }
+        }
+
+        public string OrderNumber { get; set; }
+
+        public string GlnShipTo { get; set; }
+
+        public UniversalTransferDocument Init(AbtDbContext abtContext)
+        {
+            RefEdoGoodChannel refEdoGoodChannel = null;
+            var idChannel = this.DocJournal?.DocMaster?.DocGoods?.Customer?.IdChannel;
+            if (idChannel != null && idChannel != 99001)
+                refEdoGoodChannel = (from r in abtContext.RefContractors
+                                     where r.IdChannel == idChannel
+                                     join s in (from c in abtContext.RefContractors
+                                                where c.DefaultCustomer != null
+                                                join refEdo in abtContext.RefEdoGoodChannels on c.IdChannel equals (refEdo.IdChannel)
+                                                select new { RefEdoGoodChannel = refEdo, RefContractor = c })
+                                                on r.DefaultCustomer equals (s.RefContractor.DefaultCustomer)
+                                     where s != null
+                                     select s.RefEdoGoodChannel)?.FirstOrDefault();
+
+            this.DocJournal = this.DocJournal;
+            _details = this.Details.Select(u => u.Init(abtContext, refEdoGoodChannel)).ToList();
+
+            if (refEdoGoodChannel != null)
+            {
+                refEdoGoodChannel.EdoValuesPairs.ToList();
+                RefEdoGoodChannel = refEdoGoodChannel;
+                if (!string.IsNullOrEmpty(refEdoGoodChannel.OrderNumberUpdId))
+                {
+                    var docJournalTag = abtContext.DocJournalTags.FirstOrDefault(t => t.IdDoc == this.DocJournal.IdDocMaster && t.IdTad == 137);
+
+                    if (docJournalTag == null)
+                        throw new Exception("Отсутствует номер заказа покупателя.");
+
+                    this.OrderNumber = docJournalTag.TagValue ?? string.Empty;
+                }
+
+                if (!string.IsNullOrEmpty(refEdoGoodChannel.GlnShipToUpdId))
+                {
+                    var shipToGlnJournalTag = abtContext.DocJournalTags.FirstOrDefault(t => t.IdDoc == this.DocJournal.IdDocMaster && t.IdTad == 222);
+
+                    if (shipToGlnJournalTag == null)
+                        throw new Exception("Не указан GLN грузополучателя!");
+
+                    this.GlnShipTo = shipToGlnJournalTag.TagValue ?? string.Empty;
+                }
+            }
+
+            return this;
         }
     }
 }

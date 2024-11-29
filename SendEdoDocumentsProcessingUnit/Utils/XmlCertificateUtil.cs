@@ -94,6 +94,82 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             return message;
         }
 
+        public async Task<Diadoc.Api.Proto.Events.Message> SignAndSendAsync(X509Certificate2 signerCertificate,
+            Kontragent sender, Kontragent receiver,
+            object document)
+        {
+            _log.Log("SignAndSend: отправка с подписанием.");
+            if (document == null)
+                throw new Exception("Не указан отправляемый документ.");
+
+            if (receiver == null)
+                throw new Exception("Не выбран контрагент.");
+
+            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
+
+            if (!string.IsNullOrEmpty(sender.EmchdId))
+                powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                {
+                    UseDefault = false,
+                    FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                    {
+                        RegistrationNumber = sender.EmchdId,
+                        IssuerInn = sender.Inn
+                    }
+                };
+
+            var crypt = new WinApiCryptWrapper(signerCertificate);
+            Diadoc.Api.Proto.Events.Message message = null;
+
+            if (!string.IsNullOrEmpty(receiver.FnsParticipantId))
+            {
+                if (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
+                {
+                    var orgData = (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails;
+
+                    if (orgData != null)
+                        orgData.FnsParticipantId = receiver.FnsParticipantId;
+                }
+                else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                {
+                    var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.ExtendedOrganizationDetailsUtd970;
+
+                    if (orgData != null)
+                        orgData.FnsParticipantId = receiver.FnsParticipantId;
+                }
+            }
+
+            var generatedFile = await GetGeneratedFileAsync(document);
+
+            var content = new Diadoc.Api.Proto.Events.SignedContent
+            {
+                Content = generatedFile.Content
+            };
+
+            byte[] signature = crypt.Sign(generatedFile.Content, true);
+            content.Signature = signature;
+
+            message = await EdiProcessingUnit.Edo.Edo.GetInstance().SendXmlDocumentAsync(sender.OrgId,
+                receiver.OrgId, false,
+                content, "СЧФДОП", powerOfAttorneyToPost);
+
+
+            return message;
+        }
+
+        public async Task<Diadoc.Api.Proto.Events.GeneratedFile> GetGeneratedFileAsync(object document)
+        {
+            string version = null;
+
+            if (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
+                version = "utd820_05_01_01_hyphen";
+            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                version = "utd970_05_02_01";
+
+            return await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync("UniversalTransferDocument",
+                    "СЧФДОП", version, 0, document);
+        }
+
         public Diadoc.Api.Proto.Events.GeneratedFile GetGeneratedFile(object document)
         {
             string version = null;
