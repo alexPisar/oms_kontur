@@ -786,6 +786,30 @@ namespace EdiProcessingUnit.Edo
             return CallApiSafe(new Func<MessagePatch>(() => { return _api.PostMessagePatch(_authToken, messageToPost); }));
         }
 
+        public async Task<MessagePatch> SendPatchRecipientXmlDocumentAsync(string messageId, int docType, IEnumerable<RecipientTitleAttachment> attachments, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
+        {
+            var messageToPost = new MessagePatchToPost
+            {
+                BoxId = _actualBoxId,
+                MessageId = messageId
+            };
+
+            foreach (var recipientAttachment in attachments)
+            {
+                if (powerOfAttorneyToPost != null)
+                    recipientAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
+                if (docType == (int)DocumentType.UniversalTransferDocument)
+                    messageToPost.AddUniversalTransferDocumentBuyerTitle(recipientAttachment);
+                else if (docType == (int)DocumentType.XmlTorg12)
+                    messageToPost.AddXmlTorg12BuyerTitle(recipientAttachment);
+                else if (docType == (int)DocumentType.XmlAcceptanceCertificate)
+                    messageToPost.AddXmlAcceptanceCertificateBuyerTitle(recipientAttachment);
+            }
+
+            return await CallApiSafeAsync(new Func<Task<MessagePatch>>(async () => { return await _api.PostMessagePatchAsync(_authToken, messageToPost); }));
+        }
+
         public MessagePatch SendPatchRecipientXmlDocument(string messageId, int docType, string entityId, byte[] content, byte[] signature = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var recipientAttachment = new RecipientTitleAttachment

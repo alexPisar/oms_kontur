@@ -255,7 +255,39 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     {
                         DocComissionEdoProcessing docComissionEdoProcessing = null;
                         var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.CurrentDocJournalId select label).ToList();
-                        docComissionEdoProcessing = SendComissionDocumentForHonestMark(myOrganization, doc, employee, labels);
+
+                        if ((doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                        (doc?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)) ||
+                        (doc.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                        (doc?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)))
+                        {
+                            throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                        }
+                        else if ((doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                            (doc?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)) ||
+                            (doc.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                            (doc?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)))
+                        {
+                            throw new Exception("В данном документе есть избыток кодов маркировки.");
+                        }
+
+                        var consignor = GetConsignorFromDocument(null, doc.IdSubdivision);
+
+                        if (consignor == null)
+                            throw new Exception("Не найден комитент.");
+
+                        docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, employee, consignor, labels);
+
+                        lock (locker)
+                        {
+                            _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                            _abt.SaveChanges();
+                        }
+
                         doc.ProcessingStatus = docComissionEdoProcessing;
                     }
 
@@ -472,7 +504,11 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         DocComissionEdoProcessing docComissionEdoProcessing = null;
                                         if (doc.IsMarked)
                                             if ((doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 2 && (doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 1)
-                                                docComissionEdoProcessing = SendComissionDocumentForHonestMark(myOrganization, doc, employee);
+                                            {
+                                                docComissionEdoProcessing = SendComissionDocumentForHonestMark(myOrganization, doc, employee).Result;
+                                                _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                                                _abt.SaveChanges();
+                                            }
 
                                         var universalDocument = GetUniversalDocument(doc, myOrganization, doc.Details.ToList(), employee, signerDetails, doc.RefEdoGoodChannel as RefEdoGoodChannel);
 
@@ -1137,8 +1173,38 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return document;
         }
 
+        private async Task<Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle> CreateBuyerShipmentDocumentAsync(Kontragent receiverOrganization)
+        {
+            var result = await Task.Run(() =>
+            {
+                var document = CreateBuyerShipmentDocument(receiverOrganization);
+                return document;
+            });
+            return result;
+        }
+
+        private async Task<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens> CreateShipmentDocumentAsync(
+            DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<UniversalTransferDocumentDetail> docDetails, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
+        {
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
+                return null;
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocGoodsI == null)
+                return null;
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && d.DocGoods == null)
+                return null;
+
+            var result = await Task.Run(() =>
+            {
+                var document = CreateShipmentDocument(d, senderOrganization, receiverOrganization, docDetails, detailsLabels, documentNumber, employee, considerOnlyLabeledGoods);
+                return document;
+            });
+            return result;
+        }
+
         private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens CreateShipmentDocument(
-            DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
+            DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<UniversalTransferDocumentDetail> docDetails, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
         {
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
                 return null;
@@ -1300,10 +1366,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                foreach (var docJournalDetail in d.DocGoodsDetailsIs)
+                foreach (var docDetail in docDetails)
                 {
-                    var refGood = _abt.RefGoods?
-                    .FirstOrDefault(r => r.Id == docJournalDetail.IdGood);
+                    var docJournalDetail = docDetail.DocDetailI;
+                    var refGood = docDetail.Good;
 
                     if (refGood == null)
                         continue;
@@ -1313,12 +1379,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     if (considerOnlyLabeledGoods && docGoodDetailLabels.Count == 0)
                         continue;
 
-                    var barCode = _abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
-                        .BarCode;
+                    var barCode = docDetail.ItemVendorCode;
 
-                    string countryCode = _abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
-                        $"(select ID_COUNTRY from REF_GOODS where ID = {refGood.Id})");
+                    string countryCode = docDetail.CountryCode;
 
                     int quantity;
 
@@ -1593,7 +1656,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return kontragent;
         }
 
-        private DocComissionEdoProcessing SendComissionDocumentForHonestMark(Kontragent myOrganization, UniversalTransferDocument document, string employee, IEnumerable<DocGoodsDetailsLabels> labels = null)
+        private async Task<DocComissionEdoProcessing> SendComissionDocumentForHonestMark(Kontragent myOrganization, UniversalTransferDocument document, string employee, Kontragent consignor = null, IEnumerable<DocGoodsDetailsLabels> labels = null)
         {
             if (myOrganization == null)
                 throw new Exception("Не задана организация.");
@@ -1606,37 +1669,40 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             var idDocType = document.DocJournal.IdDocType;
 
-            if(labels == null)
+            if (labels == null)
+            {
                 labels = from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == document.CurrentDocJournalId select label;
 
-            if (labels.Count() == 0)
-                return null;
-
-            if ((document.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                if ((document.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
                 (document?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
                 (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)) ||
                 (document.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
                 (document?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
                 (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)))
-            {
-                throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                {
+                    throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                }
+                else if ((document.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                    (document?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)) ||
+                    (document.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                    (document?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)))
+                {
+                    throw new Exception("В данном документе есть избыток кодов маркировки.");
+                }
             }
-            else if ((document.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                (document?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)) ||
-                (document.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                (document?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)))
-            {
-                throw new Exception("В данном документе есть избыток кодов маркировки.");
-            }
+
+            if (labels.Count() == 0)
+                return null;
 
             if (idDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
                 if (document.IdSubdivision == null)
                     throw new Exception("Не задана организация-комитент");
 
-                var consignor = GetConsignorFromDocument(null, document.IdSubdivision);
+                if (consignor == null)
+                    consignor = GetConsignorFromDocument(null, document.IdSubdivision);
 
                 if (consignor == null)
                     throw new Exception("Не найден комитент.");
@@ -1645,8 +1711,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 _edo.Authenticate(false, consignor.Certificate, consignor.Inn);
 
                 string documentNumber = document.DocJournal?.Code;
-                var comissionDocument = CreateShipmentDocument(document.DocJournal, consignor, myOrganization, labels.ToList(), documentNumber, employee, true);
-                var generatedFile = _edo.GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 0, document);
+                var comissionDocument = await CreateShipmentDocumentAsync(document.DocJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, employee, true);
+                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 0, document);
                 byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                 var signedContent = new Diadoc.Api.Proto.Events.SignedContent
@@ -1669,10 +1735,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         }
                     };
 
-                var message = _edo.SendXmlDocument(consignor.OrgId, myOrganization.OrgId, false, new List<Diadoc.Api.Proto.Events.SignedContent>(new Diadoc.Api.Proto.Events.SignedContent[] { signedContent }), "ДОП", consignorPowerOfAttorneyToPost);
+                var message = await _edo.SendXmlDocumentAsync(consignor.OrgId, myOrganization.OrgId, false, signedContent, "ДОП", consignorPowerOfAttorneyToPost);
 
                 _edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn);
-                var buyerDocument = CreateBuyerShipmentDocument(myOrganization);
+                var buyerDocument = await CreateBuyerShipmentDocumentAsync(myOrganization);
                 crypt.InitializeCertificate(myOrganization.Certificate);
 
                 var attachments = message.Entities.Where(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument).Select(ent =>
@@ -1702,7 +1768,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         }
                     };
 
-                _edo.SendPatchRecipientXmlDocument(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
+                await _edo.SendPatchRecipientXmlDocumentAsync(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
                     attachments, myOrganizationPowerOfAttorneyToPost);
 
                 var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
@@ -1732,11 +1798,6 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     docComissionProcessing.DocStatus = 2;
 
                 document.ProcessingStatus = docComissionProcessing;
-                lock (locker)
-                {
-                    _abt.DocComissionEdoProcessings.Add(docComissionProcessing);
-                    _abt.SaveChanges();
-                }
                 return docComissionProcessing;
             }
             else
