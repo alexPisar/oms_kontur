@@ -121,7 +121,7 @@ namespace KonturEdoClient.Models
                     {
                         try
                         {
-                            var currentDocuments = _currentDocuments.Where(c => c.Value != null).Select(c => c.Value);
+                            var currentDocuments = _currentDocuments.Where(c => c.Value != null).Select(c => c.Value).ToList();
                             if (_docType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             {
                                 Diadoc.Api.DataXml.RussianAddress receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
@@ -160,7 +160,7 @@ namespace KonturEdoClient.Models
 
                             var message = new XmlSignUtils().SignAndSend(isSign,
                                 _signerCertificate, _myOrganization, SelectedOrganization,
-                                currentDocuments.ToList());
+                                currentDocuments);
 
                             DocEdoProcessing docProcessing;
                             if (message != null)
