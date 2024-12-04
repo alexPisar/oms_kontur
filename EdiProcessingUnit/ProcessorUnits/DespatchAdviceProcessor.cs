@@ -15,10 +15,13 @@ namespace EdiProcessingUnit.ProcessorUnits
 	{
 		internal AbtDbContext _abtDbContext;
 		private bool _isTest = Config.GetInstance()?.TestModeEnabled ?? false;
+        private List<DocOrder> _ordersListForSentDespatchAdvice = null;
         private List<string> _xmlList = null;
+        public bool _isSentForSomeOrders => _ordersListForSentDespatchAdvice != null && _ordersListForSentDespatchAdvice?.Count > 0;
 
         public DespatchAdviceProcessor(List<string> xmlList) => _xmlList = xmlList;
         public DespatchAdviceProcessor() { }
+        public DespatchAdviceProcessor(List<DocOrder> orders) => _ordersListForSentDespatchAdvice = orders;
 
         public override void Run()
 		{
@@ -60,50 +63,50 @@ namespace EdiProcessingUnit.ProcessorUnits
             if (connectionStringList.Count <= 0)
 				return;
 
-            // 1. получаем доки из бд
-            List<DocOrder> docs = new List<DocOrder>();
-
-            var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-1);
-            docs = _ediDbContext.DocOrders
-                .Where( doc => doc.Status < 3 && doc.Status > 0 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
-                doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
-                .ToList();
-
-            foreach (var doc in docs)
+            if (!_isSentForSomeOrders)
             {
-                var clientGln = doc.GlnBuyer;
-                ConnectedBuyers connectedBuyer = _ediDbContext?
-                    .RefShoppingStores?
-                    .FirstOrDefault( r => r.BuyerGln == doc.GlnBuyer )?
-                    .MainShoppingStore;
+                // 1. получаем доки из бд
+                List<DocOrder> docs = new List<DocOrder>();
 
-                if (connectedBuyer == null)
-                    continue;
+                var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-2);
+                docs = _ediDbContext.DocOrders
+                    .Where( doc => doc.Status < 3 && doc.Status > 0 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
+                   doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
+                    .ToList();
 
-                if (connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.None)
-                    continue;
-
-                if (connectedBuyer.OrderExchangeType ==
-                    (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && doc.Status < 2)
-                    continue;
-
-                var logOrders = doc?.LogOrders ?? new List<LogOrder>();
-                foreach (var log in logOrders)
+                foreach (var doc in docs)
                 {
+                    var clientGln = doc.GlnBuyer;
+                    ConnectedBuyers connectedBuyer = _ediDbContext?
+                        .RefShoppingStores?
+                        .FirstOrDefault( r => r.BuyerGln == doc.GlnBuyer )?
+                        .MainShoppingStore;
+
+                    if (connectedBuyer == null)
+                        continue;
+
+                    if (connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.None)
+                        continue;
+
                     if (connectedBuyer.OrderExchangeType ==
-                    (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && log.OrderStatus < 2)
+                        (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && doc.Status < 2)
                         continue;
 
-                    if (log.OrderStatus > 2)
-                        continue;
+                    var logOrders = doc?.LogOrders?.Where(l => l.OrderStatus < 3 && l.IdDocJournal != null)?.ToList() ?? new List<LogOrder>();
+                    foreach (var log in logOrders)
+                    {
+                        if (connectedBuyer.OrderExchangeType ==
+                        (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp && log.OrderStatus < 2)
+                            continue;
 
-                    if (log.IdDocJournal == null)
-                        continue;
-
-                    if (!logOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
-                        desadvLogs.Add(log);
+                        if (!doc.LogOrders.Exists(l => l.IdDocJournal == log.IdDocJournal && l.OrderStatus > 2))
+                            desadvLogs.Add(log);
+                    }
                 }
             }
+            else
+                desadvLogs = _ordersListForSentDespatchAdvice.SelectMany(o => o.LogOrders.Where(l => l.OrderStatus == 1)).ToList();
+
 
             if (desadvLogs.Count <= 0)
                 return;
@@ -115,6 +118,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 				using (_abtDbContext = new AbtDbContext( connStr, true ))
 				{
                     List<RefCountry> Countries = null;
+                    bool isAbtDataBaseError = false;
 
                     foreach (var desadvLogsByOrder in desadvLogsByOrders)
                     {
@@ -128,28 +132,30 @@ namespace EdiProcessingUnit.ProcessorUnits
                             .FirstOrDefault(r => r.BuyerGln == origOrder.GlnBuyer)?
                             .MainShoppingStore;
 
-                        if (connectedBuyer.SendTomorrow == 1 && origOrder?.ReqDeliveryDate != null)
-                        {
-                            DateTime dateTimeWhenCanSend = new DateTime(
-                                origOrder.ReqDeliveryDate.Value.Year,
-                                origOrder.ReqDeliveryDate.Value.Month,
-                                origOrder.ReqDeliveryDate.Value.Day,
-                                9, 0, 0);
-
-                            if (dateTime < dateTimeWhenCanSend)
-                                continue;
-                        }
+                        DateTime? deliveryDate = origOrder?.ReqDeliveryDate;
 
                         docStatusWhenIsSent = connectedBuyer.DocStatusSendDesadv ?? 5;
 
                         // 2. пробегаемся по доступным логам
                         foreach (LogOrder log in desadvLogsByOrder)
                         {
-                            // 3. получаем привязанные к логам документы из трейдера
-                            var trDocs = _abtDbContext?
-                                .DocJournals?
-                                .Where( doc => log.IdDocJournal == doc.Id)?
-                                .ToList();
+                            List<DocJournal> trDocs = null;
+
+                            try
+                            {
+                                // 3. получаем привязанные к логам документы из трейдера
+                                trDocs = _abtDbContext?
+                                    .DocJournals?
+                                    .Where( doc => log.IdDocJournal == doc.Id)?
+                                    .ToList();
+                            }
+                            catch (Exception ex)
+                            {
+                                _log.Log(ex);
+                                MailReporter.Add(ex, Console.Title);
+                                isAbtDataBaseError = true;
+                                break;
+                            }
 
                             if (trDocs == null)
                                 continue;
@@ -162,11 +168,39 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                         }//foreach (var log in desadvLogs)
 
+                        if (isAbtDataBaseError)
+                            break;
+
                         if (traderDocs.Exists(doc => doc.ActStatus < docStatusWhenIsSent) && connectedBuyer.MultiDesadv == 0)
                             continue;
 
                         if (traderDocs.Count == 0)
                             continue;
+
+                        if (connectedBuyer.SendTomorrow == 1)
+                        {
+                            if (traderDocs.Count == 1)
+                            {
+                                var trDoc = traderDocs.First();
+
+                                if (trDoc.DeliveryDate != null)
+                                    deliveryDate = trDoc.DeliveryDate;
+                            }
+
+                            if (deliveryDate != null)
+                            {
+                                DateTime dateTimeWhenCanSend = new DateTime(
+                                    deliveryDate.Value.Year,
+                                    deliveryDate.Value.Month,
+                                    deliveryDate.Value.Day,
+                                    9, 0, 0);
+
+                                var currentDateTime = DateTime.Now;
+
+                                if (currentDateTime < dateTimeWhenCanSend)
+                                    continue;
+                            }
+                        }
 
                         if (Countries == null)
                             Countries = _abtDbContext?.RefCountries?.ToList();
@@ -175,6 +209,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                         desadvLineItems = new List<despatchAdviceLineItem>();
                         bool existsTraderDocsWithLessStatus = false;
+                        bool existsTraderDocsNotDelivered = false;
 
                         foreach (DocJournal traderDoc in traderDocs)
                         {
@@ -185,7 +220,31 @@ namespace EdiProcessingUnit.ProcessorUnits
                             }
 
                             if(connectedBuyer.MultiDesadv == 1)
+                            {
                                 desadvLineItems = new List<despatchAdviceLineItem>();
+
+                                if (traderDoc.DeliveryDate != null)
+                                    deliveryDate = traderDoc.DeliveryDate;
+                                else
+                                    deliveryDate = origOrder?.ReqDeliveryDate;
+                            }
+
+                            if (connectedBuyer.SendTomorrow == 1 && deliveryDate != null && connectedBuyer.MultiDesadv == 1)
+                            {
+                                DateTime dateTimeWhenCanSend = new DateTime(
+                                    deliveryDate.Value.Year,
+                                    deliveryDate.Value.Month,
+                                    deliveryDate.Value.Day,
+                                    9, 0, 0);
+
+                                var currentDateTime = DateTime.Now;
+
+                                if (currentDateTime < dateTimeWhenCanSend)
+                                {
+                                    existsTraderDocsNotDelivered = true;
+                                    continue;
+                                }
+                            }
 
                             var traderInvoice = _abtDbContext?
                                     .DocJournals?
@@ -222,10 +281,80 @@ namespace EdiProcessingUnit.ProcessorUnits
                                         .Where(x => barCodes.Exists(b => b == x.Gtin))?
                                         .FirstOrDefault();
 
-                                    if(desadvLineItem == null)
+                                    if(desadvLineItem != null)
+                                        desadvLineItem.IdGood = (long)detail.IdGood;
+                                }
+
+                                if(desadvLineItem == null && connectedBuyer.IncludedBuyerCodes != 1)
+                                {
+                                    barCodes = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                where mapGood.IdGood == detail.IdGood
+                                                select mapGood.BarCode)?.Where(s => s != null)?.ToList() ?? new List<string>();
+
+                                    desadvLineItem = origOrder.DocLineItems
+                                        .Where(x => barCodes.Exists(b => b == x.Gtin))?
+                                        .FirstOrDefault();
+
+                                    if (desadvLineItem != null)
+                                        desadvLineItem.IdGood = (long)detail.IdGood;
+                                }
+
+                                if (desadvLineItem == null)
+                                {
+                                    if (connectedBuyer.IncludedBuyerCodes != 1)
                                         continue;
 
-                                    desadvLineItem.IdGood = (long)detail.IdGood;
+                                    var refBarCode = _abtDbContext?.RefBarCodes?.FirstOrDefault(r => r.IdGood == detail.IdGood && r.IsPrimary == false);
+
+                                    IEnumerable<MapGoodByBuyer> buyerItems = null;
+
+                                    if(refBarCode != null)
+                                        buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                      where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                      join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                      where mapGood.IdGood == detail.IdGood && mapGood.BarCode == refBarCode.BarCode
+                                                      select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                    if (refBarCode == null || buyerItems == null || buyerItems.Count() == 0)
+                                        buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                      where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                      join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                      where mapGood.IdGood == detail.IdGood
+                                                      select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                    if (buyerItems.Count() == 0)
+                                        buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                      where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                      join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                      where mapGood.BarCode == refBarCode.BarCode
+                                                      select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                    if (buyerItems.Count() == 0)
+                                        continue;
+
+                                    var buyerCodes = buyerItems?
+                                        .Where(x => !string.IsNullOrEmpty(x.BuyerCode))?
+                                        .Select(s => s.BuyerCode) ?? new List<string>();
+
+                                    if (buyerCodes.Count() == 0)
+                                        continue;
+
+                                    buyerCodes = buyerCodes.Distinct();
+                                    desadvLineItem = origOrder.DocLineItems
+                                        .Where(x => buyerCodes.Any(b => b == x.BuyerCode))?
+                                        .FirstOrDefault();
+
+                                    if (desadvLineItem != null)
+                                    {
+                                        desadvLineItem.IdGood = (long)detail.IdGood;
+
+                                        if(!string.IsNullOrEmpty(refBarCode?.BarCode))
+                                            desadvLineItem.Gtin = refBarCode.BarCode;
+                                    }
+                                    else
+                                        continue;
                                 }
 
                                 double UnitsCount = 0,// отправляемое кол-во
@@ -243,7 +372,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                                     UnitsCount = detail.Quantity;
 
                                 if(desadvLineItem.VatRate != null)
-                                    VATRate = double.Parse( desadvLineItem.VatRate );
+                                {
+                                    if (desadvLineItem.VatRate == "NOT_APPLICABLE")
+                                        VATRate = 0;
+                                    else
+                                        VATRate = double.Parse( desadvLineItem.VatRate );
+                                }
                                 else
                                 {
                                     VATRate = traderInvoice?
@@ -255,17 +389,28 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                                 if (connectedBuyer.PriceIncludingVat == 1)
                                 {
-                                    NetPriceWithVAT = detail.Price;
+                                    NetPriceWithVAT = detail.Price - detail.DiscountSumm;
                                     Amount = Math.Round(NetPriceWithVAT * UnitsCount, 2);
 
-                                    var taxSumm = traderInvoice?
+                                    var taxRate = traderInvoice?
                                         .DocGoodsDetailsIs?
                                         .Where(ds=> ds.IdGood == detail.IdGood)?
                                         .FirstOrDefault()?
-                                        .TaxSumm ?? 0;
+                                        .TaxRate ?? 0;
 
-                                    VATAmount = Math.Round(taxSumm * UnitsCount, 2);
-                                    NetPrice = Math.Round(detail.Price - taxSumm, 2);
+                                    var taxSumm = Amount * taxRate / (taxRate + 100);
+
+                                    VATAmount = Math.Round(taxSumm, 3);
+                                    VATAmount = Math.Round(VATAmount, 2, MidpointRounding.AwayFromZero);
+
+                                    if(UnitsCount > 0)
+                                        NetPrice = Math.Round((Amount - VATAmount) / UnitsCount, 2, MidpointRounding.AwayFromZero);
+                                    else
+                                        NetPrice = Math.Round(NetPriceWithVAT * 100 / (taxRate + 100), 2);
+
+                                    if(connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.DesadvInvoic ||
+                                        connectedBuyer.ShipmentExchangeType == (int)DataContextManagementUnit.DataAccess.ShipmentType.DesadvRecadvInvoic)
+                                        NetAmount = Amount - VATAmount;
                                 }
                                 else
                                 {
@@ -317,8 +462,9 @@ namespace EdiProcessingUnit.ProcessorUnits
                                         traderDoc
                                     }),
                                     outInvoiceProcessor,
-                                    origOrder.ReqDeliveryDate ?? dateTime,
-                                    traderInvoice?.Code);
+                                    deliveryDate ?? dateTime,
+                                    traderInvoice?.Code,
+                                    deliveryDate);
                             
                         }//foreach (var traderDoc in traderDocs)
 
@@ -328,12 +474,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                                 desadvLineItems,
                                 traderDocs,
                                 outInvoiceProcessor,
-                                dateTime);
+                                dateTime, null, deliveryDate);
 
                             origOrder.Status = 3;
                         }
 
-                        if (!existsTraderDocsWithLessStatus)
+                        if (!(existsTraderDocsWithLessStatus || existsTraderDocsNotDelivered))
                             origOrder.Status = 3;
 
                         _ediDbContext.SaveChanges();
@@ -348,8 +494,12 @@ namespace EdiProcessingUnit.ProcessorUnits
             List<DocJournal> traderDocs,
             OutInvoicesProcessor outInvoiceProcessor,
             DateTime ordersDateTime,
-            string invoiceNumber = null)
+            string invoiceNumber = null,
+            DateTime? deliveryDate = null)
         {
+            if (deliveryDate == null)
+                deliveryDate = origOrder?.ReqDeliveryDate;
+
             double
                                     totalSumExcludingTaxes = 0, // сумма респонса без НДС
                                     totalVATAmount = 0, // сумма НДС
@@ -386,11 +536,20 @@ namespace EdiProcessingUnit.ProcessorUnits
                 desadvEdiMsg.InterchangeHeader.CreationDateTime = GetDate(ordersDateTime);
             }
             else
+                reseiveNumber = traderDocs.First()
+                    .DocJournals?.FirstOrDefault(d => d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)?.Code;
+
+            if(string.IsNullOrEmpty(reseiveNumber))
                 reseiveNumber = traderDocs.First().Code;
 
             desadvEdiMsg.DespatchAdvice = new DespatchAdvice();
             desadvEdiMsg.DespatchAdvice.number = reseiveNumber;
-            desadvEdiMsg.DespatchAdvice.date = GetDate(DateTime.Now);
+
+            if(deliveryDate != null)
+                desadvEdiMsg.DespatchAdvice.date = GetDate(deliveryDate.Value);
+            else
+                desadvEdiMsg.DespatchAdvice.date = GetDate(DateTime.Now);
+
             desadvEdiMsg.DespatchAdvice.originOrder = new Identificator();
             desadvEdiMsg.DespatchAdvice.originOrder.Number = origOrder.Number;
             desadvEdiMsg.DespatchAdvice.originOrder.Date = GetDate(origOrder.OrderDate.Value);
@@ -403,8 +562,21 @@ namespace EdiProcessingUnit.ProcessorUnits
             desadvEdiMsg.DespatchAdvice.deliveryInfo = new despatchAdviceDeliveryInfo();
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo = new Company();
             desadvEdiMsg.DespatchAdvice.deliveryInfo.shipTo.gln = origOrder.GlnShipTo;
-            desadvEdiMsg.DespatchAdvice.deliveryInfo.estimatedDeliveryDateTime = origOrder?.ReqDeliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            if (!string.IsNullOrEmpty(invoiceNumber))
+            {
+                desadvEdiMsg.DespatchAdvice.invoiceIdentificator = new Identificator();
+                desadvEdiMsg.DespatchAdvice.invoiceIdentificator.Number = invoiceNumber;
+                desadvEdiMsg.DespatchAdvice.invoiceIdentificator.Date = desadvEdiMsg?.DespatchAdvice?.date;
+            }
+
+            if(deliveryDate != null)
+                desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = deliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            else
+                desadvEdiMsg.DespatchAdvice.deliveryInfo.shippingDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            if(deliveryDate != null)
+                desadvEdiMsg.DespatchAdvice.deliveryInfo.estimatedDeliveryDateTime = deliveryDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
             desadvEdiMsg.DespatchAdvice.status = "Accepted";
             if (desadvLineItems.Count <= 0)
@@ -435,17 +607,18 @@ namespace EdiProcessingUnit.ProcessorUnits
                     if (shipmentExchangeType ==
                         (int)DataContextManagementUnit.DataAccess.ShipmentType.DesadvInvoic)
                     {
-                        DateTime deliveryDate = origOrder?.ReqDeliveryDate ?? DateTime.Now;
+                        if(deliveryDate == null)
+                            deliveryDate = DateTime.Now;
 
                         if (traderDocs.Count == 1)
                         {
                             var trDoc = traderDocs.First();
 
-                            if(trDoc.DeliveryDate != null && trDoc.DeliveryDate.Value.Date > deliveryDate)
+                            if(trDoc.DeliveryDate != null && trDoc.DeliveryDate.Value.Date > deliveryDate.Value)
                                 deliveryDate = trDoc.DeliveryDate.Value;
                         }
 
-                        outInvoiceProcessor.SendInvoicFromDesadv(desadvEdiMsg, origOrder, deliveryDate);
+                        outInvoiceProcessor.SendInvoicFromDesadv(desadvEdiMsg, origOrder, deliveryDate.Value);
                     }
                 }
                 catch (Exception ex)

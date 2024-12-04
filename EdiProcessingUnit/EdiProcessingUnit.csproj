@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>08C2A2C9A221C5B686059B78B25533CACDAAC115</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>EdiProcessingUnit_TemporaryKey.pfx</ManifestKeyFile>
@@ -66,8 +66,9 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiadocApi, Version=2.9.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <HintPath>..\OMS\packages\DiadocSDK.2.9.13\lib\net461\DiadocApi.dll</HintPath>
+    <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -163,14 +164,19 @@
     <Compile Include="Edo\Edo.cs" />
     <Compile Include="Edo\EdoTokenCache.cs" />
     <Compile Include="Edo\Models\Kontragent.cs" />
+    <Compile Include="Edo\Models\UniversalCorrectionDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentDetail.cs" />
     <Compile Include="Enums\DocEdoSendStatus.cs" />
+    <Compile Include="Enums\DocEdoType.cs" />
     <Compile Include="Infrastructure\EdiProcessor.cs" />
+    <Compile Include="Infrastructure\EdoProcessor.cs" />
     <Compile Include="Infrastructure\MailReporter.cs" />
     <Compile Include="Infrastructure\Xml.cs" />
     <Compile Include="Edi\Model\Company.cs" />
     <Compile Include="ProcessorUnits\DespatchAdviceProcessor.cs" />
+    <Compile Include="ProcessorUnits\DiadocEdoProcessor.cs" />
+    <Compile Include="ProcessorUnits\ExecuteEdiProceduresProcessor.cs" />
     <Compile Include="ProcessorUnits\OrderResponsesProcessor.cs" />
     <Compile Include="ProcessorUnits\OutInvoicesProcessor.cs" />
     <Compile Include="ProcessorUnits\ReceivingAdviceProcessor.cs" />

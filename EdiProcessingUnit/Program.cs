@@ -66,7 +66,7 @@ namespace EdiProcessingUnit
                                 return;
                             }
 
-                            RunSafe(_processorFactory, new RelationsProcessor());
+                            //RunSafe(_processorFactory, new RelationsProcessor());
                             StartHandlers();
                         }
                         catch (Exception ex)
@@ -75,6 +75,15 @@ namespace EdiProcessingUnit
                             MailReporter.Add(ex, Console.Title);
                         }
                     }
+
+                    _processorFactory.OrganizationGln = null;
+                    _processorFactory.ResetAuth();
+
+                    RunSafe(new DiadocEdoProcessor());
+                    _utilityLog.Log($"{_timeStamp} - обработчик DiadocEdoProcessor завершил работу.");
+
+                    RunSafe(_processorFactory, new ExecuteEdiProceduresProcessor());
+                    _utilityLog.Log($"{_timeStamp} - обработчик ExecuteEdiProceduresProcessor завершил работу.");
                 }
                 finally
                 {
@@ -106,10 +115,20 @@ namespace EdiProcessingUnit
 		private static void StartHandlers()
 		{
             _utilityLog.Log(_timeStamp + " - Запуск обработчиков сообщений");
-			RunSafe( _processorFactory, new OrdersProcessor() );
-            _utilityLog.Log($"{_timeStamp} - обработчик OrdersProcessor завершил работу.");
-            RunSafe( _processorFactory, new ReceivingAdviceProcessor() );
+
+            //var ordersProcessor = new OrdersProcessor();
+            //RunSafe( _processorFactory, ordersProcessor );
+            //_utilityLog.Log($"{_timeStamp} - обработчик OrdersProcessor завершил работу.");
+
+            var receivingAdviceProcessor = new ReceivingAdviceProcessor();
+            RunSafe( _processorFactory, receivingAdviceProcessor );
             _utilityLog.Log($"{_timeStamp} - обработчик ReceivingAdviceProcessor завершил работу.");
+
+            if (receivingAdviceProcessor.IsSavingLastEventId)// && !ordersProcessor.WithErrors)
+            {
+                _utilityLog.Log($"{_timeStamp} - Сохранение LastEventId.");
+                _processorFactory.SaveEdiLastEventId();
+            }
 
             RunSafe( _processorFactory, new OrderResponsesProcessor() );
             _utilityLog.Log($"{_timeStamp} - обработчик OrderResponsesProcessor завершил работу.");
@@ -131,8 +150,23 @@ namespace EdiProcessingUnit
 
 			}
 		}
-		
-		public static string GetParameterValue(string[] args, string parameter, string defaultParameterValue)
+
+        public static void RunSafe(EdoProcessor processor)
+        {
+            try
+            {
+                _utilityLog.Log(processor.ProcessorName + ".Run()");
+                processor.Init();
+                processor.Run();
+            }
+            catch(Exception ex)
+            {
+                _utilityLog.Log(ex);
+                MailReporter.Add(ex, Console.Title);
+            }
+        }
+
+        public static string GetParameterValue(string[] args, string parameter, string defaultParameterValue)
 		{
 			if (args.Contains( parameter ))
 			{

@@ -11,6 +11,8 @@ namespace DataContextManagementUnit.DataAccess
         Receipt = 1,
         Requirement,
         Translocation,
-        Invoice = 8
+        ReturnFromBuyer = 7,
+        Invoice,
+        Correction = 18
     }
 }

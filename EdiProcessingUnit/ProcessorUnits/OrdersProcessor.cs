@@ -14,7 +14,10 @@ namespace EdiProcessingUnit.WorkingUnits
 	public sealed class OrdersProcessor : EdiProcessor
 	{
 		private List<string> _xmlList = null;
-		public OrdersProcessor() { }		
+        private bool _withErrors;
+
+        public bool WithErrors => _withErrors;
+        public OrdersProcessor() { }		
 		public OrdersProcessor(List<string> Xmls) => _xmlList = Xmls;	
 		public override void Run()
 		{
@@ -30,13 +33,24 @@ namespace EdiProcessingUnit.WorkingUnits
 				return;
 			}			
 			List<MessageBoxEvent> events = new List<MessageBoxEvent>();
-			events = _edi.GetNewEvents();// получить новые события в ящике 
-                                         //if (events.Count() <= 0)
-                                         //	events = _edi.GetNewEventsFromDate( DateTime.Today );
+            _withErrors = false;
+
+            try
+            {
+                events = _edi.GetNewEvents();// получить новые события в ящике 
+                                             //if (events.Count() <= 0)
+                                             //	events = _edi.GetNewEventsFromDate( DateTime.Today );
+            }
+            catch(Exception ex)
+            {
+                _withErrors = true;
+                MailReporter.Add(_log.GetRecursiveInnerException(ex));
+                throw ex;
+            }
+
             if (events.Count() <= 0)
 				return;
 			var incomingMessages = events.Where( x => x.EventType == MessageBoxEventType.NewInboxMessage ).ToList();
-            bool withErrors = false;
 			foreach (MessageBoxEvent boxEvent in incomingMessages)
 			{
 				try
@@ -45,7 +59,7 @@ namespace EdiProcessingUnit.WorkingUnits
 				}
 				catch(Exception ex)
 				{
-                    withErrors = true;
+                    _withErrors = true;
                     MailReporter.Add( _log.GetRecursiveInnerException(ex)
 						+ "\r\n BoxId=" + boxEvent.BoxId
 						+ "\r\n EventId=" + boxEvent.EventId
@@ -55,9 +69,6 @@ namespace EdiProcessingUnit.WorkingUnits
 						);
 				}
 			}
-
-            if(!withErrors)
-                _edi.SaveLastEventId();
         }
 
 		private void NewInboxMessageHandler(object EventContent)
@@ -125,6 +136,8 @@ namespace EdiProcessingUnit.WorkingUnits
                         newOrderGlnSeller = "",
                         newOrderGlnBuyer = "",
                         newOrderGlnShipTo = "",
+                        newOrderNameShipTo = "",
+                        newOrderAddressShipTo = "",
                         newOrderComment = "",
                         newOrderCurrencyCode = "",
                         newOrderTotalAmount = "",
@@ -177,6 +190,27 @@ namespace EdiProcessingUnit.WorkingUnits
                     {
                         newOrderGlnShipTo = deliveryInfo.ShipTo.gln;
                         relationsProcessor.AddNewCompany( ConvertCompany( deliveryInfo.ShipTo ) );
+                        newOrderNameShipTo = deliveryInfo.ShipTo?.organization?.name;
+
+                        if (deliveryInfo.ShipTo.russianAddress != null)
+                        {
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.city))
+                                newOrderAddressShipTo = deliveryInfo.ShipTo.russianAddress.city;
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.settlement))
+                                newOrderAddressShipTo = string.IsNullOrEmpty(newOrderAddressShipTo) ? deliveryInfo.ShipTo.russianAddress.settlement
+                                    : $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.settlement}";
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.street))
+                                newOrderAddressShipTo = string.IsNullOrEmpty(newOrderAddressShipTo) ? deliveryInfo.ShipTo.russianAddress.street
+                                    : $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.street}";
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.house))
+                                newOrderAddressShipTo = $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.house}";
+
+                            if (!string.IsNullOrEmpty(deliveryInfo.ShipTo.russianAddress.flat))
+                                newOrderAddressShipTo = $"{newOrderAddressShipTo},{deliveryInfo.ShipTo.russianAddress.flat}";
+                        }
                     }
 
                     if(!string.IsNullOrEmpty(deliveryInfo.RequestedDeliveryDateTime))
@@ -226,6 +260,12 @@ namespace EdiProcessingUnit.WorkingUnits
                 }
 
                 glnMainReceiver = newOrderMainGlnReceiver;
+
+                if (string.IsNullOrEmpty(newOrderNameShipTo))
+                {
+                    var shipToCompany = _ediDbContext?.RefCompanies?.FirstOrDefault(r => r.Gln == newOrderGlnShipTo);
+                    newOrderNameShipTo = shipToCompany?.Name;
+                }
 
                 // пробегаемся по списку заказываемого
                 foreach (var item in msg.Order.LineItems.LineItem)
@@ -328,6 +368,20 @@ namespace EdiProcessingUnit.WorkingUnits
                 }
                 if (orderLineItems.Count <= 0)      // если что-то пошло не так и список товаров пустой то вывалимся в ошибку		
                     throw new NullReferenceException( "Заказываемые товары входящего заказа отсутствуют" );
+
+                if (string.IsNullOrEmpty(newOrderTotalAmount) && orderLineItems.All(l => !string.IsNullOrEmpty(l.Amount)))
+                {
+                    try
+                    {
+                        double calculatedTotalAmount = orderLineItems.Sum(l => double.Parse(l.Amount));
+                        newOrderTotalAmount = Math.Round(calculatedTotalAmount, 2).ToString();
+                    }
+                    catch(Exception ex)
+                    {
+                        newOrderTotalAmount = null;
+                    }
+                }
+
                 newOrder = new DocOrder() { // определим тело заказа куда и список товаров запихаем
                     Id = IdOrder,
                     DocType = newOrderDocType,
@@ -335,10 +389,13 @@ namespace EdiProcessingUnit.WorkingUnits
                     EdiCreationDate = newOrderEdiCreationDate,
                     EdiCreationSenderDate = newOrderEdiCreationSenderDate,
                     ReqDeliveryDate = newOrderReqDeliveryDate,
+                    OrderDeliveryDate = newOrderReqDeliveryDate,
                     GlnSender = newOrderGlnSender,
                     GlnSeller = newOrderGlnSeller,
                     GlnBuyer = newOrderGlnBuyer,
                     GlnShipTo = newOrderGlnShipTo,
+                    NameShipTo = newOrderNameShipTo,
+                    AddressShipTo = newOrderAddressShipTo,
                     Comment = newOrderComment,
                     Number = newOrderNumber,
                     OrderDate = newOrderDate,
@@ -364,6 +421,11 @@ namespace EdiProcessingUnit.WorkingUnits
                     .Select(g => g.MainGln)?
                     .FirstOrDefault();
 
+            ConnectedBuyers connectedBuyer = null;
+
+            if(!string.IsNullOrEmpty(glnMainBuyer))
+                connectedBuyer = _ediDbContext?.ConnectedBuyers?.FirstOrDefault(c => c.Gln == glnMainBuyer);
+
             var map = _ediDbContext?.MapGoodsByBuyers?
                 .Where(m => m.Gln == glnMainBuyer)?
                 .Select(l => l.MapGood)?
@@ -376,6 +438,14 @@ namespace EdiProcessingUnit.WorkingUnits
                     var newItem = map.Single( x => x.BarCode == item.Gtin );
                     if (newItem.IdGood != null)
                         item.IdGood = (long)newItem.IdGood;
+
+                    if (connectedBuyer?.IncludedBuyerCodes == 1 && !string.IsNullOrEmpty(item.BuyerCode))
+                    {
+                        var glnItemGood = newItem.MapGoodByBuyers.FirstOrDefault(m => m.Gln == glnMainBuyer);
+
+                        if (glnItemGood != null && string.IsNullOrEmpty(glnItemGood?.BuyerCode))
+                            glnItemGood.BuyerCode = item.BuyerCode;
+                    }
                 }
                 else
                 {
@@ -394,6 +464,9 @@ namespace EdiProcessingUnit.WorkingUnits
                         IdMapGood = mapGood.Id,
                         MapGood = mapGood
                     };
+
+                    if (connectedBuyer?.IncludedBuyerCodes == 1)
+                        glnItemGood.BuyerCode = item.BuyerCode;
 
                     mapGood.MapGoodByBuyers.Add( glnItemGood );
                 }				

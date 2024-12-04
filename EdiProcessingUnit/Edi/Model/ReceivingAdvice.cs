@@ -39,7 +39,17 @@ namespace EdiProcessingUnit.Edi.Model
 		[XmlElement( ElementName = "lineItem" )]
 		public List<recadvLineItem> LineItem { get; set; }
 
-	}
+        [XmlElement(ElementName = "totalAmount")]
+        public string TotalAmount { get; set; }
+
+        [XmlElement(ElementName = "totalVATAmount")]
+        public string TotalVATAmount { get; set; }
+
+        [XmlElement(ElementName = "totalSumExcludingTaxes")]
+        public string TotalSumExcludingTaxes { get; set; }
+
+
+    }
 
 
 	public class recadvLineItem

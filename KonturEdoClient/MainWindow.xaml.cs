@@ -36,5 +36,10 @@ namespace KonturEdoClient
         {
             ((MainModel)DataContext).SetSelectedFilial((string)((DevExpress.Xpf.Bars.BarEditItem)e.Source).EditValue);
         }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            ((MainModel)DataContext).Dispose();
+        }
     }
 }

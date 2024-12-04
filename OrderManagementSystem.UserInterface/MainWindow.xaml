@@ -103,6 +103,10 @@
 
                     <dxr:RibbonPageGroup Caption="Управление документами">
 
+                        <dxb:BarButtonItem Content="Реестр приёмок" ToolTip="Просмотр принятых документов из Трейдера по заказам"
+                                           Command="{Binding LoadReestrDocumentsCommand}"
+                                           RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Export/ExportToXLS.svg}"/>
+
                         <dxb:BarButtonItem Content="Экспорт" ToolTip="Создать документ в трейдере" IsEnabled="{Binding Path=IsExportButtonEnabled}"
                                            Command="{Binding ExportToTraderSingleCommand}"
                                            RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/PDF Viewer/SinglePageView.svg}" />
@@ -120,9 +124,6 @@
                         <dxb:BarButtonItem Content="Просмотреть заказ" ToolTip="Просмотреть заказ"
                                            Command="{Binding OpenOrderViewCommand}"
                                            RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/XAF/State_ItemVisibility_Show.svg}" />
-                        <dxb:BarButtonItem Content="Рассчёт суммы с НДС" ToolTip="Рассчитать итоговую сумму с НДС"
-                                           Command="{Binding SummWithNdsCommand}"
-                                           RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Snap/Summary.svg}" />
                         <dxb:BarButtonItem Content="Удалить заказ" ToolTip="Удалить заказ из списка"
                                            IsEnabled="{Binding Path=PermittedToMatchingGoods}" Command="{Binding DeleteOrderCommand}"
                                            RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Delete.svg}" />
@@ -185,8 +186,9 @@
                     <dxg:GridColumn Header="Покупатель" Width="120" FieldName="Buyer.Name"/>
                     <dxg:GridColumn Header="Отправитель" Width="120" FieldName="Sender.Name"/>
                     <dxg:GridColumn Header="GLN отправителя" Width="120" FieldName="GlnSender"/>
-                    <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="ShipTo.Name"/>
+                    <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="NameShipTo"/>
                     <dxg:GridColumn Header="GLN точки доставки" Width="120" FieldName="GlnShipTo"/>
+                    <dxg:GridColumn Header="Адрес точки" Width="120" FieldName="AddressShipTo"/>
                     <dxg:GridColumn Header="Коментарий" FieldName="Comment"/>
 
                     <dxg:GridColumn ReadOnly="True" FieldName="TotalAmount" Header="Сумма с НДС">
@@ -214,13 +216,12 @@
                                GroupSummaryDisplayMode="AlignByColumns"
                                    >
 
-                        <!--<dxg:TableView.FormatConditions>
-                            <dxg:FormatCondition ApplyToRow="True" 
-                                                 Expression="[DocumentTypeId] == 0">
-                                <dxg:Format Background="#ffc9c9"/>
+                        <dxg:TableView.FormatConditions>
+                            <dxg:FormatCondition ApplyToRow="True" Expression="[IsMarkedNotExportable] != 0">
+                                <dxg:Format Background="#e69c9c"/>
                             </dxg:FormatCondition>
 
-                            <dxg:FormatCondition ApplyToRow="True" 
+                            <!--<dxg:FormatCondition ApplyToRow="True" 
                                                  Expression="[DocumentTypeId] == 2 and [ACT_STATUS] != NULL">
                                 <dxg:Format Background="#b3e0ff"/>
                             </dxg:FormatCondition>
@@ -233,9 +234,9 @@
                             <dxg:FormatCondition ApplyToRow="True" 
                                                  Expression="[DocumentTypeId] > 2">
                                 <dxg:Format Background="#c1d4f5"/>
-                            </dxg:FormatCondition>
+                            </dxg:FormatCondition>-->
 
-                        </dxg:TableView.FormatConditions>-->
+                        </dxg:TableView.FormatConditions>
 
 
                     </dxg:TableView>

@@ -109,7 +109,28 @@ namespace OrderManagementSystem.UserInterface.ViewModels.Implementations
             }
         }
 
-		protected virtual void OnDispose() { }
+        /// <summary>Метод для универсального парсинга строки в число с плавающей точкой</summary>
+		/// <param name="text">Строка, которую нужно распарсить</param>
+        public double ParseStringToDouble(string text)
+        {
+            double result;
+
+            if (!double.TryParse(text, out result))
+            {
+                try
+                {
+                    result = double.Parse(text, System.Globalization.CultureInfo.InvariantCulture);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
+            return result;
+        }
+
+        protected virtual void OnDispose() { }
 
 		public void Dispose()
 		{

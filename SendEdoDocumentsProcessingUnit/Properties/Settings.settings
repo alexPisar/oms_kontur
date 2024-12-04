@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SendEdoDocumentsProcessingUnit.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DefaultOrgCountryCode" Type="System.String" Scope="User">
+      <Value Profile="(Default)">643</Value>
+    </Setting>
+    <Setting Name="DefaultUnit" Type="System.String" Scope="User">
+      <Value Profile="(Default)">796</Value>
+    </Setting>
+    <Setting Name="DefaultCurrency" Type="System.String" Scope="User">
+      <Value Profile="(Default)">643</Value>
+    </Setting>
+    <Setting Name="DefaultEmployePosition" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Зав. складом</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

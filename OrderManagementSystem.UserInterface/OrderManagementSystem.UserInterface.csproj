@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>08C2A2C9A221C5B686059B78B25533CACDAAC115</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>OrderManagementSystem.UserInterface_TemporaryKey.pfx</ManifestKeyFile>
@@ -238,6 +238,7 @@
     <Compile Include="GoodsMapView.xaml.cs">
       <DependentUpon>GoodsMapView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Infrastructure\DocJournalByRecadv.cs" />
     <Compile Include="InvoicExportView.xaml.cs">
       <DependentUpon>InvoicExportView.xaml</DependentUpon>
     </Compile>
@@ -265,6 +266,7 @@
     <Compile Include="ViewModels\CompanyMapViewModel.cs" />
     <Compile Include="ViewModels\DeliveryPointsModel.cs" />
     <Compile Include="ViewModels\GoodsMapViewModel.cs" />
+    <Compile Include="ViewModels\Implementations\MapGoodForExport.cs" />
     <Compile Include="ViewModels\Implementations\RelayCommand.cs" />
     <Compile Include="ViewModels\Implementations\ViewModelBase.cs" />
     <Compile Include="ViewModels\InvoicExportViewModel.cs" />
@@ -401,9 +403,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Infrastructure\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Resource Include="edi-enter.ico" />
   </ItemGroup>

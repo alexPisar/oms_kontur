@@ -77,6 +77,21 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .Property(d => d.DocStatus)
                 .HasColumnName("DOC_STATUS");
 
+            this
+                .Property(d => d.DocType)
+                .HasColumnName("DOC_TYPE")
+                .IsRequired();
+
+            this
+                .Property(d => d.IdParent)
+                .HasColumnName("ID_PARENT");
+
+            this
+                .HasMany(d => d.Children)
+                .WithOptional(c => c.Parent)
+                .HasForeignKey(d => d.IdParent)
+                .WillCascadeOnDelete(false);
+
             OnCreated();
         }
 

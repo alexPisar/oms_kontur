@@ -41,6 +41,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasDatabaseGeneratedOption(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None);
 
             this
+                .Property(l => l.IdDocReturn)
+                .HasColumnName(@"ID_DOC_RETURN")
+                .HasDatabaseGeneratedOption(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.None);
+
+            this
                 .Property(l => l.SaleDmLabel)
                 .HasColumnName(@"SALE_DM_LABEL")
                 .HasMaxLength(100);
@@ -48,6 +53,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
             this
                 .Property(l => l.SaleDateTime)
                 .HasColumnName(@"SALE_DATETIME");
+
+            this
+                .Property(l => l.ReturnDateTime)
+                .HasColumnName(@"RETURN_DATETIME");
 
             OnCreated();
         }

@@ -1,0 +1,96 @@
+﻿<dxr:DXRibbonWindow x:Class="KonturEdoClient.ShowCorrectionDocumentsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Отправить корректировку" Height="550" Width="900">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <DockPanel  Grid.Row="0" LastChildFill="True">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" DockPanel.Dock="Bottom" Height="40">
+                <Button Margin="5" Width="80" Content="Обновить" x:Name="SearchButton" Click="SearchButton_Click" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Дата с" Width="60" Margin="5"/>
+                        <dxe:DateEdit Margin="5" Mask="d MMM y" EditValue="{Binding DateFrom,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Дата по" Width="60" Margin="5"/>
+                        <dxe:DateEdit Margin="5" Mask="d MMM y" EditValue="{Binding DateTo,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Номер счёта-фактуры" Width="125" Margin="5"/>
+                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Номер документа" Width="125" Margin="5"/>
+                        <dxe:TextEdit Margin="5" EditValue="{Binding SearchDocumentNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Тип документа" Width="90" Margin="5"/>
+                        <dxe:ComboBoxEdit x:Name="DocTypesBar" ItemsSource="{Binding DocTypes}" DisplayMember="Value" ValueMember="Key" EditValue="{Binding SelectedDocType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Width="150"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </DockPanel>
+        <dxg:GridControl Grid.Row="1" ItemsSource="{Binding Documents, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                         SelectedItem="{Binding SelectedDocument}" SelectedItemChanged="GridControl_SelectedItemChanged">
+            <dxg:GridColumn Header="Дата создания" Width="120" FieldName="CorrectionDocJournal.DocDatetime">
+                <dxg:GridColumn.EditSettings>
+                    <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy HH:mm:ss"/>
+                </dxg:GridColumn.EditSettings>
+            </dxg:GridColumn>
+            <dxg:GridColumn Header="Тип" Width="120" FieldName="DocType" />
+            <dxg:GridColumn Header="Номер документа" Width="80" FieldName="CorrectionDocJournalNumber" />
+            <dxg:GridColumn Header="Номер корректировки" Width="80" FieldName="DocumentNumber" />
+            <dxg:GridColumn Header="Номер счёта-фактуры" Width="80" FieldName="InvoiceNumber" />
+            <dxg:GridColumn Header="Статус в ЭДО" Width="80" FieldName="DocEdoSendStatus" />
+            <dxg:GridColumn Header="{Binding BuyerGridColumnName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="160" FieldName="BuyerName" />
+            <dxg:GridColumn Header="{Binding SellerGridColumnName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="160" FieldName="SellerName" />
+            <dxg:GridControl.View>
+                <dxg:TableView>
+                    <dxg:TableView.FormatConditions>
+                        <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked]">
+                            <dxg:Format Background="#FF27C3E6"/>
+                        </dxg:FormatCondition>
+                    </dxg:TableView.FormatConditions>
+                </dxg:TableView>
+            </dxg:GridControl.View>
+        </dxg:GridControl>
+        <GridSplitter Grid.Row="2"
+                      Height="5"
+                      ShowsPreview="False"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"/>
+        <dxg:GridControl Grid.Row="3" ItemsSource="{Binding CorrectionDocumentDetails, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <dxg:GridColumn Header="ID товара" Width="80" FieldName="IdGood" />
+            <dxg:GridColumn Header="Наименование" Width="160" FieldName="Good.Name" />
+            <dxg:GridColumn Header="Количество" Width="80" FieldName="Quantity" />
+            <dxg:GridColumn Header="Стоимость" Width="80" FieldName="Price" />
+        </dxg:GridControl>
+        <StackPanel Orientation="Horizontal" Grid.Row="4" HorizontalAlignment="Right">
+            <Button x:Name="SendButton" Margin="5 5" Content="Отправить" Width="90" Click="SendButton_Click" />
+            <Button x:Name="CancelButton" Margin="5 5" Content="Отмена" Width="90" Click="CancelButton_Click" />
+        </StackPanel>
+    </Grid>
+</dxr:DXRibbonWindow>

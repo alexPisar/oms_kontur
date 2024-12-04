@@ -21,6 +21,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public DocOrder()
         {
             this.Status = 0;
+            this.IsMarkedNotExportable = 0;
             this.DocLineItems = new List<DocLineItem>();
             this.LogOrders = new List<LogOrder>();
             OnCreated();
@@ -52,6 +53,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 
         public virtual string GlnShipTo { get; set; }
 
+        public virtual string NameShipTo { get; set; }
+
+        public virtual string AddressShipTo { get; set; }
+
         public virtual string Comment { get; set; }
 
         public virtual string CurrencyCode { get; set; }
@@ -63,6 +68,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
         public virtual string TotalSumExcludeTax { get; set; }
 
         public virtual long Status { get; set; }
+
+        public virtual int IsMarkedNotExportable { get; set; }
+
+        public virtual global::System.DateTime? OrderDeliveryDate { get; set; }
 
         #endregion
 

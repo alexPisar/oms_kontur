@@ -23,7 +23,6 @@ namespace OMS.ViewModels
 		//public RelayCommand ExportSCHFDOPPRCommand => new RelayCommand( (o) => { ExportSCHFDOPPR(); } );
 		public RelayCommand OpenGoodsMapCommand => new RelayCommand( (o) => { OpenGoodsMap(); } );
 		public RelayCommand OpenOrderViewCommand => new RelayCommand( (o) => { OpenOrderView(); } );
-        public RelayCommand SummWithNdsCommand => new RelayCommand( (o) => { SummWithNds(); } );
         public RelayCommand OpenCompanyMapCommand => new RelayCommand( (o) => { OpenCompanyMap(); } );
 		public RelayCommand OpenInvoicesCommand => new RelayCommand( (o) => { OpenInvoices(); } );
 		public RelayCommand SendGoodsMapCommand => new RelayCommand((o) => { SendGoodsMap(); } );
@@ -34,7 +33,10 @@ namespace OMS.ViewModels
         public RelayCommand OpenDeliveryPointsCommand => new RelayCommand((o) => { OpenDeliveryPoints(); } );
         public RelayCommand UpdateSettingsCommand => new RelayCommand((o) => { UpdateSettings(); });
         public RelayCommand OpenJuridicalEntitiesCommand => new RelayCommand((o) => { OpenJuridicalEntities(); });
+        public RelayCommand SetExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(0); });
+        public RelayCommand SetNotExportableStateCommand => new RelayCommand((o) => { ChangeExportableState(1); });
         public RelayCommand SaveCommand => new RelayCommand((o) => { Save(); });
+        public RelayCommand LoadReestrDocumentsCommand => new RelayCommand((o) => { LoadReestrDocuments(); });
         public bool MustShowAllOrders { get; set; } = false;
 		public DocLineItem SelectedDocLineItem { get; set; }
 
@@ -54,6 +56,8 @@ namespace OMS.ViewModels
         public bool IsMainAccount { get; set; }
 
         public bool IsExportButtonEnabled { get; set; }
+
+        public bool IsNotExportable => SelectedItem?.Status == 0 && SelectedItem?.IsMarkedNotExportable != 0;
 
         public bool PermittedToMatchingGoods { get; set; }
 
@@ -262,9 +266,35 @@ namespace OMS.ViewModels
                     return;
                 }
 
+                if(IsNotExportable)
+                {
+                    System.Windows.MessageBox.Show("Такой заказ помечен как не экспортируемый.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
                 if (DocLineItems.Exists( d => d.IdGood == null || d.IdGood == 0 ))
                 {
                     System.Windows.MessageBox.Show( "Ошибка! В списке товаров есть несопоставленные товары!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                if (DocLineItems.Exists(d => DocLineItems.FirstOrDefault(l => l.IdGood == d.IdGood && l.Id != d.Id) != null))
+                {
+                    long? duplicateIdGood = null;
+
+                    foreach (var docLineItem in DocLineItems)
+                    {
+                        if (duplicateIdGood == null || duplicateIdGood == 0)
+                        {
+                            duplicateIdGood = DocLineItems?.FirstOrDefault(l => l.IdGood == docLineItem.IdGood && l.Id != docLineItem.Id)?.IdGood;
+                            continue;
+                        }
+
+                        break;
+                    }
+
+                    string duplicateIdGoodStr = duplicateIdGood != null ? duplicateIdGood.ToString() : "";
+                    System.Windows.MessageBox.Show($"Ошибка! В списке товаров есть дубль ID товара {duplicateIdGoodStr}!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
 
@@ -297,6 +327,13 @@ namespace OMS.ViewModels
                     .FirstOrDefault(r => r.BuyerGln == order.GlnBuyer)?
                     .MainShoppingStore;
 
+                decimal? idSeller = (decimal?)_edi.RefCompanies?
+                    .Where(r => r.Gln == order.GlnSeller)?
+                    .FirstOrDefault()?.IdContractor;
+
+                if (idSeller == null)
+                    throw new Exception("Не удалось определить организацию-продавца из заказа.");
+
                 Dictionary<decimal?, DocJournal> docInfosByManufacturers = new Dictionary<decimal?, DocJournal>();
                 List<decimal?> docsWithoutManufacturers = new List<decimal?>();
 
@@ -307,9 +344,9 @@ namespace OMS.ViewModels
                 if (_abt.RefContractors.Any( r => r.Id == SelectedItem.ShipTo.IdContractor ))
                 {
                     if (connectedBuyer.ExportOrdersByManufacturers == 1)
-                        docInfosByManufacturers = DocExportDataByManufacturers(order, connectedBuyer.IdSeller);
+                        docInfosByManufacturers = DocExportDataByManufacturers(order, idSeller.Value);
                     else
-                        docsWithoutManufacturers = DocExportData(order, connectedBuyer.IdSeller);
+                        docsWithoutManufacturers = DocExportData(order, idSeller.Value, connectedBuyer.UseSplitDocProcedure == 1);
 
                     try
                     {
@@ -345,7 +382,7 @@ namespace OMS.ViewModels
 
                                     if (connectedBuyer.ExportOrdersByManufacturers == 1)
                                     {
-                                        var docsToTraider = DocExportDataByManufacturers( order, connectedBuyer.IdSeller, abtContext );
+                                        var docsToTraider = DocExportDataByManufacturers( order, idSeller.Value, abtContext );
                                         abtContext.SaveChanges();
 
                                         foreach(var doc in (docsToTraider ?? new Dictionary<decimal?, DocJournal>()))
@@ -353,7 +390,7 @@ namespace OMS.ViewModels
                                     }
                                     else
                                     {
-                                        var idDocsToTrader = DocExportData(order, connectedBuyer.IdSeller, abtContext);
+                                        var idDocsToTrader = DocExportData(order, idSeller.Value, connectedBuyer.UseSplitDocProcedure == 1, abtContext);
                                         abtContext.SaveChanges();
 
                                         foreach (var idDoc in (idDocsToTrader ?? new List<decimal?>()))
@@ -599,13 +636,16 @@ namespace OMS.ViewModels
 
             newDocJournal.DocGoods.IdCustomer = (decimal)idCustomer;
 
+            var dateTime = GetDateTimeForExportOrder(order);
+            newDocJournal.DocDatetime = dateTime;
+
             if (idManufacturer != null)
             {
                 newDocJournal.DocGoods.IdAgent = abtContext?
                     .RefContractorAgents?
                     .Where( r => r.IdContractor == (decimal)idCustomer
                     && r.IdManufacturer == idManufacturer
-                    && r.StartDate != null)?
+                    && r.StartDate != null && r.StartDate < dateTime)?
                      .OrderByDescending(ra => ra.StartDate)?
                      .FirstOrDefault()?
                      .IdAgent ?? 0;
@@ -636,6 +676,19 @@ namespace OMS.ViewModels
                     }
                 }
             }
+
+            order.ReqDeliveryDate = dateTime.AddDays(1);
+
+            if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Saturday)
+            {
+                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(2);
+            }
+            else if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Sunday)
+            {
+                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(1);
+            }
+
+            newDocJournal.DeliveryDate = order.ReqDeliveryDate;
 
             var mainGln = _edi.RefShoppingStores?
                 .FirstOrDefault(r => r.BuyerGln == SelectedItem.GlnBuyer)?
@@ -685,24 +738,10 @@ namespace OMS.ViewModels
             // генерация кода документа
             newDocJournal.Code = abtContext.SelectSingleValue( "SELECT ABT.DOCUMENTS_UTILS.GET_DOC_CODE(1) FROM dual" );
 
-            var dateTime = GetDateTimeForExportOrder(order);
-            newDocJournal.DocDatetime = dateTime;
             newDocJournal.IdDocType = 2;
             newDocJournal.CreateInvoice = 1;
             newDocJournal.Comment = order.Number;
 
-            order.ReqDeliveryDate = dateTime.AddDays(1);
-
-            if (order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Saturday)
-            {
-                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(2);
-            }
-            else if(order.ReqDeliveryDate?.DayOfWeek == DayOfWeek.Sunday)
-            {
-                order.ReqDeliveryDate = order.ReqDeliveryDate.Value.AddDays(1);
-            }
-
-            newDocJournal.DeliveryDate = order.ReqDeliveryDate;
             newDocJournal.UserName = "EDI";
 
             newDocJournal.DocGoods.DocPrecision = true;
@@ -712,6 +751,9 @@ namespace OMS.ViewModels
             foreach (DocLineItem detail in docLineItems)
             {
                 if (detail.IdGood == null)
+                    continue;
+
+                if (detail.IsRemoved == "1")
                     continue;
 
                 string itemPrice = abtContext.SelectSingleValue(
@@ -745,11 +787,20 @@ namespace OMS.ViewModels
             }
             newDocJournal.DocGoods.DocJournal = newDocJournal;
             abtContext.DocJournals.Add( newDocJournal );
+            var docJournalTag = new DocJournalTag { IdDoc = newDocJournal.Id, IdTad = 137, TagValue = order.Number };
+            abtContext.DocJournalTags.Add(docJournalTag);
+
+            if (!string.IsNullOrEmpty(order.GlnShipTo))
+            {
+                var shipToGlnJournalTag = new DocJournalTag { IdDoc = newDocJournal.Id, IdTad = 222, TagValue = order.GlnShipTo };
+                abtContext.DocJournalTags.Add(shipToGlnJournalTag);
+            }
+
             //abtContext.DocGoods.Add( newDocJournal.DocGoods );
             return newDocJournal;
         }
 
-        public List<decimal?> DocExportData(DocOrder order, decimal idSeller, AbtDbContext abtContext = null)
+        public List<decimal?> DocExportData(DocOrder order, decimal idSeller, bool splitDoc = false, AbtDbContext abtContext = null)
         {
             _log.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
 
@@ -758,11 +809,37 @@ namespace OMS.ViewModels
 
             var idFilial = Decimal.Parse(abtContext?.SelectSingleValue($"select id_filial from profiles where profile_gln = '{_usersConfig.SelectedUser.UserGLN}'"));
 
-            var doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller);
+            DocJournal doc;
+
+            if (splitDoc)
+            {
+                doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller);
+            }
+            else
+            {
+                var docLineItem = order.DocLineItems.FirstOrDefault();
+
+                if (docLineItem?.IdGood == null)
+                    return new List<decimal?>();
+
+                var param = new Oracle.ManagedDataAccess.Client.OracleParameter("IdGood", docLineItem.IdGood);
+
+                var idManufacturer = abtContext?.Database?.SqlQuery<decimal?>(
+                    $"select Id_Manufacturer from abt.ref_goods where Id = :IdGood", param)?
+                    .FirstOrDefault();
+
+                doc = ExportDocWithLineItems(order, abtContext, idFilial, order.DocLineItems, idSeller, idManufacturer);
+            }
+
             abtContext.SaveChanges();
 
-            var ids = SplitDoc(doc.Id);
-            return ids;
+            if (splitDoc)
+            {
+                var ids = SplitDoc(doc.Id);
+                return ids;
+            }
+            else
+                return new List<decimal?>(new decimal?[] { doc.Id });
         }
 
         private List<decimal?> SplitDoc(decimal docId)
@@ -937,29 +1014,135 @@ namespace OMS.ViewModels
             }
         }
 
-        private void SummWithNds()
+        private void ChangeExportableState(int exportableState)
         {
-            if(SelectedItem == null)
+            if (SelectedItem == null)
             {
-                System.Windows.MessageBox.Show( "Ошибка! Не выбран заказ для расчёта!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
+                System.Windows.MessageBox.Show("Ошибка! Не выбран заказ!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
-            if(!string.IsNullOrEmpty(SelectedItem?.TotalAmount))
+            _edi.Entry(SelectedItem)?.Reload();
+
+            if (SelectedItem.IsMarkedNotExportable == 0 && SelectedItem.Status != 0)
             {
-                System.Windows.MessageBox.Show( "Ошибка! Сумма с НДС для данного заказа уже рассчитана!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error );
+                System.Windows.MessageBox.Show("Статус Экспорта документа не позволяет пометить его неэкспортируемым.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
-            double sum = 0.0;
-
-            foreach(var l in SelectedItem.DocLineItems)
+            if (SelectedItem.IsMarkedNotExportable == exportableState)
             {
-                sum += Convert.ToDouble(l.Amount);
+                if(exportableState == 0)
+                    System.Windows.MessageBox.Show("Заказ уже помечен для экспорта.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                else
+                    System.Windows.MessageBox.Show("Заказ уже помечен как неэкспортируемый.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            else
+            {
+                SelectedItem.IsMarkedNotExportable = exportableState;
+                Save();
             }
 
-            SelectedItem.TotalAmount = sum.ToString();
-            Refresh();
+            UpdateProps();
+            OnPropertyChanged("IsExportButtonEnabled");
+            OnPropertyChanged("IsNotExportable");
+        }
+
+        private async void LoadReestrDocuments()
+        {
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+
+            saveFileDialog.Filter = "Excel Files(.xlsx)|*.xlsx";
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                var loadWindow = new LoadWindow();
+                var loadContext = new LoadModel();
+                loadWindow.DataContext = loadContext;
+
+                loadWindow.Show();
+
+                Exception exception = null;
+                string errorMessage = null;
+
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        var dateFrom = DateFrom.AddMonths(-1);
+                        var docJournals = (from docJournal in _abt.DocJournals
+                                           where docJournal.ActStatus == 5 && docJournal.DocDatetime >= dateFrom && docJournal.IdDocType == 2
+                                           select docJournal).ToArray();
+
+                        var docJournalsByRecadv = (from docOrder in _edi.DocOrders
+                                                   where docOrder.Status >= 1 && docOrder.OrderDate != null &&
+                                                   docOrder.OrderDate.Value >= dateFrom
+                                                   join recadv in _edi.DocReceivingAdvices
+                                                   on docOrder.Id equals recadv.IdOrder
+                                                   where recadv.IdDocJournal != null
+                                                   select new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv
+                                                   {
+                                                       IdDocJournal = recadv.IdDocJournal.Value,
+                                                       OrderDate = docOrder.OrderDate.Value,
+                                                       OrderNumber = docOrder.Number,
+                                                       BuyerName = docOrder.Buyer.Name,
+                                                       ShipToName = docOrder.NameShipTo,
+                                                       RecadvTotalAmount = recadv.TotalAmount,
+                                                       RecadvTotalQuantity = recadv.TotalAcceptedQuantity.Value
+                                                   })?.ToArray()?.Where(r => r.GetDocJournal(docJournals) != null)?.ToArray() ?? 
+                                                   new OrderManagementSystem.UserInterface.Infrastructure.DocJournalByRecadv[] { };
+
+                        if(docJournalsByRecadv.Count() == 0)
+                        {
+                            errorMessage = "Не нашлось приёмок по загруженным заказам.";
+                            return;
+                        }
+
+                        var sheetName = "Лист1";
+                        FileWorker.ExcelColumnCollection columnCollection = new FileWorker.ExcelColumnCollection();
+
+                        columnCollection.AddColumn("OrderNumber", "Номер заказа", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("OrderDate", "Дата заказа", FileWorker.ExcelType.DateTime);
+                        columnCollection.AddColumn("InvoicNumber", "Номер С/Ф", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("DocJournalNumber", "Номер документа", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("BuyerName", "Покупатель", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("ShipToName", "Точка доставки", FileWorker.ExcelType.String);
+                        columnCollection.AddColumn("DocJournalTotalAmount", "Сумма С/Ф", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("RecadvTotalAmount", "Сумма клиента", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("DocJournalTotalQuantity", "Количество С/Ф", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("RecadvTotalQuantity", "Количество у клиента", FileWorker.ExcelType.Double);
+                        columnCollection.AddColumn("IsMatchingAmounts", "Сумма совпадает", FileWorker.ExcelType.Int32);
+
+                        var docJournalsByRecadvData = new FileWorker.ExcelDocumentData(columnCollection, docJournalsByRecadv);
+                        docJournalsByRecadvData.SheetName = sheetName;
+                        docJournalsByRecadvData.HeadRowAutoFilter = true;
+
+                        var worker = new FileWorker.ExcelFileWorker(saveFileDialog.FileName, new List<FileWorker.ExcelDocumentData>(new[] { docJournalsByRecadvData }));
+                        worker.ExportRow("Реестр документов, принятых клиентами", sheetName);
+
+                        worker.ExportData();
+                        worker.SaveFile();
+                        loadWindow.SetSuccessFullLoad(loadContext, "Данные успешно выгружены");
+                    }
+                    catch(Exception ex)
+                    {
+                        exception = ex;
+                    }
+                });
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    loadWindow.Close();
+                    _log.Log($"LoadReestrDocuments: {errorMessage}");
+                    ShowError(errorMessage);
+                }
+                else if(exception != null)
+                {
+                    loadWindow.Close();
+                    _log.Log(exception);
+                    ShowError(_log.GetRecursiveInnerException(exception));
+                }
+            }
         }
 
         private void UpdateProps()

@@ -17,6 +17,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Label Content="Выберите контрагента" Margin="5 5"></Label>
                 <dxg:LookUpEdit Width="300" PopupWidth="600" Margin="5 5" 
+                          IsEnabled="{Binding IsButtonsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           ItemsSource="{Binding Organizations}" 
                           SelectedItem="{Binding SelectedOrganization, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           DisplayMember="Name"
@@ -47,9 +48,9 @@
                 </dxg:LookUpEdit>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Height="40" Margin="0 5" HorizontalAlignment="Center">
-                <Button Content="Сохранить в черновики" Margin="5 5" ToolTip="Сохранить документ в черновики в Диадоке" Click="SaveButton_Click"></Button>
-                <Button Content="Подписать и отправить" Margin="5 5" ToolTip="Подписать документ и отправить в Диадок" Click="SignAndSaveButton_Click"></Button>
-                <Button Content="Отмена" Margin="5 5" Click="CancelButton_Click"></Button>
+                <Button Content="Сохранить в черновики" Margin="5 5" ToolTip="Сохранить документ в черновики в Диадоке" IsEnabled="{Binding IsButtonsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Click="SaveButton_Click"></Button>
+                <Button Content="Подписать и отправить" Margin="5 5" ToolTip="Подписать документ и отправить в Диадок" IsEnabled="{Binding IsButtonsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Click="SignAndSaveButton_Click"></Button>
+                <Button Content="Отмена" Margin="5 5" IsEnabled="{Binding IsButtonsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Click="CancelButton_Click"></Button>
             </StackPanel>
         </StackPanel>
     </Grid>

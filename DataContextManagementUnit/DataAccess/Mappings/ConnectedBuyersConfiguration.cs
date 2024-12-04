@@ -55,8 +55,12 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasColumnName(@"EXPORT_ORDERS_BY_MANUFACTURERS");
 
             this
-                .Property(c => c.IdSeller)
-                    .HasColumnName(@"ID_SELLER");
+                .Property(c => c.IncludedBuyerCodes)
+                    .HasColumnName(@"INCLUDED_BUYER_CODES");
+
+            this
+                .Property(c => c.UseSplitDocProcedure)
+                    .HasColumnName(@"USE_SPLIT_DOC_PROCEDURE");
 
             this
                 .HasMany(c => c.ShoppingStores)

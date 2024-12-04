@@ -21,6 +21,11 @@ namespace EdiProcessingUnit.Enums
         /// <summary>
         /// Подписан
         /// </summary>
-        Signed = 2
+        Signed = 2,
+
+        ///<summary>
+        /// Подписан с расхождениями
+        ///</summary>
+        PartialSigned
     }
 }

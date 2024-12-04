@@ -37,5 +37,10 @@ namespace OrderManagementSystem.UserInterface
         {
             ((GoodsMapViewModel)DataContext).GlnChangedEvent();
         }
+
+        private void GoodsMap_SelectedItemChanged(object sender, DevExpress.Xpf.Grid.SelectedItemChangedEventArgs e)
+        {
+            ((GoodsMapViewModel)DataContext).OnPropertyChanged("SelectedMapGoodByBuyer");
+        }
     }
 }

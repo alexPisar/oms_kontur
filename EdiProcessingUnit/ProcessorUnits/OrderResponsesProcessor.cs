@@ -15,9 +15,12 @@ namespace EdiProcessingUnit.WorkingUnits
 		internal AbtDbContext _abtDbContext;
 		private bool _isTest = Config.GetInstance()?.TestModeEnabled ?? false;
         private List<string> _xmlList = null;
+        private List<DocOrder> _ordersListForSentResponses = null;
+        private bool _isSentResponseForSomeOrders => _ordersListForSentResponses != null && _ordersListForSentResponses?.Count > 0;
 
         public OrderResponsesProcessor(List<string> xmlList) => _xmlList = xmlList;
         public OrderResponsesProcessor() { }
+        public OrderResponsesProcessor(List<DocOrder> orders) => _ordersListForSentResponses = orders;
 
         public override void Run()
 		{
@@ -55,10 +58,14 @@ namespace EdiProcessingUnit.WorkingUnits
             List<DocOrder> docs = new List<DocOrder>();
 
             var dateTimeDeliveryFrom = DateTime.Now.AddMonths(-1);
-            docs = _ediDbContext.DocOrders
-                .Where( doc => doc.Status == 1 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln && 
-                doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
-                .ToList();
+
+            if (_isSentResponseForSomeOrders)
+                docs = _ordersListForSentResponses;
+            else
+                docs = _ediDbContext.DocOrders
+                    .Where( doc => doc.Status == 1 && doc.ReqDeliveryDate != null && doc.GlnSeller == _edi.CurrentOrgGln &&
+                    doc.ReqDeliveryDate.Value > dateTimeDeliveryFrom)
+                    .ToList();
 
             List<LogOrder> orderLogs = new List<LogOrder>();
             foreach (var doc in docs)
@@ -66,24 +73,10 @@ namespace EdiProcessingUnit.WorkingUnits
                 if (!IsNeedProcessor( doc.GlnBuyer ))
                     continue;
 
-                foreach (var item in doc.LogOrders)
-                {
-                    /*
-                    0	Новый
-                    1	Экспортирован
-                    2	Отобран
-                    3	Отправлен
-                    4	Принят
-                    5	Принят с расхождением
-                    6	Отправлена корректировка
-                    7	Закрыт
-                    */
-                    if (item.OrderStatus != 1)
-                        continue;
+                var docLogOrders = doc?.LogOrders?.Where(l => l.OrderStatus == 1 && l.IdDocJournal != null) ?? new List<LogOrder>();
 
-                    if (item.IdDocJournal != null /*&& item.IdManufacturer != null*/)
-                        orderLogs.Add( item );
-                }
+                foreach (var item in docLogOrders)
+                    orderLogs.Add(item);
             }
 
             if (orderLogs.Count <= 0)
@@ -95,13 +88,20 @@ namespace EdiProcessingUnit.WorkingUnits
 			{
 				using (_abtDbContext = new AbtDbContext( connStr, true ))
 				{
+                    bool isAbtDataBaseError = false;
+
                     foreach (var orderLogsByOrder in orderLogsByOrders)
                     {
                         // дёргаем заказ
                         var orderId = orderLogsByOrder.Key;
                         DocOrder originalEdiDocOrder = _ediDbContext.DocOrders.FirstOrDefault( d => d.Id == orderId );
 
-                        if (!IsNeedProcessor( originalEdiDocOrder.GlnBuyer ))
+                        var connectedBuyer = _ediDbContext?
+                            .RefShoppingStores?
+                            .FirstOrDefault(r => r.BuyerGln == originalEdiDocOrder.GlnBuyer)?
+                            .MainShoppingStore;
+
+                        if (!IsNeedProcessor( originalEdiDocOrder.GlnBuyer, connectedBuyer ))
                             continue;
 
                         try
@@ -112,11 +112,23 @@ namespace EdiProcessingUnit.WorkingUnits
                             {
                                 foreach(var log in orderLogsByOrder)
                                 {
-                                    // 3. получаем привязанные к логам документы из трейдера
-                                    List<DocJournal> trDocs = _abtDbContext?
-                                        .DocJournals?
-                                        .Where(doc => log.IdDocJournal == doc.Id)?
-                                        .ToList();
+                                    List<DocJournal> trDocs = null;
+
+                                    try
+                                    {
+                                        // 3. получаем привязанные к логам документы из трейдера
+                                        trDocs = _abtDbContext?
+                                            .DocJournals?
+                                            .Where(doc => log.IdDocJournal == doc.Id)?
+                                            .ToList();
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        _log.Log(ex);
+                                        MailReporter.Add(ex, Console.Title);
+                                        isAbtDataBaseError = true;
+                                        break;
+                                    }
 
                                     if (trDocs == null)
                                         continue;
@@ -136,17 +148,33 @@ namespace EdiProcessingUnit.WorkingUnits
                                 foreach (var logsGroupsByManufacturer in logsGroupsByManufacturers)
                                 {
                                     bool existsDocumentWithNeedStatus = false;
+                                    bool allTraderDocumentsDeleted = true;
                                     // 2. пробегаемся по доступным логам
                                     foreach (LogOrder log in logsGroupsByManufacturer)
                                     {
-                                        // 3. получаем привязанные к логам документы из трейдера
-                                        List<DocJournal> trDocs = _abtDbContext?
-                                            .DocJournals?
-                                            .Where( doc => log.IdDocJournal == doc.Id)?
-                                            .ToList();
+                                        List<DocJournal> trDocs = null;
+
+                                        try
+                                        {
+                                            // 3. получаем привязанные к логам документы из трейдера
+                                            trDocs = _abtDbContext?
+                                                .DocJournals?
+                                                .Where( doc => log.IdDocJournal == doc.Id)?
+                                                .ToList();
+                                        }
+                                        catch(Exception ex)
+                                        {
+                                            _log.Log(ex);
+                                            MailReporter.Add(ex, Console.Title);
+                                            isAbtDataBaseError = true;
+                                            break;
+                                        }
 
                                         if (trDocs == null)
+                                        {
+                                            allTraderDocumentsDeleted = false;
                                             continue;
+                                        }
 
                                         foreach (var t in trDocs)
                                             if ((!traderDocs.Contains( t )) && t.ActStatus >= 4)
@@ -154,14 +182,65 @@ namespace EdiProcessingUnit.WorkingUnits
                                                 traderDocs.Add( t );
                                                 existsDocumentWithNeedStatus = true;
                                             }
+
+                                        if (allTraderDocumentsDeleted && trDocs.Count > 0 && 
+                                            trDocs.All(tr => /*tr.Deleted == 1 &&*/ tr.ActStatus == 0) && !existsDocumentWithNeedStatus)
+                                        {
+                                            foreach(var tr in trDocs)
+                                            {
+                                                if (!allTraderDocumentsDeleted)
+                                                    continue;
+
+                                                if (tr.Deleted == 1)
+                                                    continue;
+
+                                                var trDocJournalId = tr.Id;
+                                                DateTime? trDocDeliveryDate = tr.DeliveryDate;
+
+                                                var param = new Oracle.ManagedDataAccess.Client.OracleParameter("ID_DOC", trDocJournalId);
+                                                param.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Decimal;
+                                                IEnumerable<DateTime> conductDateTimes = _abtDbContext?.Database?
+                                                    .SqlQuery<DateTime>($"select action_datetime from log_actions where id_object = :ID_DOC and id_action = 0", param);
+
+                                                if (conductDateTimes == null)
+                                                    conductDateTimes = new List<DateTime>();
+
+                                                DateTime? conductDateTime = null;
+
+                                                if (conductDateTimes.Count() > 0)
+                                                    conductDateTime = conductDateTimes.Max().AddDays(1);
+
+                                                allTraderDocumentsDeleted = trDocDeliveryDate != null && 
+                                                    trDocDeliveryDate.Value < DateTime.Now;
+
+                                                if (conductDateTime != null)
+                                                {
+                                                    if (conductDateTime.Value.DayOfWeek == DayOfWeek.Saturday)
+                                                        conductDateTime = conductDateTime.Value.AddDays(2);
+                                                    else if (conductDateTime.Value.DayOfWeek == DayOfWeek.Sunday)
+                                                        conductDateTime = conductDateTime.Value.AddDays(1);
+
+                                                    allTraderDocumentsDeleted = allTraderDocumentsDeleted && conductDateTime.Value < DateTime.Now;
+                                                }
+                                            }
+                                        }
+                                        else
+                                            allTraderDocumentsDeleted = false;
                                     }
 
-                                    existsManufacturerWithEarlyStatus = existsManufacturerWithEarlyStatus || !existsDocumentWithNeedStatus;
+                                    if (isAbtDataBaseError)
+                                        break;
+
+                                    if(!allTraderDocumentsDeleted)
+                                        existsManufacturerWithEarlyStatus = existsManufacturerWithEarlyStatus || !existsDocumentWithNeedStatus;
                                 }
 
                                 if (existsManufacturerWithEarlyStatus)
                                     continue;
                             }
+
+                            if (isAbtDataBaseError)
+                                break;
 
                             if (traderDocs.Exists( tr => tr.ActStatus < 4 ))
                                 continue;
@@ -180,6 +259,81 @@ namespace EdiProcessingUnit.WorkingUnits
                                     LineItem newOrdrspeLineItem = new LineItem();
                                     DocLineItem origLineItem = originalEdiDocOrder.DocLineItems
                                         .FirstOrDefault( x => x.IdGood == detail.IdGood );
+
+                                    if (origLineItem == null)
+                                    {
+                                        string sql = "select RBC.BAR_CODE FROM ABT.REF_GOODS RG, ABT.REF_BAR_CODES RBC " +
+                                            "WHERE RBC.ID_GOOD = RG.ID and RG.ID=" + detail.IdGood;
+
+                                        List<string> barCodes = _abtDbContext?.Database?
+                                        .SqlQuery<string>(sql)?
+                                        .ToList() ?? new List<string>();
+
+                                        if (barCodes.Count == 0)
+                                            continue;
+
+                                        origLineItem = originalEdiDocOrder.DocLineItems?
+                                            .Where(x => barCodes.Exists(b => b == x.Gtin))?
+                                            .FirstOrDefault();
+
+                                        if (origLineItem != null)
+                                            origLineItem.IdGood = (long)detail.IdGood;
+                                    }
+
+                                    if (origLineItem == null && connectedBuyer?.IncludedBuyerCodes == 1)
+                                    {
+                                        var refBarCode = _abtDbContext?.RefBarCodes?.FirstOrDefault(r => r.IdGood == detail.IdGood && r.IsPrimary == false);
+
+                                        IEnumerable<MapGoodByBuyer> buyerItems = null;
+
+                                        if (refBarCode != null)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.IdGood == detail.IdGood && mapGood.BarCode == refBarCode.BarCode
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (refBarCode == null || buyerItems == null || buyerItems.Count() == 0)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.IdGood == detail.IdGood
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (buyerItems.Count() == 0)
+                                            buyerItems = (from mapGoodByBuyer in _ediDbContext.MapGoodsByBuyers
+                                                          where mapGoodByBuyer.Gln == connectedBuyer.Gln
+                                                          join mapGood in _ediDbContext.MapGoods on mapGoodByBuyer.IdMapGood equals (mapGood.Id)
+                                                          where mapGood.BarCode == refBarCode.BarCode
+                                                          select mapGoodByBuyer) as IEnumerable<MapGoodByBuyer> ?? new List<MapGoodByBuyer>();
+
+                                        if (buyerItems.Count() == 0)
+                                            continue;
+
+                                        var buyerCodes = buyerItems?
+                                        .Where(x => !string.IsNullOrEmpty(x.BuyerCode))?
+                                        .Select(s => s.BuyerCode) ?? new List<string>();
+
+                                        if (buyerCodes.Count() == 0)
+                                            continue;
+
+                                        buyerCodes = buyerCodes.Distinct();
+
+                                        origLineItem = originalEdiDocOrder.DocLineItems?
+                                            .Where(x => buyerCodes.Any(b => b == x.BuyerCode))?
+                                            .FirstOrDefault();
+
+                                        if (origLineItem != null)
+                                        {
+                                            origLineItem.IdGood = (long)detail.IdGood;
+
+                                            if (!string.IsNullOrEmpty(refBarCode?.BarCode))
+                                                origLineItem.Gtin = refBarCode.BarCode;
+                                        }
+                                        else
+                                            continue;
+                                    }
+
                                     if (origLineItem == null)
                                         continue;
                                     double UnitsCount = 0,// отправляемое кол-во
@@ -354,7 +508,7 @@ namespace EdiProcessingUnit.WorkingUnits
                                 + $"\r\n Number={originalEdiDocOrder.Number}"
                                 + $"\r\n Buyer ={originalEdiDocOrder.Buyer.IdContractor} {originalEdiDocOrder.GlnBuyer} {originalEdiDocOrder.Buyer.Name}"
                                 + $"\r\n Seller={originalEdiDocOrder.Seller.IdContractor} {originalEdiDocOrder.GlnSeller} {originalEdiDocOrder.Seller.Name}"
-                                + $"\r\n ShipTo={originalEdiDocOrder.ShipTo.IdContractor} {originalEdiDocOrder.GlnShipTo} {originalEdiDocOrder.ShipTo.Name}"
+                                + $"\r\n ShipTo={originalEdiDocOrder.ShipTo.IdContractor} {originalEdiDocOrder.GlnShipTo} {originalEdiDocOrder.NameShipTo}"
                                 + $"\r\n Sender={originalEdiDocOrder.Sender.IdContractor} {originalEdiDocOrder.GlnSender} {originalEdiDocOrder.Sender.Name}"
                                 );
                         }
@@ -381,17 +535,18 @@ namespace EdiProcessingUnit.WorkingUnits
         /// Определяет, нужен ли данный документ в документообороте
         /// </summary>
         /// <param name="gln">ГЛН организации</param>
-        protected override bool IsNeedProcessor(string gln)
+        protected override bool IsNeedProcessor(string gln, ConnectedBuyers connectedBuyer = null)
         {
-            var connectedBuyer = _ediDbContext?
-                .RefShoppingStores?
-                .FirstOrDefault( r => r.BuyerGln == gln )?
-                .MainShoppingStore;
+            if(connectedBuyer == null)
+                connectedBuyer = _ediDbContext?
+                    .RefShoppingStores?
+                    .FirstOrDefault( r => r.BuyerGln == gln )?
+                    .MainShoppingStore;
 
             if (connectedBuyer == null)
                 return false;
 
-            return connectedBuyer.OrderExchangeType == (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp;
+            return _isSentResponseForSomeOrders || connectedBuyer.OrderExchangeType == (int)DataContextManagementUnit.DataAccess.OrderTypes.OrdersOrdrsp;
         }
     }
 }

@@ -30,13 +30,13 @@ namespace KonturEdoClient.Utils
 
         public Diadoc.Api.Proto.Events.Message SignAndSend(bool isSign, X509Certificate2 signerCertificate,
             Kontragent sender, Kontragent receiver,
-            Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens document)
+            List<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens> documents)
         {
             _log.Log("SignAndSend: отправка" + (isSign ? " с подписанием." : "."));
-            if (document == null)
+            if (documents == null || documents.Count == 0)
             {
                 System.Windows.MessageBox.Show(
-                    "Не выбран документ для отправки.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    "Не выбраны документы для отправки.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return null;
             }
 
@@ -46,39 +46,61 @@ namespace KonturEdoClient.Utils
                 return null;
             }
 
-            var crypt = new WinApiCryptWrapper(signerCertificate);
-            Diadoc.Api.Proto.Events.Message message = null;
-
-            if (!string.IsNullOrEmpty(receiver.FnsParticipantId))
-            {
-                var orgData = document.Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails;
-
-                if (orgData != null)
-                    orgData.FnsParticipantId = receiver.FnsParticipantId;
-            }
-
-            var generatedFile = GetGeneratedFile(document);
-
-            if (!System.IO.Directory.Exists(Properties.Settings.Default.XmlFilesPath))
-                System.IO.Directory.CreateDirectory(Properties.Settings.Default.XmlFilesPath);
-
-            generatedFile.SaveContentToFile($"{Properties.Settings.Default.XmlFilesPath}\\{generatedFile.FileName}");
+            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost powerOfAttorneyToPost = null;
 
             if (isSign)
             {
-                byte[] signature = crypt.Sign(generatedFile.Content, true);
+                if (!string.IsNullOrEmpty(sender.EmchdId))
+                    powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                    {
+                        UseDefault = false,
+                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                        {
+                            RegistrationNumber = sender.EmchdId,
+                            IssuerInn = sender.Inn
+                        }
+                    };
+            }
 
-                message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
-                    receiver.OrgId, false,
-                    generatedFile.Content,
-                    "СЧФДОП", signature);
-            }
-            else
+            var crypt = new WinApiCryptWrapper(signerCertificate);
+            Diadoc.Api.Proto.Events.Message message = null;
+            var contents = new List<Diadoc.Api.Proto.Events.SignedContent>();
+
+            foreach (var document in documents)
             {
-                message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
-                    receiver.OrgId, false,
-                    generatedFile.Content, "СЧФДОП");
+                if (!string.IsNullOrEmpty(receiver.FnsParticipantId))
+                {
+                    var orgData = document.Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails;
+
+                    if (orgData != null)
+                        orgData.FnsParticipantId = receiver.FnsParticipantId;
+                }
+
+                var generatedFile = GetGeneratedFile(document);
+
+                if (!System.IO.Directory.Exists(Properties.Settings.Default.XmlFilesPath))
+                    System.IO.Directory.CreateDirectory(Properties.Settings.Default.XmlFilesPath);
+
+                generatedFile.SaveContentToFile($"{Properties.Settings.Default.XmlFilesPath}\\{generatedFile.FileName}");
+
+                var content = new Diadoc.Api.Proto.Events.SignedContent
+                {
+                    Content = generatedFile.Content
+                };
+
+                if (isSign)
+                {
+                    byte[] signature = crypt.Sign(generatedFile.Content, true);
+                    content.Signature = signature;
+                }
+
+                contents.Add(content);
             }
+
+            message = Edo.GetInstance().SendXmlDocument(sender.OrgId,
+                receiver.OrgId, false,
+                contents, "СЧФДОП", powerOfAttorneyToPost);
+            
 
             return message;
         }

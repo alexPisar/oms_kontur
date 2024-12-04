@@ -1,0 +1,178 @@
+﻿<Window x:Class="KonturEdoClient.ChannelSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="{Binding MainWindowText}" Height="1090" Width="850">
+    <Grid>
+        <ScrollViewer>
+            <Grid>
+            <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Vertical" Grid.Row="0">
+            <StackPanel Orientation="Horizontal" Height="45">
+                <Label Content="Сеть из базы" Width="100" Margin="10 0" VerticalAlignment="Center"/>
+                <dxg:LookUpEdit Width="600" PopupWidth="1200" PopupHeight="600" Margin="0 10" IsEnabled="{Binding IsCreate}"
+                                ItemsSource="{Binding Channels, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                SelectedItem="{Binding SelectedChannel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                DisplayMember="Name" ValueMember="Id"
+                                EditValue="{Binding Item.IdChannel, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                ImmediatePopup="True" AutoPopulateColumns="False">
+                    <dxg:LookUpEdit.PopupContentTemplate>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn Header="ID" Width="80" FieldName="Id"/>
+                                    <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView AllowPerPixelScrolling="True" 
+									                   ShowSearchPanelMode="Always" 
+									                   AllowEditing="False" 
+									                   NavigationStyle="Row" 
+									                   ShowGroupPanel="False" 
+									                   ShowAutoFilterRow="True" />
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </ControlTemplate>
+                    </dxg:LookUpEdit.PopupContentTemplate>
+                    <dxg:LookUpEdit.StyleSettings>
+                        <dxg:SearchLookUpEditStyleSettings/>
+                    </dxg:LookUpEdit.StyleSettings>
+                </dxg:LookUpEdit>
+            </StackPanel>
+                    <StackPanel Orientation="Horizontal" Height="45">
+                        <Label Content="Сеть EDI" Width="100" Margin="10 0" VerticalAlignment="Center"/>
+                        <dxg:LookUpEdit Width="600" PopupWidth="900" PopupHeight="500" Margin="0 10"
+                                        ItemsSource="{Binding EdiChannels, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                        SelectedItem="{Binding SelectedEdiChannel, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                        DisplayMember="Gln" ValueMember="Gln"
+                                        EditValue="{Binding Item.EdiGln, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                        ImmediatePopup="True" AutoPopulateColumns="False">
+                            <dxg:LookUpEdit.PopupContentTemplate>
+                                <ControlTemplate TargetType="{x:Type ContentControl}">
+                                    <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >
+                                        <dxg:GridControl.Columns>
+                                            <dxg:GridColumn Header="GLN" Width="120" FieldName="Gln"/>
+                                            <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                        </dxg:GridControl.Columns>
+                                    </dxg:GridControl>
+                                </ControlTemplate>
+                            </dxg:LookUpEdit.PopupContentTemplate>
+                        </dxg:LookUpEdit>
+                    </StackPanel>
+                        <CheckBox Height="35" x:Name="PermittedCheckBox" Margin="10" Content="Разрешить сопоставление для других филиалов" IsChecked="{Binding IsPermittedForOtherFilials, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="140" />
+                </Grid.RowDefinitions>
+                <GroupBox Header="Название текстовой информации поля факта хозяйственной жизни 1 (ИнфПолФХЖ1)" Grid.Row="0">
+                    <Grid Height="625">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="215" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Vertical" Grid.Row="0">
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера УПД" Margin="10 0" Width="350" VerticalAlignment="Center"/>
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.NumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера заказа" Margin="10 0" Width="350" VerticalAlignment="Center"/>
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.OrderNumberUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля даты заказа" Margin="10 0" Width="350" VerticalAlignment="Center"/>
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.OrderDateUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера документа возврата УКД" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DocReturnNumberUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля даты документа возврата УКД" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DocReturnDateUcdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля GLN грузополучателя" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.GlnShipToUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Grid.Row="1">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Height="50">
+                                <Label VerticalAlignment="Center" FontSize="16" Margin="0 0 100 0" Content="Пары ключ - значение (УПД)" />
+                                <Button x:Name="AddButton" Content="Добавить" Margin="5 10" Click="AddButton_Click" />
+                                <Button x:Name="EditButton" Content="Изменить" Margin="5 10" Click="EditButton_Click" />
+                                <Button x:Name="RemoveButton" Content="Удалить" Margin="5 10" Click="RemoveButton_Click" />
+                            </StackPanel>
+                            <dxg:GridControl x:Name="KeyValuePairsGridControl" Height="150" ItemsSource="{Binding Item.EdoValuesPairs, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn Header="Наименование" Width="*" FieldName="Key"/>
+                                    <dxg:GridColumn Header="Значение" Width="80" FieldName="Value"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView AllowPerPixelScrolling="True" 
+                                                   ShowSearchPanelMode="Always"
+                                                   AllowEditing="False" 
+                                                   NavigationStyle="Row" />
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Grid.Row="2">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Height="50">
+                                <Label VerticalAlignment="Center" FontSize="16" Margin="0 0 100 0" Content="Пары ключ - значение (УКД)" />
+                                <Button x:Name="UcdAddButton" Content="Добавить" Margin="5 10" Click="UcdAddButton_Click" />
+                                <Button x:Name="UcdEditButton" Content="Изменить" Margin="5 10" Click="UcdEditButton_Click" />
+                                <Button x:Name="UcdRemoveButton" Content="Удалить" Margin="5 10" Click="UcdRemoveButton_Click" />
+                            </StackPanel>
+                            <dxg:GridControl x:Name="UcdKeyValuePairsGridControl" Height="150" ItemsSource="{Binding Item.EdoUcdValuesPairs, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn Header="Наименование" Width="*" FieldName="Key"/>
+                                    <dxg:GridColumn Header="Значение" Width="80" FieldName="Value"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView AllowPerPixelScrolling="True" 
+                                                   ShowSearchPanelMode="Always"
+                                                   AllowEditing="False" 
+                                                   NavigationStyle="Row" />
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Название текстовой информации для сведений о товаре поля факта хозяйственной жизни 2 (ИнфПолФХЖ2)" Grid.Row="1">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Vertical" Grid.Row="0">
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера товара покупателя" Margin="10 0" Width="350" VerticalAlignment="Center"/>
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailBuyerCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера штрих кода" Margin="10 0" Width="350" VerticalAlignment="Center"/>
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailBarCodeUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="35">
+                                <Label Content="Название поля номера позиции" Margin="10 0" Width="350" VerticalAlignment="Center" />
+                                <TextBox Width="420" Margin="0 5" Text="{Binding Item.DetailPositionUpdId, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+            </Grid>
+            <CheckBox Height="35" Margin="10" x:Name="TransferSettingsCheckBox" Content="Перенести настройки на другие филиалы" IsChecked="{Binding TransferSettingsToFilials, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
+            <Button Margin="5" Content="Сохранить" Width="90" Click="SaveButton_Click" />
+            <Button Margin="5" Content="Отмена" Width="90" Click="CancelButton_Click" />
+        </StackPanel>
+    </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

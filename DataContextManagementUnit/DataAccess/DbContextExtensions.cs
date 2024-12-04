@@ -43,7 +43,19 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi
 			return connection;
 		}
 
-	}
+        public void ExecuteProcedure(string procedureName, params object[] parameters)
+        {
+            var commandText = string.Empty;
+
+            if (parameters != null && parameters?.Count() > 0)
+                foreach (var par in parameters)
+                    commandText += string.IsNullOrEmpty(commandText) ? $"{((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}"
+                        : $", {((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}";
+
+            commandText = $"begin {procedureName}({commandText});END;";
+            var result = Database.ExecuteSqlCommand(commandText, parameters);
+        }
+    }
 }
 
 namespace DataContextManagementUnit.DataAccess.Contexts.Abt
@@ -73,7 +85,20 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
 			return retVal;
 		}
 
-		private static DbConnection GetDefaultConnection()
+        public void ExecuteProcedure(string procedureName, params object[] parameters)
+        {
+            var commandText = string.Empty;
+
+            if (parameters?.Count() > 0)
+                foreach (var par in parameters)
+                    commandText += string.IsNullOrEmpty(commandText) ? $"{((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}"
+                        : $", {((OracleParameter)par).ParameterName} => :{((OracleParameter)par).ParameterName}";
+
+            commandText = $"begin {procedureName}({commandText});END;";
+            Database.ExecuteSqlCommand(commandText, parameters);
+        }
+
+        private static DbConnection GetDefaultConnection()
 		{
 			DbConnection connection = Oracle.ManagedDataAccess.Client.OracleClientFactory.Instance.CreateConnection();
             var connStr = new DataBaseConnection(Config.GetInstance().AbtDataBaseIpAddress, Config.GetInstance().AbtDataBaseSid, Config.GetInstance().GetDataBaseUser(), Config.GetInstance().GetDataBasePassword()).GetConnectionString();

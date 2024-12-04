@@ -40,8 +40,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiadocApi, Version=2.9.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <HintPath>..\packages\DiadocSDK.2.9.13\lib\net461\DiadocApi.dll</HintPath>
+    <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+	  <HintPath>..\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -109,6 +110,10 @@
     <ProjectReference Include="..\Reporter\Reporter.csproj">
       <Project>{503e3c25-6312-4928-8c3f-2909c7e429a2}</Project>
       <Name>Reporter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WebService\WebService.csproj">
+      <Project>{ce9f432a-bbc8-45b1-8a7f-3a533c4fb47e}</Project>
+      <Name>WebService</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

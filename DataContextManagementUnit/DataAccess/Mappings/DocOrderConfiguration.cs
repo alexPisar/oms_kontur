@@ -90,6 +90,16 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                     .HasMaxLength(16)
                     .IsUnicode(false);
             this
+                .Property(p => p.NameShipTo)
+                    .HasColumnName(@"NAME_SHIP_TO")
+                    .HasMaxLength(512)
+                    .IsUnicode(false);
+            this
+                .Property(p => p.AddressShipTo)
+                   .HasColumnName(@"ADDRESS_SHIP_TO")
+                   .HasMaxLength(512)
+                   .IsUnicode(false);
+            this
                 .Property(p => p.Comment)
                     .HasColumnName(@"COMMENT")
                     .HasMaxLength(512)
@@ -118,6 +128,14 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Edi.Mapping
                 .Property(p => p.Status)
                     .HasColumnName(@"STATUS")
                     .IsRequired();
+            this
+                .Property(p => p.IsMarkedNotExportable)
+                    .HasColumnName(@"IS_MARKED_NOT_EXPORTABLE")
+                    .IsRequired();
+            this
+                .Property(p => p.OrderDeliveryDate)
+                    .HasColumnName(@"ORDER_DELIVERY_DATE")
+                    .HasPrecision(0);
             // Associations:
             this
                 .HasMany(p => p.DocLineItems)

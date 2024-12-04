@@ -14,5 +14,8 @@ namespace KonturEdoClient.HonestMark.Models
 
         [JsonProperty(PropertyName = "data")]
         public string Data { get; set; }
+
+        [JsonProperty(PropertyName = "inn")]
+        public string Inn { get; set; }
     }
 }

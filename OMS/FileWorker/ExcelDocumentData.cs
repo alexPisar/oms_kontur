@@ -54,6 +54,8 @@ namespace FileWorker
 
         public double HeadRowHeight { get; set; }
 
+        public bool HeadRowAutoFilter { get; set; }
+
         public double DefaultRowHeight { get; set; }
 
         public double DefaultRowWidth { get; set; }
@@ -134,7 +136,19 @@ namespace FileWorker
                 double result;
 
                 if (valueIsString)
-                    double.TryParse( (string)value, out result );
+                {
+                    if(!double.TryParse((string)value, out result))
+                    {
+                        try
+                        {
+                            result = double.Parse((string)value, System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                        catch(Exception ex)
+                        {
+
+                        }
+                    }
+                }
                 else
                     result = GetResultByValue<double>( value );
 
