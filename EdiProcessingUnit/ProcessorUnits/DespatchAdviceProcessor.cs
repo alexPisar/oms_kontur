@@ -567,7 +567,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             {
                 desadvEdiMsg.DespatchAdvice.invoiceIdentificator = new Identificator();
                 desadvEdiMsg.DespatchAdvice.invoiceIdentificator.Number = invoiceNumber;
-                //desadvEdiMsg.DespatchAdvice.invoiceIdentificator.Date = desadvEdiMsg?.DespatchAdvice?.date;
+                desadvEdiMsg.DespatchAdvice.invoiceIdentificator.Date = desadvEdiMsg?.DespatchAdvice?.date;
             }
 
             if(deliveryDate != null)
