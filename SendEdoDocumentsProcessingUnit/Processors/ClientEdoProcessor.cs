@@ -179,7 +179,20 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     return u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
                                         $"select count(*) from log_actions where id_object = {u.DocJournal.IdDocMaster} and id_action = {permissionStatus} and action_datetime > sysdate - 14")
                                         .First() > 0;
-                                })?.Select(u => u.Init(_abt))?.ToList();
+                                })?.Select(u =>
+                                {
+                                    try
+                                    {
+                                        return u.Init(_abt);
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        _log.Log(ex);
+                                        MailReporter.Add(ex, $"Ошибка в документе {u.DocJournal.Code}: ");
+                                        return null;
+                                    }
+                                }
+                                )?.Where(u => u != null)?.ToList();
 
                                 int position = 0, block = 10, count = docs.Count();
                                 docs = docs ?? new List<UniversalTransferDocument>();
@@ -192,7 +205,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                     var tasks = docsFromBlock.Select((doc) =>
                                     {
-                                        var receiver = counteragents.FirstOrDefault(r => $"{r.Inn}/{r.Kpp}" == doc.BuyerInnKpp);
+                                        var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
                                         var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee);
                                         return task;
                                     });
@@ -489,14 +502,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 {
                                     try
                                     {
-                                        var receiver = counteragents.FirstOrDefault(r => $"{r.Inn}/{r.Kpp}" == doc.BuyerInnKpp);
-
-                                        if (receiver == null)
-                                        {
-                                            var length = doc.BuyerInnKpp.LastIndexOf('/');
-                                            var buyerInn = doc.BuyerInnKpp.Substring(0, length).Trim();
-                                            receiver = counteragents.FirstOrDefault(r => r.Inn == buyerInn);
-                                        }
+                                        var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
 
                                         if (receiver == null)
                                             continue;
