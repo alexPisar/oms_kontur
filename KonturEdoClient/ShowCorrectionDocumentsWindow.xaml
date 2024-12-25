@@ -62,6 +62,7 @@
             </dxg:GridColumn>
             <dxg:GridColumn Header="Тип" Width="120" FieldName="DocType" />
             <dxg:GridColumn Header="Номер документа" Width="80" FieldName="CorrectionDocJournalNumber" />
+            <dxg:GridColumn Header="Статус документа" Width="80" FieldName="ActStatusStr" />
             <dxg:GridColumn Header="Номер корректировки" Width="80" FieldName="DocumentNumber" />
             <dxg:GridColumn Header="Номер счёта-фактуры" Width="80" FieldName="InvoiceNumber" />
             <dxg:GridColumn Header="Статус в ЭДО" Width="80" FieldName="DocEdoSendStatus" />
