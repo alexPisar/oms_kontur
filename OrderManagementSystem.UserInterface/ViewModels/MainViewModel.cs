@@ -817,9 +817,9 @@ namespace OMS.ViewModels
             }
             else
             {
-                var docLineItem = order.DocLineItems.FirstOrDefault();
+                var docLineItem = order.DocLineItems.FirstOrDefault(l => l.IdGood != null);
 
-                if (docLineItem?.IdGood == null)
+                if (docLineItem == null || docLineItem?.IdGood == null)
                     return new List<decimal?>();
 
                 var param = new Oracle.ManagedDataAccess.Client.OracleParameter("IdGood", docLineItem.IdGood);
