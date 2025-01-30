@@ -55,6 +55,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         {
             switch (status)
             {
+                case "0":
+                    return 0;
                 case "5":
                     return 5;
                 case "6":
@@ -150,7 +152,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                                                                on buyerContractor.DefaultCustomer equals buyerCustomer.Id
                                                                                join refRefTag in _abt.RefRefTags
                                                                                on buyerCustomer.Id equals refRefTag.IdObject
-                                                                               where refRefTag.IdTag == 242 && refRefTag.TagValue != "0"
+                                                                               where refRefTag.IdTag == 242
                                                                                let refRefTagValue = refRefTag.TagValue
                                                                                select new UniversalTransferDocument
                                                                                {
@@ -176,7 +178,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 docs = docs?/*.AsParallel()?*/.Where(u => 
                                 {
                                     var permissionStatus = FilterByStatuses(u.ActStatusForSendFromTraderStr);
-                                    return u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
+                                    return permissionStatus > 0 && u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
                                         $"select count(*) from log_actions where id_object = {u.DocJournal.IdDocMaster} and id_action = {permissionStatus} and action_datetime > sysdate - 14")
                                         .First() > 0;
                                 })?.Select(u =>
@@ -467,7 +469,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                             on buyerContractor.DefaultCustomer equals buyerCustomer.Id
                                             join refRefTag in _abt.RefRefTags
                                             on buyerCustomer.Id equals refRefTag.IdObject
-                                            where refRefTag.IdTag == 242 && refRefTag.TagValue != "0"
+                                            where refRefTag.IdTag == 242
                                             let refRefTagValue = refRefTag.TagValue
                                             select new UniversalTransferDocument
                                             {
@@ -493,7 +495,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 docs = docs?.AsParallel()?.Where(u =>
                                 {
                                     var permissionStatus = FilterByStatuses(u.ActStatusForSendFromTraderStr);
-                                    return u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
+                                    return permissionStatus > 0 && u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
                                         $"select count(*) from log_actions where id_object = {u.DocJournal.IdDocMaster} and id_action = {permissionStatus} and action_datetime > sysdate - 14")
                                         .First() > 0;
                                 })?.Select(u => u.Init(_abt))?.ToList();
