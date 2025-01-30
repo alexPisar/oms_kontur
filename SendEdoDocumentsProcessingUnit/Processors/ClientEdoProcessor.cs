@@ -64,7 +64,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             };
         }
 
-        public async Task<bool> TestSend()
+        public async Task<bool> RunAsync()
         {
             List<string> connectionStringList = new EdiProcessingUnit.UsersConfig().GetAllConnectionStrings();
             var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
@@ -150,7 +150,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                                                                on buyerContractor.DefaultCustomer equals buyerCustomer.Id
                                                                                join refRefTag in _abt.RefRefTags
                                                                                on buyerCustomer.Id equals refRefTag.IdObject
-                                                                               where refRefTag.IdTag == 242
+                                                                               where refRefTag.IdTag == 242 && refRefTag.TagValue != "0"
                                                                                let refRefTagValue = refRefTag.TagValue
                                                                                select new UniversalTransferDocument
                                                                                {
@@ -467,7 +467,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                             on buyerContractor.DefaultCustomer equals buyerCustomer.Id
                                             join refRefTag in _abt.RefRefTags
                                             on buyerCustomer.Id equals refRefTag.IdObject
-                                            where refRefTag.IdTag == 242
+                                            where refRefTag.IdTag == 242 && refRefTag.TagValue != "0"
                                             let refRefTagValue = refRefTag.TagValue
                                             select new UniversalTransferDocument
                                             {
