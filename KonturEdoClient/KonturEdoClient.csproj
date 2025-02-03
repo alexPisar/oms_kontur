@@ -148,9 +148,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\DevExpress 20.1\Components\Bin\Framework\DevExpress.Xpf.Themes.VS2019Light.v20.1.dll</HintPath>
     </Reference>
-    <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
+    <Reference Include="DiadocApi, Version=2.30.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
+      <HintPath>..\OMS\packages\DiadocSDK.2.30.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>

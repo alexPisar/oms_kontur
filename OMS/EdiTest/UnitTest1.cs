@@ -148,103 +148,103 @@ namespace EdiTest
         [TestMethod]
         public void EdoGenerateXmlTest()
         {
-            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
-            edo.Authenticate(true);
-            var userDocCreator = edo.GetUniversalTransferDocumentWithHyphens(new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
-            {
-                Inn = "7750370238",
-                Kpp = "770100101",
-                OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                OrgName = "ЗАО Очень Древний Папирус",
-                Address = new Diadoc.Api.DataXml.Address
-                {
-                    Item = new Diadoc.Api.DataXml.RussianAddress
-                    {
-                        Region = "66"
-                    }
-                }
-            },
-            new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
-            {
-                Inn = "9500000005",
-                Kpp = "667301001",
-                OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                OrgName = "ООО Тестовое Юрлицо обычное",
-                Address = new Diadoc.Api.DataXml.Address
-                {
-                    Item = new Diadoc.Api.DataXml.RussianAddress
-                    {
-                        Region = "66"
-                    }
-                }
-            },
-            "01.01.2020",
-            "134",
-            Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФ,
-            null,
-            new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
-            {
-                Item = new[]
-                    {
-                        new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
-                        {
-                            Product = "товар",
-                            Unit = "796",
-                            Quantity = 10,
-                            QuantitySpecified = true,
-                            WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
-                            SubtotalSpecified = true,
-                            Subtotal = 0,
-                            ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights,
-                            ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[]
-                            {
-                                new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
-                                {
-                                    ItemsElementName = new []{ Diadoc.Api.DataXml.ItemsChoiceType.Unit },
-                                    Items = new string[]{"4564385435465"},
-                                    TransPackageId = "6352386234233"
-                                }
-                            }
-                        }
-                    },
+            //var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            //edo.Authenticate(true);
+            //var userDocCreator = edo.GetUniversalTransferDocumentWithHyphens(new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+            //{
+            //    Inn = "7750370238",
+            //    Kpp = "770100101",
+            //    OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+            //    OrgName = "ЗАО Очень Древний Папирус",
+            //    Address = new Diadoc.Api.DataXml.Address
+            //    {
+            //        Item = new Diadoc.Api.DataXml.RussianAddress
+            //        {
+            //            Region = "66"
+            //        }
+            //    }
+            //},
+            //new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+            //{
+            //    Inn = "9500000005",
+            //    Kpp = "667301001",
+            //    OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+            //    OrgName = "ООО Тестовое Юрлицо обычное",
+            //    Address = new Diadoc.Api.DataXml.Address
+            //    {
+            //        Item = new Diadoc.Api.DataXml.RussianAddress
+            //        {
+            //            Region = "66"
+            //        }
+            //    }
+            //},
+            //"01.01.2020",
+            //"134",
+            //Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФ,
+            //null,
+            //new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+            //{
+            //    Item = new[]
+            //        {
+            //            new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+            //            {
+            //                Product = "товар",
+            //                Unit = "796",
+            //                Quantity = 10,
+            //                QuantitySpecified = true,
+            //                WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+            //                SubtotalSpecified = true,
+            //                Subtotal = 0,
+            //                ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights,
+            //                ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[]
+            //                {
+            //                    new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+            //                    {
+            //                        ItemsElementName = new []{ Diadoc.Api.DataXml.ItemsChoiceType.Unit },
+            //                        Items = new string[]{"4564385435465"},
+            //                        TransPackageId = "6352386234233"
+            //                    }
+            //                }
+            //            }
+            //        },
 
-                WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True,
-                TotalSpecified=true,
-                Total=7960
-            },
-            new[]
-            {
-                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
-                {
-                    SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
-                    FirstName = "Иван",
-                    MiddleName = "Иванович",
-                    LastName = "Иванов",
-                    SignerOrganizationName = "ЗАО Очень Древний Папирус",
-                    Inn = "7750370238",
-                    Position = "директор"
-                }
-            },
-            0, "643", "Писаренко А.Н.");
+            //    WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True,
+            //    TotalSpecified=true,
+            //    Total=7960
+            //},
+            //new[]
+            //{
+            //    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+            //    {
+            //        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+            //        FirstName = "Иван",
+            //        MiddleName = "Иванович",
+            //        LastName = "Иванов",
+            //        SignerOrganizationName = "ЗАО Очень Древний Папирус",
+            //        Inn = "7750370238",
+            //        Position = "директор"
+            //    }
+            //},
+            //0, "643", "Писаренко А.Н.");
 
-            try
-            {
-                var docFile = edo.GenerateTitleXml("UniversalTransferDocument",
-                    "СЧФ", "utd820_05_01_01_hyphen", 0, userDocCreator);
+            //try
+            //{
+            //    var docFile = edo.GenerateTitleXml("UniversalTransferDocument",
+            //        "СЧФ", "utd820_05_01_01_hyphen", 0, userDocCreator);
 
-                var xmlString = Encoding.GetEncoding(1251).GetString(docFile.Content);
+            //    var xmlString = Encoding.GetEncoding(1251).GetString(docFile.Content);
 
-                docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\{docFile.FileName}");
+            //    docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\{docFile.FileName}");
 
-                var universalTransferDocumentString = Encoding.UTF8.GetString(userDocCreator.SerializeToXml());
-                var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
-                universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
-                reporter.LoadFromXml(universalTransferDocumentString);
-            }
-            catch(WebException webEx)
-            {
+            //    var universalTransferDocumentString = Encoding.UTF8.GetString(userDocCreator.SerializeToXml());
+            //    var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
+            //    universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
+            //    reporter.LoadFromXml(universalTransferDocumentString);
+            //}
+            //catch(WebException webEx)
+            //{
 
-            }
+            //}
         }
 
         [TestMethod]
@@ -330,7 +330,7 @@ namespace EdiTest
                     },
                     TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
                     {
-                        Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                        Employee = new Diadoc.Api.DataXml.Employee
                         {
                             Position = "Зав. складом",
                             EmployeeInfo = employee,
@@ -430,7 +430,7 @@ namespace EdiTest
                 else
                     signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
 
-                document.UseSignerDetails(signer);
+                document.Signers = signer;
 
                 document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
                 {
@@ -492,19 +492,19 @@ namespace EdiTest
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -516,7 +516,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -866,7 +866,7 @@ namespace EdiTest
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
                 {
                     Position = "Зав. складом",
                     EmployeeInfo = employee,
@@ -974,7 +974,7 @@ namespace EdiTest
             //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
             //}
 
-            document.UseSignerDetails(signer);
+            document.Signers = signer;
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
             document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
@@ -1051,19 +1051,19 @@ namespace EdiTest
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -1071,7 +1071,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -1132,7 +1132,7 @@ namespace EdiTest
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
                         ItemVendorCode = barCode,
                         CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
@@ -1149,7 +1149,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -1175,7 +1175,7 @@ namespace EdiTest
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                 document.Table.VatSpecified = true;
             else
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
 
             if (considerOnlyLabeledGoods)
             {

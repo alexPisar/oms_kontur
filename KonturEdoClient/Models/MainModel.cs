@@ -384,7 +384,7 @@ namespace KonturEdoClient.Models
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
                 {
                     Position = Properties.Settings.Default.DefaultEmployePosition,
                     EmployeeInfo = employee,
@@ -493,7 +493,7 @@ namespace KonturEdoClient.Models
                 };
             }
 
-            document.UseSignerDetails(signer);
+            document.Signers = signer;
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
             document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
@@ -570,19 +570,19 @@ namespace KonturEdoClient.Models
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -590,7 +590,7 @@ namespace KonturEdoClient.Models
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -651,7 +651,7 @@ namespace KonturEdoClient.Models
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
                         ItemVendorCode = barCode,
                         CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
@@ -668,7 +668,7 @@ namespace KonturEdoClient.Models
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -694,7 +694,7 @@ namespace KonturEdoClient.Models
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                 document.Table.VatSpecified = true;
             else
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
 
             if (considerOnlyLabeledGoods)
             {
@@ -2930,12 +2930,12 @@ namespace KonturEdoClient.Models
             {
                 document.Table.Total = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
                 document.Table.TotalWithVatExcluded = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
             }
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
                 {
                     Position = Properties.Settings.Default.DefaultEmployePosition,
                     EmployeeInfo = employee,
@@ -2986,7 +2986,7 @@ namespace KonturEdoClient.Models
                     {
                             new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensShipper
                             {
-                                Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetails
+                                Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
                                 {
                                     Inn = organization.Inn,
                                     OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
@@ -3135,7 +3135,7 @@ namespace KonturEdoClient.Models
                     signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
             }
 
-            document.UseSignerDetails(signer);
+            document.Signers = signer;
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
             document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
@@ -3152,12 +3152,12 @@ namespace KonturEdoClient.Models
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                var additionalInfoList = new List<Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo>();
+                var additionalInfoList = new List<Diadoc.Api.DataXml.AdditionalInfo>();
 
                 if(edoGoodChannel != null)
                 {
                     if (!string.IsNullOrEmpty(edoGoodChannel.NumberUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.Code });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.Code });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
                     {
@@ -3166,11 +3166,11 @@ namespace KonturEdoClient.Models
                         if (docJournalTag == null)
                             throw new Exception("Отсутствует номер заказа покупателя.");
 
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
                     }
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
                     {
@@ -3188,15 +3188,15 @@ namespace KonturEdoClient.Models
                         }
 
                         if(!string.IsNullOrEmpty(glnShipTo))
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = glnShipTo });
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = glnShipTo });
                     }
 
                     foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
                 }
 
                 if (additionalInfoList.Count > 0)
-                    document.AdditionalInfoId = new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
+                    document.AdditionalInfoId = new Diadoc.Api.DataXml.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
 
                 int number = 1;
                 foreach (var docJournalDetail in d.DocGoodsDetailsIs)
@@ -3259,19 +3259,19 @@ namespace KonturEdoClient.Models
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -3283,7 +3283,7 @@ namespace KonturEdoClient.Models
 
                     if(docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -3301,7 +3301,7 @@ namespace KonturEdoClient.Models
                     }
 
 
-                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo>();
+                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
                     if(edoGoodChannel != null)
                     {
                         var idChannel = edoGoodChannel.IdChannel;
@@ -3321,16 +3321,16 @@ namespace KonturEdoClient.Models
                                 throw new Exception("Не все товары сопоставлены с кодами покупателя.");
 
                             if (!string.IsNullOrEmpty(goodMatching?.CustomerArticle))
-                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = goodMatching.CustomerArticle });
+                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = goodMatching.CustomerArticle });
                             else
                                 throw new Exception("Не для всех товаров заданы коды покупателя.");
                         }
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.Utd820.Hyphens.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
                     }
 
                     if(detailAdditionalInfos.Count > 0)
@@ -3377,7 +3377,7 @@ namespace KonturEdoClient.Models
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
                         ItemVendorCode = barCode,
                         CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
@@ -3400,7 +3400,7 @@ namespace KonturEdoClient.Models
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {

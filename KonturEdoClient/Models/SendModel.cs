@@ -160,7 +160,7 @@ namespace KonturEdoClient.Models
 
                             var message = new XmlSignUtils().SignAndSend(isSign,
                                 _signerCertificate, _myOrganization, SelectedOrganization,
-                                currentDocuments);
+                                currentDocuments.ToList<object>());
 
                             DocEdoProcessing docProcessing;
                             if (message != null)

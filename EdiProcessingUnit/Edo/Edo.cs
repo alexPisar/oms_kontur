@@ -33,230 +33,21 @@ namespace EdiProcessingUnit.Edo
 		private DiadocHttpApi _api;
 		private X509Certificate2 _certificate;
 
-		public void SendUtd820Kontur(UniversalTransferDocumentWithHyphens doc)
-		{
-			//GeneratedFile f = CallApiSafe( new Func<GeneratedFile>( () 
-			//	=> _api.GenerateUniversalTransferDocumentXmlForBuyer( _authToken ) ) );
-			/*
-			User user = CallApiSafe( new Func<User>( () => _api.GetMyUser( _authToken ) ) );
-			OrganizationList userPerm = CallApiSafe( new Func<OrganizationList>( () => _api.GetMyOrganizations( _authToken, false ) ) );
-			*/
-		}
 
-        
-		public UniversalTransferDocumentWithHyphens GenerateUtd820Kontur(ViewInvoicHead doc , AbtDbContext AbtDbContext, EdiDbContext EdiDbContext)
-		{
-			var canSend = _api.CanSendInvoice( _authToken, _actualBoxId, _certificate.RawData );
-			//var docTypes = _api.GetDocumentTypes( _authToken, _actualBoxId );
-			/*
-			var si = _api.GenerateSenderTitleXml(
-				_authToken,
-				_actualBoxId,
-				docTypes.DocumentTypes.First().Name,
-				docTypes.DocumentTypes.First().Functions.First().Name,
-				docTypes.DocumentTypes.First().Functions.First().Versions.First().Version,
-				);
-				*/
-			var org = _api.GetOrganizationByInnKpp( doc.CustomerInn, doc.CustomerKpp );
-
-            
-            var utd = GetUniversalTransferDocumentWithHyphens(
-                new ExtendedOrganizationDetails_ManualFilling()
-                {
-                    BankName = doc.SellerBankName,
-                    Phone = doc.SellerPhone,
-                    Okpo = doc.SellerOkpo,
-                    ShortOrgName = doc.SellerName,
-                    CorrespondentAccount = doc.SellerCorAccount,
-                },
-                new ExtendedOrganizationDetails_ManualFilling()
-                {
-                    BankName = doc.CustomerBankName,
-                    Phone = doc.CustomerPhone,
-                    Okpo = doc.CustomerOkpo,
-                    ShortOrgName = doc.CustomerName,
-                    CorrespondentAccount = doc.CustomerCorAccount,
-                },
-                doc.DocDatetime.Value.ToShortDateString(),
-                doc.Code,
-                UniversalTransferDocumentWithHyphensFunction.СЧФДОП,
-                new TransferInfo()
-                {
-                    Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee() { Position = doc.StorekeeperProf, EmployeeInfo = doc.Storekeeper }
-                }, null, null, 1, "643", null);
-
-
-
-			/*
-			List<ViewInvoicDetail> docGoodsDetails = new List<ViewInvoicDetail>();
-			docGoodsDetails = EdiDbContext.ViewInvoicDetails
-				.Where( x => x.IdDocMaster.Value == Doc.Id ).ToList();
-
-			var sellerContractor = AbtDbContext.RefContractors.Where( x => x.Id == Doc.SellerId ).ToList();
-			var customerContractor = AbtDbContext.RefContractors.Where( x => x.Id == Doc.CustomerId ).ToList();
-
-			var seller = GetOrganization( sellerContractor.FirstOrDefault() );
-			var customer = GetOrganization( customerContractor.FirstOrDefault() );
-			
-			_utdObject = new Файл() {
-				ВерсПрог = "Diadoc 1.0", // const
-				Ид = Guid.NewGuid().ToString(),
-				ВерсФорм = 5.02M,
-
-				Документ = new Документ() {
-					КНД = "1115125", // const
-					Функция = "СЧФДОП", // const
-					ДатаИнфПр = DateTime.Now.ToShortDateString(),
-					ВремИнфПр = DateTime.Now.ToShortTimeString(),
-
-					СвСчФакт = new СвСчФакт() {
-						НомерСчФ = Doc.Code,
-						ДатаСчФ = DateTime.Now.ToShortDateString(),
-						КодОКВ = "643",// const
-						СвПрод = new СвОрг[] { seller },
-
-						СвПокуп = new СвОрг[] { customer },
-						ДопСвФХЖ1 = new ДопСвФХЖ1() {
-							КурсВал = "1", // const
-							НаимОКВ = "Российский рубль" // const
-						},
-
-					},
-					ТаблСчФакт = new ТаблСчФакт() {
-						СведТов = GetLineItems( docGoodsDetails ),
-						ВсегоОпл = new ВсегоОпл() {
-							СтТовБезНДСВсего = Doc.TotalSumm.ToString(),
-							СтТовУчНалВсего = (Doc.TotalSumm + Doc.TaxSumm).ToString(),
-							СумНалВсего = new СумНалич() {
-								СумНал = Doc.TaxSumm.ToString()
-							}
-						}
-					},
-					Пер = new Пер() {
-						СвПер = new ПерСвПер() {
-							СодОпер = "Перадача товаров/услуг", // const
-							ДатаПер = Doc.DeliveryDate.Value.ToShortDateString(),
-							ОснПер = new ОснПер[]
-							{
-								new ОснПер
-								{
-									НаимОсн = Doc.Dogovor,
-									ДатаОсн=Doc.DocDatetime.Value.ToShortDateString(),
-									НомОсн=Doc.ZCode,
-								}
-							},
-							СвЛицПер = new СвЛицПер() {
-								РабОргПрод = new РабОргПрод() {
-									Должность = Doc.StorekeeperProf,
-									ФИО = new ФИО() {
-										//Фамилия = "Иванова",
-										Имя = Doc.Storekeeper,
-										//Отчество = "Ивановна"
-									}
-								}
-							}
-						}
-					},
-
-					Подписант = new Подписант[]
-					{
-						new Подписант
-						{
-							ОснПолн = $@"{Doc.Dogovor} {Doc.ZCode} {Doc.DocDatetime.Value.ToShortDateString()}",
-							ОблПолн = "6", // const
-							Статус = "2", // const
-							ЮЛ = new ЮЛ() {
-								ИННЮЛ = Doc.SellerInn,
-								Должн = Doc.StorekeeperProf,
-								НаимОрг = Doc.SellerFullName,
-								ФИО = new ФИО() {
-									Имя = Doc.Storekeeper,
-								}
-							}
-						}
-
-					}
-
-				},
-
-				СвУчДокОбор = new СвУчДокОбор() {
-					ИдОтпр = "Тестовый документ",
-					ИдПол = "Тестовый документ",
-
-					СвОЭДОтпр = new СвОЭДОтпр() {
-						ИдЭДО = "2BM",
-						ИННЮЛ = Doc.SellerInn,
-						НаимОрг = Doc.SellerFullName
-					}
-
-				},
-
-			};
-
-*/
-
-			return utd;
-		}
-
-        /*
-        public UniversalTransferDocument GetUniversalTransferDocument(ExtendedOrganizationDetails_ManualFilling seller,
-            ExtendedOrganizationDetails_ManualFilling buyer,
+        public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalTransferDocument(
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetails_ManualFilling_Utd970 seller,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetails_ManualFilling_Utd970 buyer,
             string documentDate,
             string documentNumber,
-            UniversalTransferDocumentFunction documentFunction,
-            TransferInfo transferInfo,
-            InvoiceTable invoiceTable,
-            ExtendedSignerDetails_SellerTitle[] signers,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction documentFunction,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo transferInfo,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable invoiceTable,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers signers,
             decimal currencyRate,
             string currency,
             string documentCreator)
         {
-            UniversalTransferDocument utd = new UniversalTransferDocument();
-
-            utd.Sellers = new ExtendedOrganizationInfo[]
-                {
-                    new ExtendedOrganizationInfo()
-                    {
-                        Item = seller
-                    }
-                };
-            utd.Buyers = new ExtendedOrganizationInfo[]
-                {
-                    new ExtendedOrganizationInfo()
-                    {
-                        Item = buyer
-                    }
-                };
-
-            utd.DocumentDate = documentDate;
-            utd.DocumentNumber = documentNumber;
-            utd.DocumentCreator = documentCreator;
-            utd.Function = documentFunction;
-            utd.TransferInfo = transferInfo;
-            utd.CurrencyRate = currencyRate;
-            utd.Currency = currency;
-            utd.Table = invoiceTable;
-
-            utd.UseSignerDetails(signers);
-
-            return utd;
-        }
-        */
-
-        public UniversalTransferDocumentWithHyphens GetUniversalTransferDocumentWithHyphens(
-            ExtendedOrganizationDetails_ManualFilling seller,
-            ExtendedOrganizationDetails_ManualFilling buyer,
-            string documentDate,
-            string documentNumber,
-            UniversalTransferDocumentWithHyphensFunction documentFunction,
-            TransferInfo transferInfo,
-            InvoiceTable invoiceTable,
-            ExtendedSignerDetails_SellerTitle[] signers,
-            decimal currencyRate,
-            string currency,
-            string documentCreator)
-        {
-            var universalTransferDocumentWithHyphens = new UniversalTransferDocumentWithHyphens
+            var universalTransferDocument = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument
             {
                 Function = documentFunction,
                 DocumentDate = documentDate,
@@ -265,25 +56,25 @@ namespace EdiProcessingUnit.Edo
                 DocumentCreator = documentCreator,
                 Sellers = new[]
                 {
-                    new ExtendedOrganizationInfoWithHyphens
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                     {
                         Item = seller
                     }
                 },
                 Buyers = new[]
                 {
-                    new ExtendedOrganizationInfoWithHyphens
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                     {
                         Item = buyer
                     }
                 },
                 TransferInfo = transferInfo,
-                Table=invoiceTable
+                Table = invoiceTable
             };
 
-            universalTransferDocumentWithHyphens.UseSignerDetails(signers);
+            universalTransferDocument.Signers = signers;
 
-            return universalTransferDocumentWithHyphens;
+            return universalTransferDocument;
         }
 
         public GeneratedFile GenerateTitleXml(string typeNameId,
@@ -303,6 +94,8 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
                 userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -332,6 +125,8 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
                 userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return await _api.GenerateTitleXmlAsync(_authToken,
