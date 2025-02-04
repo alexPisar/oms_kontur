@@ -148,103 +148,146 @@ namespace EdiTest
         [TestMethod]
         public void EdoGenerateXmlTest()
         {
-            //var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
-            //edo.Authenticate(true);
-            //var userDocCreator = edo.GetUniversalTransferDocumentWithHyphens(new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
-            //{
-            //    Inn = "7750370238",
-            //    Kpp = "770100101",
-            //    OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-            //    OrgName = "ЗАО Очень Древний Папирус",
-            //    Address = new Diadoc.Api.DataXml.Address
-            //    {
-            //        Item = new Diadoc.Api.DataXml.RussianAddress
-            //        {
-            //            Region = "66"
-            //        }
-            //    }
-            //},
-            //new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
-            //{
-            //    Inn = "9500000005",
-            //    Kpp = "667301001",
-            //    OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-            //    OrgName = "ООО Тестовое Юрлицо обычное",
-            //    Address = new Diadoc.Api.DataXml.Address
-            //    {
-            //        Item = new Diadoc.Api.DataXml.RussianAddress
-            //        {
-            //            Region = "66"
-            //        }
-            //    }
-            //},
-            //"01.01.2020",
-            //"134",
-            //Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФ,
-            //null,
-            //new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
-            //{
-            //    Item = new[]
-            //        {
-            //            new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
-            //            {
-            //                Product = "товар",
-            //                Unit = "796",
-            //                Quantity = 10,
-            //                QuantitySpecified = true,
-            //                WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
-            //                SubtotalSpecified = true,
-            //                Subtotal = 0,
-            //                ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights,
-            //                ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[]
-            //                {
-            //                    new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
-            //                    {
-            //                        ItemsElementName = new []{ Diadoc.Api.DataXml.ItemsChoiceType.Unit },
-            //                        Items = new string[]{"4564385435465"},
-            //                        TransPackageId = "6352386234233"
-            //                    }
-            //                }
-            //            }
-            //        },
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            edo.Authenticate(true, null, "2504000010");
+            var userDocCreator = edo.GetUniversalTransferDocument(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+            {
+                Inn = "2504000010",
+                Kpp = "253901001",
+                OrgType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                OrgName = "ООО \"Вирэй\"",
+                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                {
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
+                    {
+                        Region = "25"
+                    }
+                }
+            },
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+            {
+                Inn = "9500000005",
+                Kpp = "667301001",
+                OrgType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                OrgName = "ООО Тестовое Юрлицо обычное",
+                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                {
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
+                    {
+                        Region = "66"
+                    }
+                }
+            },
+            "01.01.2020",
+            "134",
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.СЧФДОП,
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
+            {
+                OperationInfo = "Товары переданы",
+                TransferDate = DateTime.Now.ToString("dd.MM.yyyy")
+            },
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
+            {
+                Item = new[]
+                    {
+                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
+                        {
+                            Product = "товар",
+                            Unit = "796",
+                            Quantity = 10,
+                            QuantitySpecified = true,
+                            SubtotalSpecified = true,
+                            Subtotal = 1560,
+                            VatSpecified = true,
+                            Vat = 260,
+                            SubtotalWithVatExcludedSpecified = true,
+                            SubtotalWithVatExcluded = 1300,
+                            PriceSpecified = true,
+                            Price = 130,
+                            ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4,
+                            ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[]
+                            {
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                                {
+                                    ItemsElementName = new []{ Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit },
+                                    Items = new string[]{"4564385435465"},
+                                    TransPackageId = "6352386234233"
+                                }
+                            }
+                        }
+                    },
 
-            //    WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True,
-            //    TotalSpecified=true,
-            //    Total=7960
-            //},
-            //new[]
-            //{
-            //    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
-            //    {
-            //        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
-            //        FirstName = "Иван",
-            //        MiddleName = "Иванович",
-            //        LastName = "Иванов",
-            //        SignerOrganizationName = "ЗАО Очень Древний Папирус",
-            //        Inn = "7750370238",
-            //        Position = "директор"
-            //    }
-            //},
-            //0, "643", "Писаренко А.Н.");
+                TotalSpecified = true,
+                Total = 1560,
+                VatSpecified = true,
+                Vat = 260,
+                TotalWithVatExcludedSpecified = true,
+                TotalWithVatExcluded = 1300
+            },
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers()
+            {
+                Signer = new[]
+                {
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
+                    {
+                        Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                        {
+                            FirstName = "Ирина",
+                            MiddleName = "Васильевна",
+                            LastName = "Бельтюкова"
+                        },
+                        Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                        {
+                            PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                            Value = "Директор по продажам"
+                        },
+                        SignatureTypeSpecified = true,
+                        SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                        SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                        SignerPowersConfirmationMethodSpecified = true,
+                        SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                        PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                        {
+                            Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                            {
+                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                                {
+                                    UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                    FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                    {
+                                        RegistrationNumber = "b591a89f-ffe1-439c-9f04-e02444839231",
+                                        IssuerInn = "2504000010"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            0, "643", "Писаренко А.Н.");
 
-            //try
-            //{
-            //    var docFile = edo.GenerateTitleXml("UniversalTransferDocument",
-            //        "СЧФ", "utd820_05_01_01_hyphen", 0, userDocCreator);
+            try
+            {
+                var docFile = edo.GenerateTitleXml("UniversalTransferDocument",
+                    "СЧФДОП", "utd970_05_03_01", 0, userDocCreator);
 
-            //    var xmlString = Encoding.GetEncoding(1251).GetString(docFile.Content);
+                var xmlString = Encoding.GetEncoding(1251).GetString(docFile.Content);
 
-            //    docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\{docFile.FileName}");
+                docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\Files\\{docFile.FileName}");
 
-            //    var universalTransferDocumentString = Encoding.UTF8.GetString(userDocCreator.SerializeToXml());
-            //    var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
-            //    universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
-            //    reporter.LoadFromXml(universalTransferDocumentString);
-            //}
-            //catch(WebException webEx)
-            //{
+                var universalTransferDocumentString = Encoding.UTF8.GetString(userDocCreator.SerializeToXml());
+                //var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
+                //universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
+                //reporter.LoadFromXml(universalTransferDocumentString);
+            }
+            catch (WebException webEx)
+            {
 
-            //}
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         [TestMethod]
