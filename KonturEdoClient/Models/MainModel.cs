@@ -1513,8 +1513,7 @@ namespace KonturEdoClient.Models
 
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
-                var signerDetails = Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
-                var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, signerDetails, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
+                var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
                 var file = _utils.GetGeneratedFile(doc);
                 changePathDialog.FileName = file.FileName;
 
@@ -1620,14 +1619,12 @@ namespace KonturEdoClient.Models
 
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
-                var signerDetails = Edo.GetInstance().GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
-
                 var refEdoGoodChannel = SelectedDocuments?.FirstOrDefault(s => s.RefEdoGoodChannel != null)?.RefEdoGoodChannel;
 
                 var docs = SelectedDocuments.Where(s => s.CurrentDocJournalId != null)?
-                    .Select(s => new KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>(
+                    .Select(s => new KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>(
                     s.CurrentDocJournalId.Value,
-                    GetUniversalDocument(s.DocJournal, SelectedOrganization, employee, signerDetails, refEdoGoodChannel as RefEdoGoodChannel)));
+                    GetUniversalDocument(s.DocJournal, SelectedOrganization, employee, refEdoGoodChannel as RefEdoGoodChannel)));
                 SendModel sendModel = new SendModel(_abt, SelectedOrganization, SelectedOrganization.Certificate, docs, (DataContextManagementUnit.DataAccess.DocJournalType)SelectedDocument.DocJournal.IdDocType, _authInHonestMark);
                 sendModel.SetButtonsEnabled(true);
 
@@ -1647,7 +1644,7 @@ namespace KonturEdoClient.Models
 
                 if(SelectedDocument.DocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                 {
-                    var buyerInfos = docs.Select(d => d.Value?.Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens)
+                    var buyerInfos = docs.Select(d => d.Value?.Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970)
                     .Where(d => d != null);
 
                     var buyerInns = buyerInfos.Select(b => b.Inn).Distinct();
@@ -2884,8 +2881,8 @@ namespace KonturEdoClient.Models
             }
         }
 
-        private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens GetUniversalDocument(
-            DocJournal d, Kontragent organization, string employee = null, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null, RefEdoGoodChannel edoGoodChannel = null)
+        private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
+            DocJournal d, Kontragent organization, string employee = null, RefEdoGoodChannel edoGoodChannel = null)
         {
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
                 return null;
@@ -2896,18 +2893,18 @@ namespace KonturEdoClient.Models
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && d.DocGoods == null)
                 return null;
 
-            var document = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens()
+            var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument()
             {
-                Function = Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФДОП,
+                Function = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.СЧФДОП,
                 DocumentNumber = d.Code,
                 DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
                 Currency = Properties.Settings.Default.DefaultCurrency,
-                Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+                Table = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
                 {
                     TotalSpecified = true,
                     TotalWithVatExcludedSpecified = true
                 },
-                TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
+                TransferInfo = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
                 {
                     OperationInfo = "Товары переданы",
                     TransferDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
@@ -2930,12 +2927,12 @@ namespace KonturEdoClient.Models
             {
                 document.Table.Total = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
                 document.Table.TotalWithVatExcluded = (decimal)(d?.DocGoods?.TotalSumm ?? 0);
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableWithoutVat.@true;
             }
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.EmployeeUtd970
                 {
                     Position = Properties.Settings.Default.DefaultEmployePosition,
                     EmployeeInfo = employee,
@@ -2945,8 +2942,8 @@ namespace KonturEdoClient.Models
             }
 
 
-            Diadoc.Api.DataXml.RussianAddress senderAddress = organization?.Address?.RussianAddress != null ?
-                            new Diadoc.Api.DataXml.RussianAddress
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 senderAddress = organization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                             {
                                 ZipCode = organization.Address.RussianAddress.ZipCode,
                                 Region = organization.Address.RussianAddress.Region,
@@ -2957,17 +2954,17 @@ namespace KonturEdoClient.Models
                                 Building = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? null : organization.Address.RussianAddress.Building
                             } : null;
 
-            document.Sellers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            document.Sellers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
             {
-                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                         {
-                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                             {
                                 Inn = organization.Inn,
                                 Kpp = organization.Kpp,
-                                OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                 OrgName = organization.Name,
-                                Address = new Diadoc.Api.DataXml.Address
+                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                 {
                                     Item = senderAddress
                                 }
@@ -2982,17 +2979,17 @@ namespace KonturEdoClient.Models
                 .FirstOrDefault();
 
                 if (sellerContractor != null)
-                    document.Shippers = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensShipper[]
+                    document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
                     {
-                            new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensShipper
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper
                             {
-                                Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                 {
                                     Inn = organization.Inn,
-                                    OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                                    Address = new Diadoc.Api.DataXml.Address
+                                    OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                    Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                     {
-                                        Item = new Diadoc.Api.DataXml.ForeignAddress
+                                        Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                         {
                                             Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                             Address = sellerContractor.Address
@@ -3022,17 +3019,17 @@ namespace KonturEdoClient.Models
 
                         if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
-                            document.Consignees = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                            document.Consignees = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                         {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                         {
-                                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                             {
                                                 Inn = buyerCustomer.Inn,
-                                                OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                                                Address = new Diadoc.Api.DataXml.Address
+                                                OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                                 {
-                                                    Item = new Diadoc.Api.DataXml.ForeignAddress
+                                                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                                     {
                                                         Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                                         Address = buyerContractor.Address
@@ -3044,19 +3041,19 @@ namespace KonturEdoClient.Models
                         };
                         }
 
-                        document.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                        document.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                         {
-                                    new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                     {
-                                        Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                        Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                         {
                                             Inn = buyerCustomer.Inn,
                                             Kpp = buyerCustomer.Kpp,
-                                            OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                            OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                             OrgName = buyerCustomer.Name,
-                                            Address = new Diadoc.Api.DataXml.Address
+                                            Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                             {
-                                                Item = new Diadoc.Api.DataXml.ForeignAddress
+                                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                                 {
                                                     Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                                     Address = buyerCustomer.Address
@@ -3069,7 +3066,7 @@ namespace KonturEdoClient.Models
                 }
             }
 
-            Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle[] signer;
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer signer;
 
             if (string.IsNullOrEmpty(organization.EmchdId))
             {
@@ -3077,87 +3074,93 @@ namespace KonturEdoClient.Models
                 string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
                 string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
 
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
-                                {
-                                    FirstName = signerFirstName,
-                                    MiddleName = signerMiddleName,
-                                    LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN"),
-                                    SignerOrganizationName = _utils.ParseCertAttribute(organization.Certificate.Subject, "CN"),
-                                    Inn = _utils.ParseCertAttribute(organization.Certificate.Subject, "ИНН").TrimStart('0'),
-                                    Position = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
-                                }
-                            };
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                    {
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN")
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item1
+                };
             }
             else
             {
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
                     {
                         FirstName = organization.EmchdPersonName,
                         MiddleName = organization.EmchdPersonPatronymicSurname,
-                        LastName = organization.EmchdPersonSurname,
-                        SignerOrganizationName = organization.Name,
-                        Inn = organization.EmchdPersonInn,
-                        Position = organization.EmchdPersonPosition,
-                        SignerPowersBase = "Доверенность"
+                        LastName = organization.EmchdPersonSurname
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = organization.EmchdPersonPosition
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                    PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                    {
+                        Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                            {
+                                UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                {
+                                    RegistrationNumber = organization.EmchdId,
+                                    IssuerInn = organization.Inn
+                                }
+                            }
+                        }
                     }
                 };
             }
 
-            if (signer.First().Inn == organization.Inn)
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
-            else if (signer.First().Inn?.Length == 12)
+            document.Signers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers
             {
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson;
-
-                if(string.IsNullOrEmpty(signer.First().SignerPowersBase))
-                    signer.First().SignerPowersBase = signer.First().Position;
-            }
-            else
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
-
-            if(signerDetails != null)
-            {
-                signer.First().Inn = organization.Inn;
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
-                signer.First().SignerPowers = (Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitleSignerPowers)Convert.ToInt32(signerDetails.SignerPowers);
-
-                if(signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.SellerEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.SellerEmployee;
-                else if(signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.InformationCreatorEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.InformationCreatorEmployee;
-                else if(signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.OtherOrganizationEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.OtherOrganizationEmployee;
-                else if(signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.AuthorizedPerson)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
-            }
-
-            document.Signers = signer;
+                Signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer[]
+                {
+                    signer
+                }
+            };
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
-            document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
+            document.DocumentShipments = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
             {
-                                new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
                                 {
-                                    Name = "Реализация (акт, накладная, УПД)",
-                                    Number = $"п/п 1-{docLineCount}, №{d.Code}",
-                                    Date = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                                    DocumentName = "Счет-фактура и документ об отгрузке товаров (выполнении работ), передаче имущественных прав (документ об оказании услуг)",
+                                    DocumentNumber = d.Code,
+                                    DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                                 }
             };
 
-            var details = new List<Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem>();
+            var details = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem>();
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                var additionalInfoList = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+                var additionalInfoList = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
 
                 if(edoGoodChannel != null)
                 {
                     if (!string.IsNullOrEmpty(edoGoodChannel.NumberUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.Code });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.Code });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
                     {
@@ -3166,11 +3169,11 @@ namespace KonturEdoClient.Models
                         if (docJournalTag == null)
                             throw new Exception("Отсутствует номер заказа покупателя.");
 
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = docJournalTag?.TagValue ?? string.Empty });
                     }
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
                     {
@@ -3188,15 +3191,15 @@ namespace KonturEdoClient.Models
                         }
 
                         if(!string.IsNullOrEmpty(glnShipTo))
-                            additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = glnShipTo });
+                            additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = glnShipTo });
                     }
 
                     foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
                 }
 
                 if (additionalInfoList.Count > 0)
-                    document.AdditionalInfoId = new Diadoc.Api.DataXml.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
+                    document.AdditionalInfoId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
 
                 int number = 1;
                 foreach (var docJournalDetail in d.DocGoodsDetailsIs)
@@ -3229,7 +3232,7 @@ namespace KonturEdoClient.Models
                     else
                         price = (decimal)Math.Round(docJournalDetail.Price - docJournalDetail.DiscountSumm - docJournalDetail.TaxSumm, 2);
 
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -3243,35 +3246,37 @@ namespace KonturEdoClient.Models
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
                         SubtotalWithVatExcluded = subtotal - vat,
-                        ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
-                        {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
-                                        {
-                                            Country = countryCode
-                                        }
-                        }
+                        ItemVendorCode = barCode
                     };
 
                     if (!string.IsNullOrEmpty(refGood.CustomsNo))
-                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+                    {
+                        detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[] 
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                        };
+                    }
 
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
                             break;
-                        case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
-                            break;
+                        //case 18:
+                        //    detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.;
+                        //    break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
                             break;
                     }
 
@@ -3283,25 +3288,25 @@ namespace KonturEdoClient.Models
 
                     if(docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc;
                             j++;
                         }
                     }
 
 
-                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
                     if(edoGoodChannel != null)
                     {
                         var idChannel = edoGoodChannel.IdChannel;
@@ -3321,16 +3326,16 @@ namespace KonturEdoClient.Models
                                 throw new Exception("Не все товары сопоставлены с кодами покупателя.");
 
                             if (!string.IsNullOrEmpty(goodMatching?.CustomerArticle))
-                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = goodMatching.CustomerArticle });
+                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = goodMatching.CustomerArticle });
                             else
                                 throw new Exception("Не для всех товаров заданы коды покупателя.");
                         }
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
                     }
 
                     if(detailAdditionalInfos.Count > 0)
@@ -3366,7 +3371,7 @@ namespace KonturEdoClient.Models
                         countryCode = "0" + countryCode;
 
                     var subtotal = Math.Round(docJournalDetail.Quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -3377,12 +3382,12 @@ namespace KonturEdoClient.Models
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
+                        WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
                         ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
+                        CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
                         {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
+                                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
                                         {
                                             Country = countryCode
                                         }
@@ -3400,18 +3405,18 @@ namespace KonturEdoClient.Models
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc;
                             j++;
                         }

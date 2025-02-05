@@ -221,7 +221,7 @@ namespace EdiProcessingUnit.Edo
                 recipientOrganization = counteragent.Organization;
             }
 
-            return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd820_05_01_01_hyphen",
+            return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd970_05_03_01",
                 contents, comment, customDocumentId, powerOfAttorneyToPost);
         }
 

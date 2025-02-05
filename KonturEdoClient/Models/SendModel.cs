@@ -14,7 +14,7 @@ namespace KonturEdoClient.Models
     {
         private Kontragent _myOrganization;
         private X509Certificate2 _signerCertificate;
-        private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> _currentDocuments;
+        private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>> _currentDocuments;
         private AbtDbContext _abt;
         private bool _isSendReceive = false;
         private HonestMark.DocumentProcessStatusesEnum _docStatus = HonestMark.DocumentProcessStatusesEnum.None;
@@ -41,7 +41,7 @@ namespace KonturEdoClient.Models
         }
 
         public SendModel(AbtDbContext abt, Kontragent myOrganization, X509Certificate2 signerCertificate,
-            IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> currentDocuments,
+            IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>> currentDocuments,
             DataContextManagementUnit.DataAccess.DocJournalType docType, bool authInHonestMark)
         {
             _abt = abt;
@@ -124,8 +124,8 @@ namespace KonturEdoClient.Models
                             var currentDocuments = _currentDocuments.Where(c => c.Value != null).Select(c => c.Value).ToList();
                             if (_docType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             {
-                                Diadoc.Api.DataXml.RussianAddress receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
-                                    new Diadoc.Api.DataXml.RussianAddress
+                                Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
+                                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                                     {
                                         ZipCode = string.IsNullOrEmpty(SelectedOrganization.Address.RussianAddress.ZipCode) ? null : SelectedOrganization.Address.RussianAddress.ZipCode,
                                         Region = SelectedOrganization.Address.RussianAddress.Region,
@@ -138,17 +138,17 @@ namespace KonturEdoClient.Models
 
                                 foreach (var curDoc in currentDocuments)
                                 {
-                                    curDoc.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                                    curDoc.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                                     {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                         {
-                                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                             {
                                                 Inn = SelectedOrganization.Inn,
                                                 Kpp = string.IsNullOrEmpty(SelectedOrganization.Kpp) ? null : SelectedOrganization.Kpp,
-                                                OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                                OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                                 OrgName = SelectedOrganization.Name,
-                                                Address = new Diadoc.Api.DataXml.Address
+                                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                                 {
                                                     Item = receiverAddress
                                                 }
