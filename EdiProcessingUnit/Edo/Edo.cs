@@ -115,6 +115,8 @@ namespace EdiProcessingUnit.Edo
 
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             }
+            else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -163,6 +165,8 @@ namespace EdiProcessingUnit.Edo
                 }
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             }
+            else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return await _api.GenerateTitleXmlAsync(_authToken,
