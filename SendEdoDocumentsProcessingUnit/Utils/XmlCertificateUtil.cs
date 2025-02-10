@@ -64,9 +64,9 @@ namespace SendEdoDocumentsProcessingUnit.Utils
                         if (orgData != null)
                             orgData.FnsParticipantId = receiver.FnsParticipantId;
                     }
-                    else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                    else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
                     {
-                        var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.ExtendedOrganizationDetailsUtd970;
+                        var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970;
 
                         if (orgData != null)
                             orgData.FnsParticipantId = receiver.FnsParticipantId;
@@ -130,9 +130,9 @@ namespace SendEdoDocumentsProcessingUnit.Utils
                     if (orgData != null)
                         orgData.FnsParticipantId = receiver.FnsParticipantId;
                 }
-                else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
+                else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
                 {
-                    var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.ExtendedOrganizationDetailsUtd970;
+                    var orgData = (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument).Buyers?.FirstOrDefault()?.Item as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970;
 
                     if (orgData != null)
                         orgData.FnsParticipantId = receiver.FnsParticipantId;
@@ -163,8 +163,8 @@ namespace SendEdoDocumentsProcessingUnit.Utils
 
             if (document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
                 version = "utd820_05_01_01_hyphen";
-            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
-                version = "utd970_05_02_01";
+            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+                version = "utd970_05_03_01";
 
             return await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync("UniversalTransferDocument",
                     "СЧФДОП", version, 0, document);
@@ -176,8 +176,8 @@ namespace SendEdoDocumentsProcessingUnit.Utils
 
             if(document as Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens != null)
                 version = "utd820_05_01_01_hyphen";
-            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_02_01.UniversalTransferDocument != null)
-                version = "utd970_05_02_01";
+            else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+                version = "utd970_05_03_01";
 
             return EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
                     "СЧФДОП", version, 0, document);

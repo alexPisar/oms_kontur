@@ -377,7 +377,7 @@ namespace EdiProcessingUnit.Edo
                 };
 
                 string typeNameId = "UniversalTransferDocument";
-                string version = "utd820_05_01_01_hyphen";
+                string version = "utd970_05_03_01";
 
                 Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
                 if (powerOfAttorneyToPost != null)

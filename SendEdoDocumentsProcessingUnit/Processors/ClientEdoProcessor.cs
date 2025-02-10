@@ -601,7 +601,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
         }
 
-        private async Task<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens> GetUniversalDocumentAsync(
+        private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> GetUniversalDocumentAsync(
             UniversalTransferDocument doc, Kontragent myOrganization, string employee = null, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null)
         {
             if (doc.DocJournal == null)
@@ -625,7 +625,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return result;
         }
 
-        private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens GetUniversalDocument(
+        private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
             UniversalTransferDocument d, Kontragent organization, List<UniversalTransferDocumentDetail> docDetails, string employee = null, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null, RefEdoGoodChannel edoGoodChannel = null)
         {
             if (d.DocJournal == null)
@@ -640,18 +640,18 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             if (d.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && d.DocJournal.DocGoods == null)
                 return null;
 
-            var document = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens()
+            var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument()
             {
-                Function = Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФДОП,
+                Function = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.СЧФДОП,
                 DocumentNumber = d.DocJournal.Code,
                 DocumentDate = d.DocJournal.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
                 Currency = Properties.Settings.Default.DefaultCurrency,
-                Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+                Table = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
                 {
                     TotalSpecified = true,
                     TotalWithVatExcludedSpecified = true
                 },
-                TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
+                TransferInfo = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
                 {
                     OperationInfo = "Товары переданы",
                     TransferDate = d.DocJournal.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
@@ -674,12 +674,12 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                 document.Table.Total = (decimal)(d?.DocJournal?.DocGoods?.TotalSumm ?? 0);
                 document.Table.TotalWithVatExcluded = (decimal)(d?.DocJournal?.DocGoods?.TotalSumm ?? 0);
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableWithoutVat.@true;
             }
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.EmployeeUtd970
                 {
                     Position = Properties.Settings.Default.DefaultEmployePosition,
                     EmployeeInfo = employee,
@@ -689,8 +689,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
 
 
-            Diadoc.Api.DataXml.RussianAddress senderAddress = organization?.Address?.RussianAddress != null ?
-                            new Diadoc.Api.DataXml.RussianAddress
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 senderAddress = organization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                             {
                                 ZipCode = organization.Address.RussianAddress.ZipCode,
                                 Region = organization.Address.RussianAddress.Region,
@@ -701,17 +701,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 Building = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? null : organization.Address.RussianAddress.Building
                             } : null;
 
-            document.Sellers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            document.Sellers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
             {
-                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                         {
-                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                             {
                                 Inn = organization.Inn,
                                 Kpp = organization.Kpp,
-                                OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                 OrgName = organization.Name,
-                                Address = new Diadoc.Api.DataXml.Address
+                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                 {
                                     Item = senderAddress
                                 }
@@ -721,17 +721,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             if (d.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                    document.Shippers = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensShipper[]
+                    document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
                     {
-                            new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensShipper
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper
                             {
-                                Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                 {
                                     Inn = organization.Inn,
-                                    OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                                    Address = new Diadoc.Api.DataXml.Address
+                                    OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                    Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                     {
-                                        Item = new Diadoc.Api.DataXml.ForeignAddress
+                                        Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                         {
                                             Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                             Address = d.ShipperAddress
@@ -745,17 +745,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                         if (d.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
-                            document.Consignees = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                            document.Consignees = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                         {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                         {
-                                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                             {
                                                 Inn = d?.BuyerInn,
-                                                OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                                                Address = new Diadoc.Api.DataXml.Address
+                                                OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                                 {
-                                                    Item = new Diadoc.Api.DataXml.ForeignAddress
+                                                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                                     {
                                                         Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                                         Address = d?.ConsigneeAddress
@@ -767,19 +767,19 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         };
                         }
 
-                        document.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                        document.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                         {
-                                    new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                     {
-                                        Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                        Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                         {
                                             Inn = d?.BuyerInn,
                                             Kpp = d?.BuyerKpp,
-                                            OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                            OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                             OrgName = d?.BuyerName,
-                                            Address = new Diadoc.Api.DataXml.Address
+                                            Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                             {
-                                                Item = new Diadoc.Api.DataXml.ForeignAddress
+                                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
                                                 {
                                                     Country = Properties.Settings.Default.DefaultOrgCountryCode,
                                                     Address = d?.BuyerAddress
@@ -789,7 +789,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     }
                         };
 
-            Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle[] signer;
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer signer;
 
             if (string.IsNullOrEmpty(organization.EmchdId))
             {
@@ -797,113 +797,119 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
                 string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
 
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
-                                {
-                                    FirstName = signerFirstName,
-                                    MiddleName = signerMiddleName,
-                                    LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN"),
-                                    SignerOrganizationName = _utils.ParseCertAttribute(organization.Certificate.Subject, "CN"),
-                                    Inn = _utils.ParseCertAttribute(organization.Certificate.Subject, "ИНН").TrimStart('0'),
-                                    Position = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
-                                }
-                            };
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                    {
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN")
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item1
+                };
             }
             else
             {
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
                     {
                         FirstName = organization.EmchdPersonName,
                         MiddleName = organization.EmchdPersonPatronymicSurname,
-                        LastName = organization.EmchdPersonSurname,
-                        SignerOrganizationName = organization.Name,
-                        Inn = organization.EmchdPersonInn,
-                        Position = organization.EmchdPersonPosition,
-                        SignerPowersBase = "Доверенность"
+                        LastName = organization.EmchdPersonSurname
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = organization.EmchdPersonPosition
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                    PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                    {
+                        Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                            {
+                                UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                {
+                                    RegistrationNumber = organization.EmchdId,
+                                    IssuerInn = organization.Inn
+                                }
+                            }
+                        }
                     }
                 };
             }
 
-            if (signer.First().Inn == organization.Inn)
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
-            else if (signer.First().Inn?.Length == 12)
+            document.Signers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers
             {
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson;
-
-                if (string.IsNullOrEmpty(signer.First().SignerPowersBase))
-                    signer.First().SignerPowersBase = signer.First().Position;
-            }
-            else
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
-
-            if (signerDetails != null)
-            {
-                signer.First().Inn = organization.Inn;
-                signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
-                signer.First().SignerPowers = (Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitleSignerPowers)Convert.ToInt32(signerDetails.SignerPowers);
-
-                if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.SellerEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.SellerEmployee;
-                else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.InformationCreatorEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.InformationCreatorEmployee;
-                else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.OtherOrganizationEmployee)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.OtherOrganizationEmployee;
-                else if (signerDetails.SignerStatus == Diadoc.Api.Proto.Invoicing.Signers.SignerStatus.AuthorizedPerson)
-                    signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
-            }
-
-            document.Signers = signer;
+                Signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer[] 
+                {
+                    signer
+                }
+            };
 
             int docLineCount = d.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocJournal.DocGoodsDetailsIs.Count : d.DocJournal.Details.Count;
-            document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
+            document.DocumentShipments = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
             {
-                                new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
                                 {
-                                    Name = "Реализация (акт, накладная, УПД)",
-                                    Number = $"п/п 1-{docLineCount}, №{d.DocJournal.Code}",
-                                    Date = d.DocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                                    DocumentName = "Счет-фактура и документ об отгрузке товаров (выполнении работ), передаче имущественных прав (документ об оказании услуг)",
+                                    DocumentNumber = d.DocJournal.Code,
+                                    DocumentDate = d.DocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                                 }
             };
 
-            var details = new List<Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem>();
+            var details = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem>();
 
             if (d.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                var additionalInfoList = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+                var additionalInfoList = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
 
                 if (edoGoodChannel != null)
                 {
                     if (!string.IsNullOrEmpty(edoGoodChannel.NumberUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.DocJournal.Code });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.DocJournal.Code });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
                     {
                         if (string.IsNullOrEmpty(d.OrderNumber))
                             throw new Exception("Отсутствует номер заказа покупателя.");
 
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = d.OrderNumber });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = d.OrderNumber });
                     }
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocJournal.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.DocJournal.DocMaster.DocDatetime.ToString("dd.MM.yyyy") });
 
                     if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
                     {
                         if (string.IsNullOrEmpty(d.GlnShipTo))
                             throw new Exception("Не указан GLN грузополучателя.");
 
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = d.GlnShipTo });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = d.GlnShipTo });
                     }
 
                     foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
-                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
                 }
 
                 if (additionalInfoList.Count > 0)
-                    document.AdditionalInfoId = new Diadoc.Api.DataXml.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
+                    document.AdditionalInfoId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
 
                 int number = 1;
                 foreach (var docDetail in docDetails)
@@ -933,7 +939,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     else
                         price = (decimal)Math.Round(docJournalDetail.Price - docJournalDetail.DiscountSumm - docJournalDetail.TaxSumm, 2);
 
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -947,35 +953,37 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
                         SubtotalWithVatExcluded = subtotal - vat,
-                        ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
-                        {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
-                                        {
-                                            Country = countryCode
-                                        }
-                        }
+                        ItemVendorCode = barCode
                     };
 
                     if (!string.IsNullOrEmpty(refGood.CustomsNo))
-                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+                    {
+                        detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                        };
+                    }
 
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
                             break;
-                        case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
-                            break;
+                        //case 18:
+                        //    detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
+                        //    break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
                             break;
                     }
 
@@ -983,41 +991,41 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc;
                             j++;
                         }
                     }
 
 
-                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+                    var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
                     if (edoGoodChannel != null)
                     {
                         var idChannel = edoGoodChannel.IdChannel;
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBuyerCodeUpdId))
                         {
                             if (!string.IsNullOrEmpty(docDetail?.BuyerCode))
-                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = docDetail?.BuyerCode });
+                                detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = docDetail?.BuyerCode });
                             else
                                 throw new Exception("Не для всех товаров заданы коды покупателя.");
                         }
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
 
                         if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
-                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
                     }
 
                     if (detailAdditionalInfos.Count > 0)
@@ -1053,7 +1061,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         countryCode = "0" + countryCode;
 
                     var subtotal = Math.Round(docJournalDetail.Quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -1064,20 +1072,22 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
+                        WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
-                        ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
-                        {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
-                                        {
-                                            Country = countryCode
-                                        }
-                        }
+                        ItemVendorCode = barCode
                     };
 
                     if (!string.IsNullOrEmpty(refGood.CustomsNo))
-                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+                    {
+                        detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                        };
+                    }
 
                     decimal idGood = docJournalDetail.IdGood, idDoc = (decimal)d.DocJournal.Id;
 
@@ -1087,18 +1097,18 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc;
                             j++;
                         }
@@ -1112,9 +1122,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return document;
         }
 
-        private Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle CreateBuyerShipmentDocument(Kontragent receiverOrganization)
+        private Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle CreateBuyerShipmentDocument(Kontragent receiverOrganization)
         {
-            Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820[] signers;
+            Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Signer signer;
+            Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.EmployeeUtd970 employee;
 
             if (string.IsNullOrEmpty(receiverOrganization.EmchdId))
             {
@@ -1122,55 +1133,92 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
                 string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
 
-                signers = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Signer
                 {
-                new Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Fio
+                    {
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "SN")
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerPositionPositionSource.Manual,
+                        Value = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "T")
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerSignerPowersConfirmationMethod.Item1
+                };
+
+                employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.EmployeeUtd970
                 {
-                    FirstName = signerFirstName,
-                    MiddleName = signerMiddleName,
-                    LastName = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "SN"),
-                    SignerOrganizationName = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "CN"),
-                    Inn = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "ИНН").TrimStart('0'),
-                    Position = _utils.ParseCertAttribute(receiverOrganization.Certificate.Subject, "T"),
-                    SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820SignerStatus.AuthorizedPerson,
-                    SignerPowersBase = "Должностные обязанности"
-                }
-            };
+                    Position = signer.Position.Value,
+                    LastName = signer.Fio.LastName,
+                    MiddleName = signer.Fio.MiddleName,
+                    FirstName = signer.Fio.FirstName
+                };
             }
             else
             {
-                signers = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Signer
                 {
-                    new Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Fio
                     {
                         FirstName = receiverOrganization.EmchdPersonName,
                         MiddleName = receiverOrganization.EmchdPersonPatronymicSurname,
-                        LastName = receiverOrganization.EmchdPersonSurname,
-                        SignerOrganizationName = receiverOrganization.Name,
-                        Inn = receiverOrganization.EmchdPersonInn,
-                        Position = receiverOrganization.EmchdPersonPosition,
-                        SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetails_BuyerTitle820SignerStatus.AuthorizedPerson,
-                        SignerPowersBase = "Доверенность"
+                        LastName = receiverOrganization.EmchdPersonSurname
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerPositionPositionSource.Manual,
+                        Value = receiverOrganization.EmchdPersonPosition
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.SignerSignerPowersConfirmationMethod.Item3,
+                    PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.PowerOfAttorney
+                    {
+                        Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Electronic
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Storage
+                            {
+                                UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.StorageUseDefault.@false,
+                                FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.StorageFullId
+                                {
+                                    RegistrationNumber = receiverOrganization.EmchdId,
+                                    IssuerInn = receiverOrganization.Inn
+                                }
+                            }
+                        }
                     }
+                };
+                employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.EmployeeUtd970
+                {
+                    Position = receiverOrganization.EmchdPersonPosition,
+                    FirstName = receiverOrganization.EmchdPersonName,
+                    MiddleName = receiverOrganization.EmchdPersonPatronymicSurname,
+                    LastName = receiverOrganization.EmchdPersonSurname
                 };
             }
 
-            if (signers.First().Inn == receiverOrganization.Inn)
-                signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity;
-            else if (signers.First().Inn?.Length == 12)
+            var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle()
             {
-                signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson;
-
-                if (string.IsNullOrEmpty(signers.First().SignerPowersBase))
-                    signers.First().SignerPowersBase = signers.First().Position;
-            }
-            else
-                signers.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
-
-            var document = new Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle()
-            {
-                Signers = signers,
-                OperationContent = "Товары переданы"
+                Signers = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Signers
+                {
+                    Signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Signer[] { signer }
+                },
+                OperationContent = "Товары (работы, услуги, права) приняты без расхождений (претензий)",
+                ContentOperCode = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitleContentOperCode
+                {
+                    TotalCode = Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitleContentOperCodeTotalCode.Item1
+                },
+                Employee = employee,
+                AcceptanceDate = DateTime.Now.ToString("dd.MM.yyyy")
             };
 
             if (!string.IsNullOrEmpty(receiverOrganization.EmchdId))
@@ -1181,7 +1229,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return document;
         }
 
-        private async Task<Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle> CreateBuyerShipmentDocumentAsync(Kontragent receiverOrganization)
+        private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle> CreateBuyerShipmentDocumentAsync(Kontragent receiverOrganization)
         {
             var result = await Task.Run(() =>
             {
@@ -1191,7 +1239,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return result;
         }
 
-        private async Task<Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens> CreateShipmentDocumentAsync(
+        private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> CreateShipmentDocumentAsync(
             DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<UniversalTransferDocumentDetail> docDetails, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
         {
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
@@ -1211,7 +1259,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return result;
         }
 
-        private Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens CreateShipmentDocument(
+        private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument CreateShipmentDocument(
             DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<UniversalTransferDocumentDetail> docDetails, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
         {
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
@@ -1223,18 +1271,18 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && d.DocGoods == null)
                 return null;
 
-            var document = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens()
+            var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument()
             {
-                Function = Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.ДОП,
+                Function = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.ДОП,
                 DocumentNumber = documentNumber,
                 DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
                 Currency = Properties.Settings.Default.DefaultCurrency,
-                Table = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+                Table = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
                 {
                     TotalSpecified = true,
                     TotalWithVatExcludedSpecified = true
                 },
-                TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
+                TransferInfo = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
                 {
                     OperationInfo = "Товары переданы",
                     TransferDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
@@ -1248,7 +1296,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.EmployeeUtd970
                 {
                     Position = Properties.Settings.Default.DefaultEmployePosition,
                     EmployeeInfo = employee,
@@ -1258,8 +1306,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
 
 
-            Diadoc.Api.DataXml.RussianAddress senderAddress = senderOrganization?.Address?.RussianAddress != null ?
-                            new Diadoc.Api.DataXml.RussianAddress
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 senderAddress = senderOrganization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                             {
                                 ZipCode = senderOrganization.Address.RussianAddress.ZipCode,
                                 Region = senderOrganization.Address.RussianAddress.Region,
@@ -1270,17 +1318,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 Building = string.IsNullOrEmpty(senderOrganization?.Address?.RussianAddress?.Building) ? null : senderOrganization.Address.RussianAddress.Building
                             } : null;
 
-            document.Sellers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            document.Sellers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
             {
-                new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                 {
-                    Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                     {
                         Inn = senderOrganization.Inn,
                         Kpp = senderOrganization.Kpp,
-                        OrgType = senderOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                        OrgType = senderOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                         OrgName = senderOrganization.Name,
-                        Address = new Diadoc.Api.DataXml.Address
+                        Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                         {
                             Item = senderAddress
                         }
@@ -1288,8 +1336,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 }
             };
 
-            Diadoc.Api.DataXml.RussianAddress receiverAddress = receiverOrganization?.Address?.RussianAddress != null ?
-                new Diadoc.Api.DataXml.RussianAddress
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 receiverAddress = receiverOrganization?.Address?.RussianAddress != null ?
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                 {
                     ZipCode = receiverOrganization.Address.RussianAddress.ZipCode,
                     Region = receiverOrganization.Address.RussianAddress.Region,
@@ -1300,17 +1348,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     Building = string.IsNullOrEmpty(receiverOrganization?.Address?.RussianAddress?.Building) ? null : receiverOrganization.Address.RussianAddress.Building
                 } : null;
 
-            document.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+            document.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
             {
-                new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                 {
-                    Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                     {
                         Inn = receiverOrganization.Inn,
                         Kpp = receiverOrganization.Kpp,
-                        OrgType = receiverOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                        OrgType = receiverOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                         OrgName = receiverOrganization.Name,
-                        Address = new Diadoc.Api.DataXml.Address
+                        Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                         {
                             Item = receiverAddress
                         }
@@ -1318,59 +1366,88 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 }
             };
 
-            Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle[] signer;
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer signer;
             if (string.IsNullOrEmpty(senderOrganization.EmchdId))
             {
                 var firstMiddleName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "G");
                 string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
                 string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
 
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
-                                {
-                                    SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
-                                    FirstName = signerFirstName,
-                                    MiddleName = signerMiddleName,
-                                    LastName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "SN"),
-                                    SignerOrganizationName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "CN"),
-                                    Inn = _utils.GetOrgInnFromCertificate(senderOrganization.Certificate),
-                                    Position = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "T")
-                                }
-                            };
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                    {
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "SN")
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = _utils.ParseCertAttribute(senderOrganization.Certificate.Subject, "T")
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item1
+                };
             }
             else
             {
-                signer = new[]
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
                 {
-                    new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
                     {
-                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.PhysicalPerson,
                         FirstName = senderOrganization.EmchdPersonName,
                         MiddleName = senderOrganization.EmchdPersonPatronymicSurname,
-                        LastName = senderOrganization.EmchdPersonSurname,
-                        SignerOrganizationName = senderOrganization.Name,
-                        Inn = senderOrganization.EmchdPersonInn,
-                        Position = senderOrganization.EmchdPersonPosition,
-                        SignerPowersBase = "Доверенность"
+                        LastName = senderOrganization.EmchdPersonSurname
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = senderOrganization.EmchdPersonPosition
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                    PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                    {
+                        Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                            {
+                                UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                {
+                                    RegistrationNumber = senderOrganization.EmchdId,
+                                    IssuerInn = senderOrganization.Inn
+                                }
+                            }
+                        }
                     }
                 };
             }
 
-            document.Signers = signer;
+            document.Signers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers
+            {
+                Signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer[] { signer }
+            };
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
-            document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
+            document.DocumentShipments = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
             {
-                                new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
                                 {
-                                    Name = "Реализация (акт, накладная, УПД)",
-                                    Number = $"п/п 1-{docLineCount}, №{documentNumber}",
-                                    Date = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                                    DocumentName = "Документ об отгрузке товаров (выполнении работ), передаче имущественных прав (документ об оказании услуг)",
+                                    DocumentNumber = documentNumber,
+                                    DocumentDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                                 }
             };
 
-            var details = new List<Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem>();
+            var details = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem>();
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
@@ -1401,7 +1478,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     var vat = (decimal)Math.Round(docJournalDetail.TaxSumm * quantity, 2);
                     var subtotal = Math.Round(quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
 
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -1415,35 +1492,37 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
                         SubtotalWithVatExcluded = subtotal - vat,
-                        ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
-                        {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
-                                        {
-                                            Country = countryCode
-                                        }
-                        }
+                        ItemVendorCode = barCode
                     };
 
                     if (!string.IsNullOrEmpty(refGood.CustomsNo))
-                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+                    {
+                        detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                        };
+                    }
 
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
                             break;
-                        case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
-                            break;
+                        //case 18:
+                        //    detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
+                        //    break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
                             break;
                     }
 
@@ -1451,18 +1530,18 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc.DmLabel;
                             j++;
                         }
@@ -1501,7 +1580,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         quantity = docJournalDetail.Quantity;
 
                     var subtotal = Math.Round(quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
-                    var detail = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                    var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                     {
                         Product = refGood.Name,
                         Unit = Properties.Settings.Default.DefaultUnit,
@@ -1512,35 +1591,37 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
+                        WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
-                        ItemVendorCode = barCode,
-                        CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
-                        {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens
-                                        {
-                                            Country = countryCode
-                                        }
-                        }
+                        ItemVendorCode = barCode
                     };
 
                     if (!string.IsNullOrEmpty(refGood.CustomsNo))
-                        detail.CustomsDeclarations.First().DeclarationNumber = refGood.CustomsNo;
+                    {
+                        detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                        };
+                    }
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
-                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
-                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                        detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                         {
-                            ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[docGoodDetailLabels.Count],
+                            ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
                             Items = new string[docGoodDetailLabels.Count]
                         };
 
                         int j = 0;
                         foreach (var doc in docGoodDetailLabels)
                         {
-                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                            detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
                             detail.ItemIdentificationNumbers[0].Items[j] = doc.DmLabel;
                             j++;
                         }
@@ -1555,7 +1636,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                 document.Table.VatSpecified = true;
             else
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableWithoutVat.@true;
 
             if (considerOnlyLabeledGoods)
             {
@@ -1720,7 +1801,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 string documentNumber = document.DocJournal?.Code;
                 var comissionDocument = await CreateShipmentDocumentAsync(document.DocJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, employee, true);
-                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 0, document);
+                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, document);
                 byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                 var signedContent = new Diadoc.Api.Proto.Events.SignedContent
@@ -1751,7 +1832,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 var attachments = message.Entities.Where(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument).Select(ent =>
                 {
-                    var generatedBuyerFile = _edo.GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd820_05_01_01_hyphen", 1, buyerDocument, message.MessageId, ent.EntityId);
+                    var generatedBuyerFile = _edo.GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 1, buyerDocument, message.MessageId, ent.EntityId);
                     return new Diadoc.Api.Proto.Events.RecipientTitleAttachment
                     {
                         ParentEntityId = ent.EntityId,
