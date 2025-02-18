@@ -116,7 +116,25 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             }
             else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)?.Signers;
+
+                if (signersInfo != null)
+                {
+                    if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            }
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -166,7 +184,25 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
             }
             else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)?.Signers;
+
+                if (signersInfo != null)
+                {
+                    if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            }
             else throw new Exception("Неопределённый тип документа");
 
             return await _api.GenerateTitleXmlAsync(_authToken,

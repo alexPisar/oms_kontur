@@ -1801,7 +1801,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 string documentNumber = document.DocJournal?.Code;
                 var comissionDocument = await CreateShipmentDocumentAsync(document.DocJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, employee, true);
-                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, document);
+                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, comissionDocument);
                 byte[] signature = crypt.Sign(generatedFile.Content, true);
 
                 var signedContent = new Diadoc.Api.Proto.Events.SignedContent
