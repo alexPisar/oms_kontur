@@ -130,7 +130,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                 UniversalTransferDocument.DbContext = _abt;
                                 IEnumerable<UniversalTransferDocument> docs = (from doc in docJournals
-                                                                               where doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeLastPeriod
+                                                                               where doc.IdDocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeLastPeriod
+                                                                               join docGoodsI in _abt.DocGoodsIs on doc.Id equals docGoodsI.IdDoc
                                                                                join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
                                                                                where docMaster.DocDatetime >= dateTimeLastPeriod
                                                                                join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
@@ -447,9 +448,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
 
                                 IEnumerable<UniversalTransferDocument> docs = (from doc in docJournals
-                                            where doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeFrom
-                                            join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
-                                            where docMaster.DocDatetime >= dateTimeFrom
+                                                                               where doc.IdDocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeFrom
+                                                                               join docGoodsI in _abt.DocGoodsIs on doc.Id equals docGoodsI.IdDoc
+                                                                               join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
+                                                                               where docMaster.DocDatetime >= dateTimeFrom
                                             join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
                                             join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                             where customer.Inn == myOrganization.Inn && customer.Kpp == myOrganization.Kpp
