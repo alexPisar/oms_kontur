@@ -130,9 +130,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                 UniversalTransferDocument.DbContext = _abt;
                                 IEnumerable<UniversalTransferDocument> docs = (from doc in docJournals
-                                                                               where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeLastPeriod
+                                                                               where doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeLastPeriod
                                                                                join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
-                                                                               where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= dateTimeLastPeriod
+                                                                               where docMaster.DocDatetime >= dateTimeLastPeriod
                                                                                join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
                                                                                join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                                                                where customer.Inn == myOrganization.Inn && customer.Kpp == myOrganization.Kpp
