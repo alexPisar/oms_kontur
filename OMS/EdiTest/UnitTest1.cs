@@ -595,10 +595,10 @@ namespace EdiTest
         {
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
             var crypto = new WinApiCryptWrapper();
-            var cert = crypto.GetCertificateWithPrivateKey("DEEBCA5A51641044D042AEFA0E9569EEA57CE716", false);
-            edo.Authenticate(false, cert, "2538150215");
+            var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+            edo.Authenticate(false, cert, "2504000010");
 
-            var document = edo.GetDocument("c28f297c-e379-494f-8972-6768c648f279", "555d0768-0f41-436d-b6e4-6f04dab14ea3");
+            var document = edo.GetDocument("6f5b2a5a-dbc6-410b-b462-5951c8cf0ff1", "3bb9e00f-b759-45b4-a264-bf9cc80c4e12");
         }
 
         [TestMethod]
