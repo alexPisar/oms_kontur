@@ -785,7 +785,7 @@ namespace EdiTest
                 //var edoValuesPairs = document?.RefEdoGoodChannel?.EdoValuesPairs?.ToList();
 
                 var clientEdoProcessor = new SendEdoDocumentsProcessingUnit.Processors.ClientEdoProcessor();
-                var universalDocument = clientEdoProcessor.GetUniversalDocumentV2(document, organization, document.Details, document.RefEdoGoodChannel);
+                var universalDocument = clientEdoProcessor.GetUniversalDocument(document, organization, document.Details, document.RefEdoGoodChannel);
                 var generatedFile = edo.GenerateTitleXml("UniversalTransferDocument", "СЧФДОП", "utd970_05_03_01", 0, universalDocument);
                 var xml = Encoding.GetEncoding(1251).GetString(generatedFile.Content);
                 generatedFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\Files\\{generatedFile.FileName}");
