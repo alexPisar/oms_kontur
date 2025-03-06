@@ -754,6 +754,93 @@ namespace EdiTest
             var document = edo.GetDocument("13d9568b-5e35-4084-9e9e-2435ca788554", "e527de5d-c092-43a4-98b8-6117d64c54d2");
         }
 
+        [TestMethod]
+        public void GetEdoDocumentsForSendingTest()
+        {
+            try
+            {
+                var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+                var crypto = new WinApiCryptWrapper();
+                var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+                edo.Authenticate(false, cert, "2504000010");
+
+                var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+                {
+                    Name = "ООО \"ВИРЭЙ\"",
+                    Inn = "2504000010",
+                    Kpp = "253901001",
+                    EmchdId = "b591a89f-ffe1-439c-9f04-e02444839231",
+                    EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdPersonInn = "253605132573",
+                    EmchdPersonSurname = "Бельтюкова",
+                    EmchdPersonName = "Ирина",
+                    EmchdPersonPatronymicSurname = "Васильевна",
+                    EmchdPersonPosition = "Директор по продажам"
+                };
+
+                edo.SetOrganizationParameters(organization);
+                var documents = GetDocumentsForEdoAutomaticSend(organization);
+                var document = documents.FirstOrDefault(d => d.GlnShipTo == "4610018015192");
+                //var edoValuesPairs = document?.RefEdoGoodChannel?.EdoValuesPairs?.ToList();
+
+                var clientEdoProcessor = new SendEdoDocumentsProcessingUnit.Processors.ClientEdoProcessor();
+                var universalDocument = clientEdoProcessor.GetUniversalDocumentV2(document, organization, document.Details, document.RefEdoGoodChannel);
+                var generatedFile = edo.GenerateTitleXml("UniversalTransferDocument", "СЧФДОП", "utd970_05_03_01", 0, universalDocument);
+                var xml = Encoding.GetEncoding(1251).GetString(generatedFile.Content);
+                generatedFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\Files\\{generatedFile.FileName}");
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
+        {
+            using (var abt = new AbtDbContext())
+            {
+                var fileController = new WebService.Controllers.FileController();
+                var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+                var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+                fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
+
+                string sqlString = string.Empty;
+                var properties = typeof(EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2).GetProperties();
+
+                foreach (var property in properties)
+                {
+                    var colAttribute = property?.GetCustomAttributes(false)?
+                        .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                    if (colAttribute != null)
+                        sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+                }
+
+                sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_1 D where D.DOC_DATE >= :FromDate and D.ORDER_DATE >= :FromDate" +
+                    $" and SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'" +
+                    " and exists(select * from log_actions where id_object = D.ID_DOC_MASTER and id_action = D.PERMISSION_STATUS and action_datetime > sysdate - 14)";
+                var docs = abt.Database.SqlQuery<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2>(sqlString, fromDateParam).ToList();
+
+                docs = docs.Select(u =>
+                {
+                    try
+                    {
+                        return u.Init(abt);
+                    }
+                    catch (Exception ex)
+                    {
+                        //_log.Log(ex);
+                        //MailReporter.Add(ex, $"Ошибка в документе {u.InvoiceNumber}: ");
+                        return null;
+                    }
+                }).Where(u => u != null).ToList();
+                var edoValuesPairs = docs?.FirstOrDefault(d => d.GlnShipTo == "4610018015192")?.RefEdoGoodChannel?.EdoValuesPairs?.ToList();
+                return docs;
+            }
+        }
+
         private void SetFinDbConfiguration()
         {
             var finDbController = WebService.Controllers.FinDbController.GetInstance();

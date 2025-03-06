@@ -98,6 +98,10 @@
       <Project>{9af29ff4-f8b8-4e23-b370-0a93a1215d8c}</Project>
       <Name>EdiProcessingUnit</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\SendEdoDocumentsProcessingUnit\SendEdoDocumentsProcessingUnit.csproj">
+      <Project>{89cd9c62-d20c-4234-9b07-918326f4cc3e}</Project>
+      <Name>SendEdoDocumentsProcessingUnit</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cryptography\Cryptography.csproj">
       <Project>{a588206c-c730-4867-990e-6396c75b758f}</Project>
       <Name>Cryptography</Name>

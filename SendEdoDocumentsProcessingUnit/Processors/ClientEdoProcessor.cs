@@ -128,77 +128,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                                 var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
 
-                                UniversalTransferDocument.DbContext = _abt;
-                                IEnumerable<UniversalTransferDocument> docs = (from doc in docJournals
-                                                                               where doc.IdDocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= dateTimeLastPeriod
-                                                                               join docGoodsI in _abt.DocGoodsIs on doc.Id equals docGoodsI.IdDoc
-                                                                               join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
-                                                                               where docMaster.DocDatetime >= dateTimeLastPeriod
-                                                                               join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
-                                                                               join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
-                                                                               where customer.Inn == myOrganization.Inn && customer.Kpp == myOrganization.Kpp
-                                                                               let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == docMaster.Id select label).Count() > 0
-                                                                               let honestMarkStatus = (from docComissionEdoProcessing in _abt.DocComissionEdoProcessings
-                                                                                                       where isMarked && docComissionEdoProcessing.IdDoc == docMaster.Id
-                                                                                                       orderby docComissionEdoProcessing.DocDate descending
-                                                                                                       select docComissionEdoProcessing)
-                                                                               let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
-                                                                                                       where docEdo.IdDoc == docMaster.Id && docEdo.DocType == updDocType
-                                                                                                       orderby docEdo.DocDate descending
-                                                                                                       select docEdo)
-                                                                               where docEdoProcessing.Count() == 0
-                                                                               join buyerContractor in _abt.RefContractors
-                                                                               on docGoods.IdCustomer equals buyerContractor.Id
-                                                                               join buyerCustomer in _abt.RefCustomers
-                                                                               on buyerContractor.DefaultCustomer equals buyerCustomer.Id
-                                                                               join refRefTag in _abt.RefRefTags
-                                                                               on buyerCustomer.Id equals refRefTag.IdObject
-                                                                               where refRefTag.IdTag == 242
-                                                                               let refRefTagValue = refRefTag.TagValue
-                                                                               select new UniversalTransferDocument
-                                                                               {
-                                                                                   Total = doc.DocGoodsI.TotalSumm,
-                                                                                   Vat = doc.DocGoodsI.TaxSumm,
-                                                                                   TotalWithVatExcluded = (doc.DocGoodsI.TotalSumm - doc.DocGoodsI.TaxSumm),
-                                                                                   DocJournal = doc,
-                                                                                   DocJournalNumber = docMaster.Code,
-                                                                                   DocumentNumber = doc.Code,
-                                                                                   ActStatus = docMaster.ActStatus,
-                                                                                   OrgId = myOrganization.OrgId,
-                                                                                   SenderName = myOrganization.Name,
-                                                                                   SenderInnKpp = myOrganization.Inn + "/" + myOrganization.Kpp,
-                                                                                   SenderAddress = addressSender,
-                                                                                   BuyerCustomer = buyerCustomer,
-                                                                                   SellerContractor = docMaster.DocGoods.Seller,
-                                                                                   BuyerContractor = buyerContractor,
-                                                                                   ProcessingStatus = honestMarkStatus,
-                                                                                   IsMarked = isMarked,
-                                                                                   ActStatusForSendFromTraderStr = refRefTagValue
-                                                                               })?.ToList();
-
-                                docs = docs?/*.AsParallel()?*/.Where(u => 
-                                {
-                                    var permissionStatus = FilterByStatuses(u.ActStatusForSendFromTraderStr);
-                                    return permissionStatus > 0 && u.ActStatus >= permissionStatus && _abt.Database.SqlQuery<int>(
-                                        $"select count(*) from log_actions where id_object = {u.DocJournal.IdDocMaster} and id_action = {permissionStatus} and action_datetime > sysdate - 14")
-                                        .First() > 0;
-                                })?.Select(u =>
-                                {
-                                    try
-                                    {
-                                        return u.Init(_abt);
-                                    }
-                                    catch(Exception ex)
-                                    {
-                                        _log.Log(ex);
-                                        MailReporter.Add(ex, $"Ошибка в документе {u.DocJournal.Code}: ");
-                                        return null;
-                                    }
-                                }
-                                )?.Where(u => u != null)?.ToList();
+                                IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
 
                                 int position = 0, block = 10, count = docs.Count();
-                                docs = docs ?? new List<UniversalTransferDocument>();
+                                docs = docs ?? new List<UniversalTransferDocumentV2>();
                                 var errors = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
 
                                 while (count > position)
@@ -259,7 +192,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return true;
         }
 
-        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocument doc, 
+        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocumentV2 doc, 
             Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee)
         {
             var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
@@ -270,23 +203,18 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     if ((doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 2 && (doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 1)
                     {
                         DocComissionEdoProcessing docComissionEdoProcessing = null;
-                        var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.CurrentDocJournalId select label).ToList();
+                        var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
+                        var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
 
-                        if ((doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                        (doc?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)) ||
-                        (doc.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                        (doc?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)))
+                        if (doc?.Details?
+                            .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
                         {
                             throw new Exception("Для некоторых товаров отсутствует маркировка.");
                         }
-                        else if ((doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                            (doc?.DocJournal?.DocGoodsDetailsIs?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)) ||
-                            (doc.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
-                            (doc?.DocJournal?.Details?.Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)))
+                        else if (doc?.Details?
+                            .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
                         {
                             throw new Exception("В данном документе есть избыток кодов маркировки.");
                         }
@@ -296,7 +224,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         if (consignor == null)
                             throw new Exception("Не найден комитент.");
 
-                        docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, employee, consignor, labels);
+                        docComissionEdoProcessing = await SendComissionDocumentForHonestMarkV2(myOrganization, doc, docJournal, consignor, labels);
 
                         lock (locker)
                         {
@@ -307,7 +235,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         doc.ProcessingStatus = docComissionEdoProcessing;
                     }
 
-                var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, employee, signerDetails);
+                var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, signerDetails);
 
                 if (universalDocument == null)
                     throw new Exception("Не удалось сформировать документ.");
@@ -337,15 +265,13 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         EntityId = entity.EntityId,
                         FileName = fileName,
                         IsReprocessingStatus = 0,
-                        IdDoc = doc.CurrentDocJournalId,
+                        IdDoc = doc.IdDocMaster,
                         DocDate = DateTime.Now,
                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                         ReceiverName = receiver.Name,
                         ReceiverInn = receiver.Inn,
                         DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
                     };
-
-                    doc.EdoProcessing = docProcessing;
 
                     if (doc.ProcessingStatus as DocComissionEdoProcessing != null)
                     {
@@ -356,12 +282,12 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     }
                     
                     operationEntityResult.Entity = docProcessing;
-                    operationEntityResult.Description = $"Документ {doc?.DocJournal?.Code} успешно отправлен и сохранён.";
+                    operationEntityResult.Description = $"Документ {doc?.InvoiceNumber} успешно отправлен и сохранён.";
                 }
             }
             catch(Exception ex)
             {
-                operationEntityResult.SetException(ex, $"Произошла ошибка при отправке документа {doc.DocJournal.Code}");
+                operationEntityResult.SetException(ex, $"Произошла ошибка при отправке документа {doc.InvoiceNumber}");
             }
 
             return operationEntityResult;
@@ -603,28 +529,443 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
         }
 
-        private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> GetUniversalDocumentAsync(
-            UniversalTransferDocument doc, Kontragent myOrganization, string employee = null, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null)
+        private List<UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(Kontragent organization)
         {
-            if (doc.DocJournal == null)
-                return null;
+            var fileController = new WebService.Controllers.FileController();
+            var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
 
-            if (doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocJournal.DocMaster == null)
-                return null;
+            var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+            fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
 
-            if (doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocJournal.DocGoodsI == null)
-                return null;
+            string sqlString = string.Empty;
+            var properties = typeof(UniversalTransferDocumentV2).GetProperties();
 
-            if (doc.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && doc.DocJournal.DocGoods == null)
-                return null;
+            foreach (var property in properties)
+            {
+                var colAttribute = property?.GetCustomAttributes(false)?
+                    .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
 
+                if (colAttribute != null)
+                    sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+            }
+
+            sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_1 D where D.DOC_DATE >= :FromDate and D.ORDER_DATE >= :FromDate" +
+                $" and SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'" +
+                " and exists(select * from log_actions where id_object = D.ID_DOC_MASTER and id_action = D.PERMISSION_STATUS and action_datetime > sysdate - 14)";
+            var docs = _abt.Database.SqlQuery<UniversalTransferDocumentV2>(sqlString, fromDateParam).ToList();
+
+            docs = docs.Select(u =>
+            {
+                try
+                {
+                    return u.Init(_abt);
+                }
+                catch (Exception ex)
+                {
+                    _log.Log(ex);
+                    MailReporter.Add(ex, $"Ошибка в документе {u.InvoiceNumber}: ");
+                    return null;
+                }
+            }).Where(u => u != null).ToList();
+            return docs;
+        }
+
+        private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> GetUniversalDocumentAsync(
+            UniversalTransferDocumentV2 doc, Kontragent myOrganization, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null)
+        {
             var result = await Task.Run(() =>
             {
-                var universalDocument = GetUniversalDocument(doc, myOrganization, doc.Details.ToList(), employee, signerDetails, doc.RefEdoGoodChannel as RefEdoGoodChannel);
+                var universalDocument = GetUniversalDocumentV2(doc, myOrganization, doc.Details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
                 return universalDocument;
             });
 
             return result;
+        }
+
+        public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocumentV2(
+            UniversalTransferDocumentV2 d, Kontragent organization, List<UniversalTransferDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null)
+        {
+            var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument()
+            {
+                Function = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.СЧФДОП,
+                DocumentNumber = d.InvoiceNumber,
+                DocumentDate = d.InvoiceDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy"),
+                Currency = d.Currency,
+                Table = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
+                {
+                    TotalSpecified = true,
+                    TotalWithVatExcludedSpecified = true
+                },
+                TransferInfo = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
+                {
+                    OperationInfo = "Товары переданы",
+                    TransferDate = d.InvoiceDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                }
+            };
+
+            if (!string.IsNullOrEmpty(organization.EmchdId))
+                document.DocumentCreator = $"{organization.EmchdPersonSurname} {organization.EmchdPersonName} {organization.EmchdPersonPatronymicSurname}";
+            else
+                document.DocumentCreator = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN") + " " + _utils.ParseCertAttribute(organization.Certificate.Subject, "G");
+
+            document.Table.VatSpecified = true;
+            document.Table.Total = d.InvoiceTotalSumm;
+            document.Table.Vat = d.InvoiceTaxSumm;
+            document.Table.TotalWithVatExcluded = d.InvoiceTotalSumm - d.InvoiceTaxSumm;
+
+            if (!string.IsNullOrEmpty(d.Employee))
+            {
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.EmployeeUtd970
+                {
+                    Position = Properties.Settings.Default.DefaultEmployePosition,
+                    EmployeeInfo = d.Employee,
+                    LastName = d.Employee.Substring(0, d.Employee.IndexOf(' ')),
+                    FirstName = d.Employee.Substring(d.Employee.IndexOf(' ') + 1)
+                };
+            }
+
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 senderAddress = organization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
+                            {
+                                ZipCode = organization.Address.RussianAddress.ZipCode,
+                                Region = organization.Address.RussianAddress.Region,
+                                Street = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Street) ? null : organization.Address.RussianAddress.Street,
+                                City = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.City) ? null : organization.Address.RussianAddress.City,
+                                Locality = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Locality) ? null : organization.Address.RussianAddress.Locality,
+                                Territory = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Territory) ? null : organization.Address.RussianAddress.Territory,
+                                Building = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? null : organization.Address.RussianAddress.Building
+                            } : null;
+
+            document.Sellers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
+            {
+                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+                            {
+                                Inn = organization.Inn,
+                                Kpp = organization.Kpp,
+                                OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                OrgName = organization.Name,
+                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                                {
+                                    Item = senderAddress
+                                }
+                            }
+                        }
+            };
+
+            document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
+            {
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper
+                {
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+                    {
+                        Inn = organization.Inn,
+                        OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                        Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
+                            {
+                                Country = d.DefaultCountryCode,
+                                Address = d.ShipperAddress
+                            }
+                        },
+                        OrgName = d.ShipperName
+                    }
+                }
+            };
+
+            document.Consignees = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
+            {
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
+                {
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+                    {
+                        Inn = d?.BuyerInn,
+                        OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                        Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
+                            {
+                                Country = d.DefaultCountryCode,
+                                Address = d?.ConsigneeAddress
+                            }
+                        },
+                        OrgName = d?.ConsigneeName
+                    }
+                }
+            };
+
+            document.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
+            {
+                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
+                {
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+                    {
+                        Inn = d?.BuyerInn,
+                        Kpp = d?.BuyerKpp,
+                        OrgType = d?.BuyerInn?.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                        OrgName = d?.BuyerName,
+                        Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
+                            {
+                                Country = d.DefaultCountryCode,
+                                Address = d?.BuyerAddress
+                            }
+                        }
+                    }
+                }
+            };
+
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer signer;
+            if (string.IsNullOrEmpty(organization.EmchdId))
+            {
+                var firstMiddleName = _utils.ParseCertAttribute(organization.Certificate.Subject, "G");
+                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
+                {
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                    {
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN")
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item1
+                };
+            }
+            else
+            {
+                signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
+                {
+                    Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                    {
+                        FirstName = organization.EmchdPersonName,
+                        MiddleName = organization.EmchdPersonPatronymicSurname,
+                        LastName = organization.EmchdPersonSurname
+                    },
+                    Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                    {
+                        PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                        Value = organization.EmchdPersonPosition
+                    },
+                    SignatureTypeSpecified = true,
+                    SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                    SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                    SignerPowersConfirmationMethodSpecified = true,
+                    SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                    PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                    {
+                        Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                            {
+                                UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                {
+                                    RegistrationNumber = organization.EmchdId,
+                                    IssuerInn = organization.Inn
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            document.Signers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers
+            {
+                Signer = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer[]
+                {
+                    signer
+                }
+            };
+
+            int docLineCount = d.Details.Count;
+            document.DocumentShipments = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
+            {
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
+                                {
+                                    DocumentName = "Счет-фактура и документ об отгрузке товаров (выполнении работ), передаче имущественных прав (документ об оказании услуг)",
+                                    DocumentNumber = d.InvoiceNumber,
+                                    DocumentDate = d.InvoiceDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+                                }
+            };
+
+            var details = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem>();
+
+            var additionalInfoList = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
+
+            if (edoGoodChannel != null)
+            {
+                if (!string.IsNullOrEmpty(edoGoodChannel.NumberUpdId))
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.InvoiceNumber });
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
+                {
+                    if (string.IsNullOrEmpty(d.OrderNumber))
+                        throw new Exception("Отсутствует номер заказа покупателя.");
+
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = d.OrderNumber });
+                }
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.OrderDate.ToString("dd.MM.yyyy") });
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
+                {
+                    if (string.IsNullOrEmpty(d.GlnShipTo))
+                        throw new Exception("Не указан GLN грузополучателя.");
+
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = d.GlnShipTo });
+                }
+
+                foreach (var keyValuePair in edoGoodChannel.EdoValuesPairs)
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
+            }
+
+            if (additionalInfoList.Count > 0)
+                document.AdditionalInfoId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
+
+            int number = 1;
+            foreach(var docDetail in docDetails)
+            {
+                var docJournalDetail = docDetail.DocDetailI;
+                var refGood = docDetail.Good;
+
+                if (refGood == null)
+                    continue;
+
+                var barCode = docDetail.ItemVendorCode;
+
+                string countryCode = docDetail.CountryCode;
+
+                if (countryCode.Length == 1)
+                    countryCode = "00" + countryCode;
+                else if (countryCode.Length == 2)
+                    countryCode = "0" + countryCode;
+
+                var subtotal = Math.Round(docJournalDetail.Quantity * ((decimal)docJournalDetail.Price - (decimal)docJournalDetail.DiscountSumm), 2);
+                var vat = (decimal)Math.Round(subtotal * docJournalDetail.TaxRate / (docJournalDetail.TaxRate + 100), 2, MidpointRounding.AwayFromZero);
+
+                decimal price = 0;
+
+                if (docJournalDetail.Quantity > 0)
+                    price = (decimal)Math.Round((subtotal - vat) / docJournalDetail.Quantity, 2, MidpointRounding.AwayFromZero);
+                else
+                    price = (decimal)Math.Round(docJournalDetail.Price - docJournalDetail.DiscountSumm - docJournalDetail.TaxSumm, 2);
+
+                var detail = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
+                {
+                    Product = refGood.Name,
+                    Unit = Properties.Settings.Default.DefaultUnit,
+                    Quantity = docJournalDetail.Quantity,
+                    QuantitySpecified = true,
+                    VatSpecified = true,
+                    Vat = vat,
+                    PriceSpecified = true,
+                    Price = price,
+                    SubtotalSpecified = true,
+                    Subtotal = subtotal,
+                    SubtotalWithVatExcludedSpecified = true,
+                    SubtotalWithVatExcluded = subtotal - vat,
+                    ItemVendorCode = barCode
+                };
+
+                if (!string.IsNullOrEmpty(refGood.CustomsNo))
+                {
+                    detail.CustomsDeclarations = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration[]
+                    {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemCustomsDeclaration
+                            {
+                                Country = countryCode,
+                                DeclarationNumber = refGood.CustomsNo
+                            }
+                    };
+                }
+
+                switch (docJournalDetail.TaxRate)
+                {
+                    case 0:
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
+                        break;
+                    case 10:
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
+                        break;
+                    //case 18:
+                    //    detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
+                    //    break;
+                    case 20:
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
+                        break;
+                    default:
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
+                        break;
+                }
+
+                var docGoodDetailLabels = docDetail.Labels;
+
+                if (docGoodDetailLabels.Count > 0)
+                {
+                    detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
+                    detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                    detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                    {
+                        ItemsElementName = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType[docGoodDetailLabels.Count],
+                        Items = new string[docGoodDetailLabels.Count]
+                    };
+
+                    int j = 0;
+                    foreach (var doc in docGoodDetailLabels)
+                    {
+                        detail.ItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit;
+                        detail.ItemIdentificationNumbers[0].Items[j] = doc;
+                        j++;
+                    }
+                }
+
+                var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
+                if (edoGoodChannel != null)
+                {
+                    var idChannel = edoGoodChannel.IdChannel;
+                    if (!string.IsNullOrEmpty(edoGoodChannel.DetailBuyerCodeUpdId))
+                    {
+                        if (!string.IsNullOrEmpty(docDetail?.BuyerCode))
+                            detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = docDetail?.BuyerCode });
+                        else
+                            throw new Exception("Не для всех товаров заданы коды покупателя.");
+                    }
+
+                    if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
+                        detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+
+                    if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
+                        detailAdditionalInfos.Add(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = number.ToString() });
+                }
+
+                if (detailAdditionalInfos.Count > 0)
+                    detail.AdditionalInfos = detailAdditionalInfos.ToArray();
+
+                details.Add(detail);
+                number++;
+            }
+            document.Table.Total = details.Sum(i => i.Subtotal);
+            document.Table.Vat = details.Sum(i => i.Vat);
+            document.Table.TotalWithVatExcluded = document.Table.Total - document.Table.Vat;
+
+            document.Table.Item = details.ToArray();
+
+            return document;
         }
 
         private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
@@ -1895,6 +2236,141 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                 return null;
             }
+        }
+
+        private async Task<DocComissionEdoProcessing> SendComissionDocumentForHonestMarkV2(Kontragent myOrganization, UniversalTransferDocumentV2 document, DocJournal docJournal, Kontragent consignor = null, IEnumerable<DocGoodsDetailsLabels> labels = null)
+        {
+            if (myOrganization == null)
+                throw new Exception("Не задана организация.");
+
+            if (myOrganization.Certificate == null)
+                throw new Exception("Не задан сертификат организации.");
+
+            if (document == null)
+                throw new Exception("Не задан документ.");
+
+            if (labels == null)
+            {
+                labels = from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == document.IdDocMaster select label;
+
+                if (document?.Details?
+                    .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
+                {
+                    throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                }
+                else if (document?.Details?
+                    .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
+                {
+                    throw new Exception("В данном документе есть избыток кодов маркировки.");
+                }
+            }
+
+            if (labels.Count() == 0)
+                return null;
+
+            if (document.IdSubdivision == null)
+                throw new Exception("Не задана организация-комитент");
+
+            if (consignor == null)
+                consignor = GetConsignorFromDocument(null, document.IdSubdivision);
+
+            if (consignor == null)
+                throw new Exception("Не найден комитент.");
+
+            var crypt = new WinApiCryptWrapper(consignor.Certificate);
+            _edo.Authenticate(false, consignor.Certificate, consignor.Inn);
+
+            string documentNumber = document.InvoiceNumber;
+            var comissionDocument = await CreateShipmentDocumentAsync(docJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, document.Employee, true);
+            var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, comissionDocument);
+            byte[] signature = crypt.Sign(generatedFile.Content, true);
+
+            var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+            {
+                Content = generatedFile.Content
+            };
+
+            signedContent.Signature = signature ?? throw new Exception("Не удалось вычислить подпись.");
+
+            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+
+            if (!string.IsNullOrEmpty(consignor.EmchdId))
+                consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                {
+                    UseDefault = false,
+                    FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                    {
+                        RegistrationNumber = consignor.EmchdId,
+                        IssuerInn = consignor.Inn
+                    }
+                };
+
+            var message = await _edo.SendXmlDocumentAsync(consignor.OrgId, myOrganization.OrgId, false, signedContent, "ДОП", consignorPowerOfAttorneyToPost);
+
+            _edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn);
+            var buyerDocument = await CreateBuyerShipmentDocumentAsync(myOrganization);
+            crypt.InitializeCertificate(myOrganization.Certificate);
+
+            var attachments = message.Entities.Where(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument).Select(ent =>
+            {
+                var generatedBuyerFile = _edo.GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 1, buyerDocument, message.MessageId, ent.EntityId);
+                return new Diadoc.Api.Proto.Events.RecipientTitleAttachment
+                {
+                    ParentEntityId = ent.EntityId,
+                    SignedContent = new Diadoc.Api.Proto.Events.SignedContent
+                    {
+                        Content = generatedBuyerFile.Content,
+                        Signature = crypt.Sign(generatedBuyerFile.Content, true)
+                    }
+                };
+            });
+
+            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost myOrganizationPowerOfAttorneyToPost = null;
+
+            if (!string.IsNullOrEmpty(myOrganization.EmchdId))
+                myOrganizationPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                {
+                    UseDefault = false,
+                    FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                    {
+                        RegistrationNumber = myOrganization.EmchdId,
+                        IssuerInn = myOrganization.Inn
+                    }
+                };
+
+            await _edo.SendPatchRecipientXmlDocumentAsync(message.MessageId, (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocument,
+                attachments, myOrganizationPowerOfAttorneyToPost);
+
+            var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
+                           t?.DocumentInfo?.DocumentNumber == document.InvoiceNumber);
+
+            var fileNameLength = entity.DocumentInfo.FileName.LastIndexOf('.');
+
+            if (fileNameLength < 0)
+                fileNameLength = entity.DocumentInfo.FileName.Length;
+
+            var docComissionProcessing = new DocComissionEdoProcessing
+            {
+                Id = Guid.NewGuid().ToString(),
+                MessageId = message.MessageId,
+                EntityId = entity.EntityId,
+                IdDoc = document.IdDocMaster,
+                SenderInn = consignor.Inn,
+                ReceiverInn = myOrganization.Inn,
+                DocStatus = 1,
+                UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
+                FileName = entity.DocumentInfo.FileName.Substring(0, fileNameLength),
+                DocDate = DateTime.Now,
+                DeliveryDate = document?.InvoiceDate
+            };
+
+            if (!document.IsMarked)
+                docComissionProcessing.DocStatus = 2;
+
+            document.ProcessingStatus = docComissionProcessing;
+            return docComissionProcessing;
         }
     }
 }
