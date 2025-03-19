@@ -100,7 +100,7 @@ namespace KonturEdoClient.Models
                                           where correctionDocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && correctionDocJournal.CreateInvoice == 1
                                           && correctionDocJournal.DocDatetime >= DateFrom && correctionDocJournal.DocDatetime < DateTo
                                           && _abt.DocEdoProcessings.Any(d => d.IdDoc == correctionDocJournal.IdDocMaster && d.DocType == updDocType &&
-                                          (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned))
+                                          d.DocStatus != (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected)
                                           join invoice in _abt.DocJournals on correctionDocJournal.IdDocMaster equals invoice.IdDocMaster
                                           where invoice.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice
                                           join docGoods in _abt.DocGoods on invoice.IdDocMaster equals docGoods.IdDoc
@@ -128,7 +128,7 @@ namespace KonturEdoClient.Models
                                           join invoice in _abt.DocJournals on correctionDocJournal.IdDocMaster equals invoice.Id
                                           where invoice.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice
                                           && _abt.DocEdoProcessings.Any(d => d.IdDoc == invoice.IdDocMaster && d.DocType == updDocType &&
-                                          (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned))
+                                          d.DocStatus != (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Rejected)
                                           join docGoods in _abt.DocGoods on invoice.IdDocMaster equals docGoods.IdDoc
                                           join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                           where customer.Inn == _currentOrganization.Inn && customer.Kpp == _currentOrganization.Kpp
@@ -198,12 +198,18 @@ namespace KonturEdoClient.Models
                 sellerContractor = SelectedDocument.CorrectionDocJournal?.DocGoods?.Customer;
                 baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
                 (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
+
+                if(baseProcessing == null)
+                    baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
             }
             else if (SelectedDocument.CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
             {
                 sellerContractor = SelectedDocument.InvoiceDocJournal?.DocMaster?.DocGoods?.Seller;
                 baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
                 (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
+
+                if(baseProcessing == null)
+                    baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
             }
 
             if (sellerContractor?.DefaultCustomer == null)
