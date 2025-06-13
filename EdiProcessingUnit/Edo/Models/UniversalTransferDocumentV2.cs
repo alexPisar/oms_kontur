@@ -29,6 +29,9 @@ namespace EdiProcessingUnit.Edo.Models
         [Column("INVOICE_DATE")]
         public virtual DateTime? InvoiceDate { get; set; }
 
+        [Column("ACT_STATUS")]
+        public virtual int ActStatus { get; set; }
+
         [Column("PERMISSION_STATUS")]
         public virtual int PermissionStatus { get; set; }
 

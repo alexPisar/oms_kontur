@@ -796,6 +796,255 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void TestPayEngineMethod()
+        {
+            var sector = "6431";
+            var reference = "459";//"TEST1";
+            var password = "1W4Y8O8"; //"u77555g4";
+
+            try
+            {
+                var str = sector + reference + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Order");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&reference={reference}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void OperationPayEngineMethod()
+        {
+            var sector = "6431";
+            var id = "10663641";//"TEST1";
+            var operation = "3463574";
+            var password = "1W4Y8O8"; //"u77555g4";
+
+            try
+            {
+                var str = sector + id + operation + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Operation");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&id={id}&operation={operation}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void RegisterOrderTest()
+        {
+            var sector = "6431";
+            var amount = "100";
+            var currency = "643";
+            var description = "Test Order";
+            var reference = "TEST1";
+            var password = "1W4Y8O8"; //"u77555g4";
+
+            try
+            {
+                var str = sector + amount + currency + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Register");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&amount={amount}&currency={currency}&description={description}&reference={reference}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void GetOrdersListTest()
+        {
+            var sector = "6431";
+            var reference = "448,458,459";//"TEST1";
+            var password = "1W4Y8O8"; //"u77555g4";
+            var fromDate = "10.04.2025";
+            //var orderState = "0";
+
+            try
+            {
+                var str = sector + reference /*+ orderState*/  + fromDate + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/OrderList");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&from_date={fromDate}&reference_list={reference}&mode=1";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
         {
             using (var abt = new AbtDbContext())

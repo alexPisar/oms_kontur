@@ -498,7 +498,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_1 D where D.DOC_DATE >= :FromDate and D.ORDER_DATE >= :FromDate" +
                 $" and SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'" +
-                " and exists(select * from log_actions where id_object = D.ID_DOC_MASTER and id_action = D.PERMISSION_STATUS and action_datetime > sysdate - 14)";
+                " and ((D.is_marked = 1 and D.act_status >= 5) or (D.act_status >= D.PERMISSION_STATUS and " +
+                "exists(select * from log_actions where id_object = D.ID_DOC_MASTER and id_action = D.PERMISSION_STATUS and action_datetime > sysdate - 14)))";
             var docs = _abt.Database.SqlQuery<UniversalTransferDocumentV2>(sqlString, fromDateParam).ToList();
 
             docs = docs.Select(u =>
