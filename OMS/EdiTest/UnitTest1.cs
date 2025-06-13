@@ -799,9 +799,9 @@ namespace EdiTest
         [TestMethod]
         public void TestPayEngineMethod()
         {
-            var sector = "6431";
-            var reference = "459";//"TEST1";
-            var password = "1W4Y8O8"; //"u77555g4";
+            var sector = "";
+            var reference = "459";
+            var password = "";
 
             try
             {
@@ -809,7 +809,7 @@ namespace EdiTest
                 var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
                 var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
                 var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
-                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
+                
 
                 var webProxy = new WebProxy();
 
@@ -860,10 +860,10 @@ namespace EdiTest
         [TestMethod]
         public void OperationPayEngineMethod()
         {
-            var sector = "6431";
-            var id = "10663641";//"TEST1";
-            var operation = "3463574";
-            var password = "1W4Y8O8"; //"u77555g4";
+            var sector = "";
+            var id = "";
+            var operation = "";
+            var password = "";
 
             try
             {
@@ -871,7 +871,6 @@ namespace EdiTest
                 var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
                 var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
                 var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
-                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
 
                 var webProxy = new WebProxy();
 
@@ -922,12 +921,12 @@ namespace EdiTest
         [TestMethod]
         public void RegisterOrderTest()
         {
-            var sector = "6431";
+            var sector = "";
             var amount = "100";
             var currency = "643";
             var description = "Test Order";
             var reference = "TEST1";
-            var password = "1W4Y8O8"; //"u77555g4";
+            var password = ""; 
 
             try
             {
@@ -985,9 +984,9 @@ namespace EdiTest
         [TestMethod]
         public void GetOrdersListTest()
         {
-            var sector = "6431";
-            var reference = "448,458,459";//"TEST1";
-            var password = "1W4Y8O8"; //"u77555g4";
+            var sector = "";
+            var reference = "448,458,459";
+            var password = "";
             var fromDate = "10.04.2025";
             //var orderState = "0";
 
@@ -997,7 +996,7 @@ namespace EdiTest
                 var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
                 var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
                 var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
-                //signature = "N2NjMjdlNDc3ODhlZjQ3NzBkYjhkZDY2NGE1NTdhM2E=";
+                
 
                 var webProxy = new WebProxy();
 
