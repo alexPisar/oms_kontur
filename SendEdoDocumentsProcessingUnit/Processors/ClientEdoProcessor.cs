@@ -200,6 +200,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             try
             {
                 if (doc.IsMarked)
+                {
                     if ((doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 2 && (doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 1)
                     {
                         DocComissionEdoProcessing docComissionEdoProcessing = null;
@@ -219,21 +220,51 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             throw new Exception("В данном документе есть избыток кодов маркировки.");
                         }
 
-                        var consignor = GetConsignorFromDocument(null, doc.IdSubdivision);
+                        var labelsByReceivers = (from label in _abt.DocGoodsDetailsLabels
+                                                 where label.IdDocSale == doc.IdDocMaster
+                                                 join journal in _abt.DocJournals on label.IdDoc equals journal.Id
+                                                 where journal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Receipt
+                                                 join docGood in _abt.DocGoods on journal.Id equals docGood.IdDoc
+                                                 join r in _abt.RefContractors on docGood.IdCustomer equals r.Id
+                                                 join c in _abt.RefCustomers on r.DefaultCustomer equals c.Id
+                                                 where c.Inn != doc.SellerInn
+                                                 select new { Label = label, Receiver = c }).
+                                                GroupBy(p => p.Receiver.Inn)?.ToList();
 
-                        if (consignor == null)
-                            throw new Exception("Не найден комитент.");
-
-                        docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, consignor, labels);
-
-                        lock (locker)
+                        foreach (var labelsByReceiver in labelsByReceivers)
                         {
-                            _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
-                            _abt.SaveChanges();
-                        }
+                            var consignor = GetMyKontragent(labelsByReceiver.Key, labelsByReceiver?.FirstOrDefault()?.Receiver?.Kpp);
 
-                        doc.ProcessingStatus = docComissionEdoProcessing;
+                            if (consignor == null)
+                                throw new Exception("Не найден комитент.");
+
+                            if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(consignor.Certificate, consignor))
+                                throw new Exception("Не удалось авторизоваться в Честном знаке");
+
+                            var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
+                                .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labelsByReceiver.Select(l => l?.Label?.DmLabel)?.ToArray())
+                                .Where(m => m.CisInfo.OwnerInn != doc.SellerInn);
+
+                            if (!markedCodesInfo.Any())
+                                continue;
+
+                            if (markedCodesInfo.Any(m => m.CisInfo.OwnerInn != labelsByReceiver.Key))
+                                throw new Exception("Среди кодов есть не принадлежавшие организации - получателю.");
+
+                            var labelsByDoc = labelsByReceiver.Where(l => markedCodesInfo.Any(m => m.CisInfo.Cis == l.Label.DmLabel)).Select(l => l.Label)?.ToList();
+
+                            docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, consignor, labelsByDoc);
+
+                            lock (locker)
+                            {
+                                _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                                _abt.SaveChanges();
+                            }
+
+                            doc.ProcessingStatus = docComissionEdoProcessing;
+                        }
                     }
+                }
 
                 var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, signerDetails);
 
