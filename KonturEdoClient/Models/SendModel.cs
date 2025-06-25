@@ -17,7 +17,7 @@ namespace KonturEdoClient.Models
         private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>> _currentDocuments;
         private AbtDbContext _abt;
         private bool _isSendReceive = false;
-        private HonestMark.DocumentProcessStatusesEnum _docStatus = HonestMark.DocumentProcessStatusesEnum.None;
+        private EdiProcessingUnit.HonestMark.DocumentProcessStatusesEnum _docStatus = EdiProcessingUnit.HonestMark.DocumentProcessStatusesEnum.None;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
         private DataContextManagementUnit.DataAccess.DocJournalType _docType;
         private bool _authInHonestMark;
@@ -109,7 +109,7 @@ namespace KonturEdoClient.Models
                     loadWindow.Show();
                     Exception exception = null;
 
-                    if (isMarked && _authInHonestMark && !HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
+                    if (isMarked && _authInHonestMark && !EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
                     {
                         _log.Log("Проверка на регистрацию дала отрицательный результат.");
 
@@ -201,7 +201,7 @@ namespace KonturEdoClient.Models
                                     if (comissionDocument == null && currentDocument.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0))
                                     {
                                         var comDoc = _abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == currentDocument.Key &&
-                                        (d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent));
+                                        (d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent));
 
                                         if (comDoc == null)
                                             throw new Exception("Не найден комиссионный документ.");

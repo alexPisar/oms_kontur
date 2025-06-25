@@ -210,29 +210,6 @@
     <Compile Include="GoodsMatchingWindow.xaml.cs">
       <DependentUpon>GoodsMatchingWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HonestMark\Enums.cs" />
-    <Compile Include="HonestMark\HonestMarkClient.cs" />
-    <Compile Include="HonestMark\HonestMarkTokenCache.cs" />
-    <Compile Include="HonestMark\IDocument.cs" />
-    <Compile Include="HonestMark\Models\AuthData.cs" />
-    <Compile Include="HonestMark\Models\AuthRequest.cs" />
-    <Compile Include="HonestMark\Models\AuthResult.cs" />
-    <Compile Include="HonestMark\Models\DocumentEdoProcessResultInfo.cs" />
-    <Compile Include="HonestMark\Models\DocumentInfo.cs" />
-    <Compile Include="HonestMark\Models\EdoProcessingError.cs" />
-    <Compile Include="HonestMark\Models\EdoProcessingErrorDescription.cs" />
-    <Compile Include="HonestMark\Models\MarkInfo.cs" />
-    <Compile Include="HonestMark\Models\DocumentCreateRequest.cs" />
-    <Compile Include="HonestMark\Models\DocumentCreateResponse.cs" />
-    <Compile Include="HonestMark\Models\MarkCodeInfo.cs" />
-    <Compile Include="HonestMark\Models\OrgRegistrationResponse.cs" />
-    <Compile Include="HonestMark\Models\ProcessEdoOperation.cs" />
-    <Compile Include="HonestMark\Models\ProcessEdoOperationDetail.cs" />
-    <Compile Include="HonestMark\Models\ReceiveDocument.cs" />
-    <Compile Include="HonestMark\Models\ReceiveProduct.cs" />
-    <Compile Include="HonestMark\Models\ReprocessDocumentResponse.cs" />
-    <Compile Include="HonestMark\Models\ShipmentDocument.cs" />
-    <Compile Include="HonestMark\Models\ShipmentProduct.cs" />
     <Compile Include="MarkedCodesWindow.xaml.cs">
       <DependentUpon>MarkedCodesWindow.xaml</DependentUpon>
     </Compile>

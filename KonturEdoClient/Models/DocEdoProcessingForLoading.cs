@@ -1,6 +1,6 @@
 ﻿using System;
 using EdiProcessingUnit.Enums;
-using KonturEdoClient.HonestMark;
+using EdiProcessingUnit.HonestMark;
 using DataContextManagementUnit.DataAccess.Contexts.Abt;
 
 namespace KonturEdoClient.Models

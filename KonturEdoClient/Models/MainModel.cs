@@ -49,7 +49,7 @@ namespace KonturEdoClient.Models
         public bool PermissionCompareGoods { get; set; }
         public bool PermissionChannelsList { get; set; }
         public bool PermissionChannelsSettings { get; set; }
-        public bool DocumentWithErrorStatus => ((DocComissionEdoProcessing)SelectedDocument?.ProcessingStatus)?.DocStatus == (int?)HonestMark.DocEdoProcessingStatus.ProcessingError;
+        public bool DocumentWithErrorStatus => ((DocComissionEdoProcessing)SelectedDocument?.ProcessingStatus)?.DocStatus == (int?)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError;
         public bool IsSended => WorkWithDocumentsPermission && SelectedDocument?.DocEdoSendStatus != null && SelectedDocument?.DocEdoSendStatus != "-";
         public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован" ||
             SelectedDocument?.DocEdoSendStatus == "Подписан с расхождениями");
@@ -891,7 +891,7 @@ namespace KonturEdoClient.Models
 
             try
             {
-                _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(kontragent.Certificate, kontragent);
+                _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(kontragent.Certificate, kontragent);
             }
             catch (Exception ex)
             {
@@ -1128,7 +1128,7 @@ namespace KonturEdoClient.Models
                         Exception authInHonestMarkException = null;
                         try
                         {
-                            _authInHonestMark = HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
+                            _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
 
                             if (!_authInHonestMark)
                                 _log.Log("Не удалось авторизоваться в Честном знаке");
@@ -1142,7 +1142,7 @@ namespace KonturEdoClient.Models
 
                         var docProcessings = from doc in _loadedDocuments[index]
                                              where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
-                                             ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent
+                                             ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent
                                              select doc.ProcessingStatus as DocComissionEdoProcessing;
 
                         if(docProcessings.Count() != 0)
@@ -1153,15 +1153,15 @@ namespace KonturEdoClient.Models
                                 {
                                     if (_authInHonestMark)
                                     {
-                                        var docProcessingInfo = HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.FileName);
+                                        var docProcessingInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.FileName);
 
-                                        if (docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.SUCCESS)
+                                        if (docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.SUCCESS)
                                         {
-                                            docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                                            docProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed;
                                         }
-                                        else if (docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.FAILED)
+                                        else if (docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.FAILED)
                                         {
-                                            docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+                                            docProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError;
 
                                             var failedOperations = docProcessingInfo?.Operations?.Select(o => o.Details)?.Where(o => o.Successful == false);
 
@@ -1192,10 +1192,10 @@ namespace KonturEdoClient.Models
                                         Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
 
                                         if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
-                                            docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                                            docProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed;
                                         else if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
                                         {
-                                            docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+                                            docProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError;
 
                                             var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
 
@@ -1230,7 +1230,7 @@ namespace KonturEdoClient.Models
 
                             var docProcessingsForReprocessing = (from doc in _loadedDocuments[index]
                                                                  where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
-                                                                 ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed
+                                                                 ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed
                                                                  select (DocComissionEdoProcessing)doc.ProcessingStatus).SelectMany(s => s.MainDocuments).Where(m => m.IsReprocessingStatus == 1);
 
                             if ((docProcessingsForReprocessing?.Count() ?? 0) != 0)
@@ -1241,14 +1241,14 @@ namespace KonturEdoClient.Models
                                     {
                                         if (docProcessing.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed)
                                         {
-                                            var docProcessingInfo = HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.FileName);
+                                            var docProcessingInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.FileName);
 
-                                            if (docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.FAILED)
+                                            if (docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.FAILED)
                                             {
-                                                HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(docProcessing.FileName);
+                                                EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(docProcessing.FileName);
                                                 docProcessing.IsReprocessingStatus = 2;
                                             }
-                                            else if (docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.SUCCESS)
+                                            else if (docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.SUCCESS)
                                                 docProcessing.IsReprocessingStatus = 0;
                                         }
                                         else
@@ -1270,9 +1270,9 @@ namespace KonturEdoClient.Models
 
                             var docProcessingsForChecking = (from doc in _loadedDocuments[index]
                                                                  where doc.ProcessingStatus as DocComissionEdoProcessing != null &&
-                                                                 ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed
+                                                                 ((DocComissionEdoProcessing)doc.ProcessingStatus).DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed
                                                                  select (DocComissionEdoProcessing)doc.ProcessingStatus).SelectMany(s => s.MainDocuments)
-                                                                 .Where(m => m.AnnulmentStatus == (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing);
+                                                                 .Where(m => m.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing);
 
                             if ((docProcessingsForChecking?.Count() ?? 0) != 0)
                             {
@@ -1283,16 +1283,16 @@ namespace KonturEdoClient.Models
                                         if (string.IsNullOrEmpty(docProcessing.AnnulmentFileName))
                                             throw new Exception($"Не указан файл аннулирования для документа {docProcessing.FileName}");
 
-                                        var docProcessingInfo = HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.AnnulmentFileName);
+                                        var docProcessingInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetEdoDocumentProcessInfo(docProcessing.AnnulmentFileName);
 
-                                        if(docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.FAILED)
+                                        if(docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.FAILED)
                                         {
-                                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Error;
+                                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Error;
                                             errorsList.Add(new Exception($"Возникла ошибка обработки документа {docProcessing.AnnulmentFileName} в Честном знаке"));
                                         }
-                                        else if(docProcessingInfo.Code == HonestMark.HonestMarkProcessResultStatus.SUCCESS)
+                                        else if(docProcessingInfo.Code == EdiProcessingUnit.HonestMark.HonestMarkProcessResultStatus.SUCCESS)
                                         {
-                                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed;
+                                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed;
                                         }
                                     }
                                     catch (Exception ex)
@@ -1308,7 +1308,7 @@ namespace KonturEdoClient.Models
                             var docsForAnnulmentProcessing = from doc in _loadedDocuments[index]
                                                              join docProc in _abt.DocEdoProcessings
                                                              on doc.CurrentDocJournalId equals docProc.IdDoc
-                                                             where docProc.AnnulmentStatus == (int)HonestMark.AnnulmentDocumentStatus.Requested
+                                                             where docProc.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested
                                                              select docProc;
 
                             if ((docsForAnnulmentProcessing?.Count() ?? 0) != 0)
@@ -1323,13 +1323,13 @@ namespace KonturEdoClient.Models
                                         {
                                             if(doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature 
                                             && docProcessing.ComissionDocument != null)
-                                                docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing;
+                                                docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing;
                                             else
-                                                docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Revoked;
+                                                docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Revoked;
                                         }
                                         else if(doc.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationRejected)
                                         {
-                                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Rejected;
+                                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Rejected;
                                         }
                                     }
                                     catch (Exception ex)
@@ -1708,8 +1708,8 @@ namespace KonturEdoClient.Models
                 if (SelectedDocuments.Exists(s => s.IsMarked))
                 {
                     sendModel.IsReceivedMarkData = SelectedDocuments.All(s => 
-                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus == (int?)HonestMark.DocEdoProcessingStatus.Processed ||
-                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus == (int?)HonestMark.DocEdoProcessingStatus.Sent);
+                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus == (int?)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed ||
+                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus == (int?)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent);
 
                     if (!sendModel.IsReceivedMarkData)
                         sendModel.BeforeSendEventHandler += (object s, EventArgs e) => { SendComissionDocumentForHonestMark(s); };
@@ -1814,8 +1814,8 @@ namespace KonturEdoClient.Models
             }
 
             var documents = SelectedDocuments.Where(s =>
-                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != (int?)HonestMark.DocEdoProcessingStatus.Processed &&
-                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != (int?)HonestMark.DocEdoProcessingStatus.Sent);
+                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != (int?)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed &&
+                    (s.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != (int?)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent);
 
             if (documents.Count() == 0)
                 return;
@@ -2005,7 +2005,7 @@ namespace KonturEdoClient.Models
                                     IdDoc = dc.Key.CurrentDocJournalId,
                                     SenderInn = consignor.Inn,
                                     ReceiverInn = SelectedOrganization.Inn,
-                                    DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
+                                    DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent,
                                     UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                     FileName = entity.DocumentInfo.FileName.Substring(0, fileNameLength),
                                     DocDate = DateTime.Now,
@@ -2013,7 +2013,7 @@ namespace KonturEdoClient.Models
                                 };
 
                                 if (!dc.Key.IsMarked)
-                                    docComissionProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                                    docComissionProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed;
 
                                 dc.Key.ProcessingStatus = docComissionProcessing;
 
@@ -2151,7 +2151,7 @@ namespace KonturEdoClient.Models
                                     IdDoc = labelsByDocument.Key.CurrentDocJournalId,
                                     SenderInn = consignor.Inn,
                                     ReceiverInn = SelectedOrganization.Inn,
-                                    DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent,
+                                    DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent,
                                     UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                     FileName = generatedFile.FileName.Substring(0, fileNameLength),
                                     DocDate = DateTime.Now,
@@ -2159,7 +2159,7 @@ namespace KonturEdoClient.Models
                                 };
 
                                 if (!labelsByDocument.Key.IsMarked)
-                                    docProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                                    docProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed;
 
                                 labelsByDocument.Key.ProcessingStatus = docProcessing;
                                 _abt.DocComissionEdoProcessings.Add(docProcessing);
@@ -2256,14 +2256,14 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (_abt.DocComissionEdoProcessings.Any(d => d.IdDoc == SelectedDocument.CurrentDocJournalId && d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed))
+            if (_abt.DocComissionEdoProcessings.Any(d => d.IdDoc == SelectedDocument.CurrentDocJournalId && d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed))
             {
                 System.Windows.MessageBox.Show(
                     "Данный документ уже был успешно обработан.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
-            if (_abt.DocComissionEdoProcessings.Any(d => d.IdDoc == SelectedDocument.CurrentDocJournalId && d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent))
+            if (_abt.DocComissionEdoProcessings.Any(d => d.IdDoc == SelectedDocument.CurrentDocJournalId && d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent))
             {
                 System.Windows.MessageBox.Show(
                     "Данный документ находится ещё пока на стадии обработки.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
@@ -2293,9 +2293,9 @@ namespace KonturEdoClient.Models
                 if (consignor == null)
                     return;
 
-                HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(processingComissionStatus.FileName);
+                EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(processingComissionStatus.FileName);
 
-                processingComissionStatus.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Sent;
+                processingComissionStatus.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent;
 
                 var processingStatus = processingComissionStatus.MainDocuments.OrderByDescending(m => m.DocDate).FirstOrDefault();
 
@@ -2451,9 +2451,9 @@ namespace KonturEdoClient.Models
                         docProcessing.AnnulmentFileName = fileName;
 
                         if(document.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature && SelectedDocument.IsMarked)
-                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing;
+                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing;
                         else
-                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Revoked;
+                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Revoked;
 
                         _abt.SaveChanges();
 
@@ -2529,7 +2529,7 @@ namespace KonturEdoClient.Models
                             var signature = crypt.Sign(generatedFile.Content, true);
                             Edo.GetInstance().SendRejectionDocument(message.MessageId, entity.EntityId, generatedFile.Content, signature, powerOfAttorneyToPost);
 
-                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Rejected;
+                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Rejected;
                             _abt.SaveChanges();
                         };
 
@@ -2550,9 +2550,9 @@ namespace KonturEdoClient.Models
                 }
                 else if(document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationIsRequestedByMe)
                 {
-                    if (docProcessing.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.Requested)
+                    if (docProcessing.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested)
                     {
-                        docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Requested;
+                        docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested;
                         _abt.SaveChanges();
                     }
 
@@ -2646,7 +2646,7 @@ namespace KonturEdoClient.Models
                             var fileName = generatedFile.FileName.Substring(0, fileNameLength);
 
                             docProcessing.AnnulmentFileName = fileName;
-                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Requested;
+                            docProcessing.AnnulmentStatus = (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested;
                             _abt.SaveChanges();
                         };
 
@@ -2731,14 +2731,14 @@ namespace KonturEdoClient.Models
             var processingStatus = (DocComissionEdoProcessing)SelectedDocument.ProcessingStatus;
             var docProcessing = processingStatus.MainDocuments.OrderByDescending(m => m.DocDate).FirstOrDefault();
 
-            if(docProcessing != null && (docProcessing.AnnulmentStatus == (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing || docProcessing.AnnulmentStatus == (int)HonestMark.AnnulmentDocumentStatus.Requested))
+            if(docProcessing != null && (docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing || docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested))
             {
                 System.Windows.MessageBox.Show(
                     "Документ с данными кодами маркировки находится в процессе аннулирования.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
-            if (processingStatus.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent)
+            if (processingStatus.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent)
             {
                 System.Windows.MessageBox.Show(
                     "Документ с данными кодами маркировки обрабатывается в Честном знаке.\n" +
@@ -2746,7 +2746,7 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (processingStatus.DocStatus == (int)HonestMark.DocEdoProcessingStatus.ProcessingError)
+            if (processingStatus.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError)
             {
                 System.Windows.MessageBox.Show(
                     "Документ с данными кодами маркировки был обработан с ошибками в Честном знаке.\n" +
@@ -2807,8 +2807,8 @@ namespace KonturEdoClient.Models
 
                 if (_authInHonestMark)
                 {
-                    var markedCodesInfo = HonestMark.HonestMarkClient.GetInstance()
-                        .GetMarkCodesInfo(HonestMark.ProductGroupsEnum.None, labelsByConsignor.Value.Select(l => l.DmLabel).ToArray())
+                    var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
+                        .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labelsByConsignor.Value.Select(l => l.DmLabel).ToArray())
                         .Where(m => m?.CisInfo?.OwnerInn != consignor.Inn);
 
                     if(markedCodesInfo.Any(m => m?.CisInfo?.OwnerInn != SelectedOrganization.Inn))
