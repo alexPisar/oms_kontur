@@ -221,7 +221,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         }
 
                         var labelsByReceivers = (from label in _abt.DocGoodsDetailsLabels
-                                                 where label.IdDocSale == doc.IdDocMaster
+                                                 where label.IdDocSale == doc.IdDocMaster && label.IdDoc > 0
                                                  join journal in _abt.DocJournals on label.IdDoc equals journal.Id
                                                  where journal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Receipt
                                                  join docGood in _abt.DocGoods on journal.Id equals docGood.IdDoc

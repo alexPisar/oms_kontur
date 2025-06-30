@@ -1044,6 +1044,56 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void TestMethod()
+        {
+            using (var abt = new AbtDbContext())
+            {
+                //var count = abt.DocGoodsDetailsLabels.Count();
+                //var label = abt.DocGoodsDetailsLabels.FirstOrDefault(l => l.IdDocSale == 291089005);
+                //var labelIdGood = label.IdGood;
+
+
+                ExcelColumnCollection columnCollection = new ExcelColumnCollection();
+
+                columnCollection.AddColumn("Code", "Код");
+                columnCollection.AddColumn("Filial", "Филиал");
+
+                var markedCodesList = new ExcelDocumentData(columnCollection);
+
+                List<ExcelDocumentData> markedCodesLists = new List<ExcelDocumentData>(new ExcelDocumentData[] {
+                        markedCodesList
+                    });
+
+                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\MarkedCodes.xlsx", markedCodesLists);
+
+                worker.ImportData<DocGoodLabelForImportClass>();
+
+                var markedCodesFromFilial = markedCodesList.Data.Cast<DocGoodLabelForImportClass>().Where(c => c.Filial == "Владивосток").ToList();
+                var labels = markedCodesList.Data.Cast<DocGoodLabelForImportClass>().Where(c => c.Filial == "Владивосток").Select(c => c.GetLabel(abt)).Where(l => l != null).ToList();
+
+                abt.DocGoodsDetailsLabels.AddRange(labels);
+                abt.SaveChanges();
+                //foreach (var l in markedCodesList.Data)
+                //{
+                //    var label = l as DocGoodsDetailsLabels;
+                //    label.LabelStatus = 2;
+                //    label.IdDoc = 0;
+
+                //    var barCode = label.DmLabel.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+                //    decimal? idGood = abt?.RefBarCodes?.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == false)?.IdGood;
+
+                //    if(idGood != null)
+                //    {
+                //        //label.IdGood = idGood.Value;
+                //        //abt.DocGoodsDetailsLabels.Add(label);
+                //    }
+                //}
+
+
+            }
+        }
+
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
         {
             using (var abt = new AbtDbContext())

@@ -1888,15 +1888,24 @@ namespace KonturEdoClient.Models
                 {
                     if (idDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                     {
-                        if (labelsByDocuments.Any(l => l.Key?.IdSubdivision == null))
-                            throw new Exception("Не для всех документов задана организация-комитент");
+                        var labelsByConsignors = (from doc in labelsByDocuments
+                                                  join label in labelsByDocuments.SelectMany(l => l.Value)
+                                                  on doc.Key.CurrentDocJournalId equals label.IdDocSale
+                                                  where label.IdDoc > 0
+                                                  let customers = (from docGood in _abt.DocGoods
+                                                                   where docGood.IdDoc == label.IdDoc
+                                                                   join docJournal in _abt.DocJournals on docGood.IdDoc equals docJournal.Id
+                                                                   where docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Receipt
+                                                                   join r in _abt.RefContractors on docGood.IdCustomer equals r.Id
+                                                                   join c in _abt.RefCustomers on r.DefaultCustomer equals c.Id
+                                                                   select c)
+                                                  where customers.Count() > 0
+                                                  select new { Document = doc.Key, Label = label, Customer = customers.First() })
+                                                  .Where(d => d.Customer.Inn != SelectedOrganization.Inn).GroupBy(d => d.Customer.Inn);
 
-                        var docsByConsignors = from l in labelsByDocuments
-                                               group l by l.Key.IdSubdivision;
-
-                        foreach(var docsByConsignor in docsByConsignors)
+                        foreach(var labelsByConsignor in labelsByConsignors)
                         {
-                            var consignor = GetConsignorFromDocument(null, docsByConsignor.Key);
+                            var consignor = GetMyKontragent(labelsByConsignor.Key);
 
                             if (consignor == null)
                                 throw new Exception("Не найден комитент.");
@@ -1911,12 +1920,18 @@ namespace KonturEdoClient.Models
                             Edo.GetInstance().Authenticate(false, consignor.Certificate, consignor.Inn);
                             loadContext.Text = "Формирование приходного УПД";
                             var docs = new Dictionary<UniversalTransferDocument, Diadoc.Api.Proto.Events.SignedContent>();
-                            foreach (var labelsByDocument in docsByConsignor)
+                            var consignorLabelsByDocuments = labelsByConsignor.GroupBy(l => l.Document.CurrentDocJournalId);
+                            foreach (var consignorLabelsByDocument in consignorLabelsByDocuments)
                             {
-                                var labels = labelsByDocument.Value;
-                                string documentNumber = labelsByDocument.Key.DocJournal?.Code;
+                                var doc = consignorLabelsByDocument?.FirstOrDefault()?.Document;
 
-                                var document = CreateShipmentDocument(labelsByDocument.Key.DocJournal, consignor, SelectedOrganization, labels.ToList(), documentNumber, employee, true);
+                                if (doc == null)
+                                    continue;
+
+                                var labels = consignorLabelsByDocument.Select(c => c.Label);
+                                string documentNumber = doc.DocJournal?.Code;
+
+                                var document = CreateShipmentDocument(doc.DocJournal, consignor, SelectedOrganization, labels.ToList(), documentNumber, employee, true);
 
                                 var generatedFile = Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, document);
                                 byte[] signature = crypt.Sign(generatedFile.Content, true);
@@ -1929,7 +1944,7 @@ namespace KonturEdoClient.Models
                                 if (signature != null)
                                     signedContent.Signature = signature;
 
-                                docs.Add(labelsByDocument.Key, signedContent);
+                                docs.Add(doc, signedContent);
                             }
 
                             loadContext.Text = "Отправка";
@@ -1987,10 +2002,15 @@ namespace KonturEdoClient.Models
 
                             loadContext.Text = "Сохранение в базе данных.";
 
-                            var docComissionEdoProcessings = docsByConsignor.Select(dc => 
+                            var docComissionEdoProcessings = consignorLabelsByDocuments.Select(dc => 
                             {
+                                var doc = dc?.FirstOrDefault()?.Document;
+
+                                if (doc == null)
+                                    return null;
+
                                 var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
-                                t?.DocumentInfo?.DocumentNumber == dc.Key.DocJournal.Code);
+                                t?.DocumentInfo?.DocumentNumber == doc.DocJournal.Code);
 
                                 var fileNameLength = entity.DocumentInfo.FileName.LastIndexOf('.');
 
@@ -2002,20 +2022,20 @@ namespace KonturEdoClient.Models
                                     Id = Guid.NewGuid().ToString(),
                                     MessageId = message.MessageId,
                                     EntityId = entity.EntityId,
-                                    IdDoc = dc.Key.CurrentDocJournalId,
+                                    IdDoc = doc.CurrentDocJournalId,
                                     SenderInn = consignor.Inn,
                                     ReceiverInn = SelectedOrganization.Inn,
                                     DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent,
                                     UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                     FileName = entity.DocumentInfo.FileName.Substring(0, fileNameLength),
                                     DocDate = DateTime.Now,
-                                    DeliveryDate = dc.Key?.DocJournal?.DeliveryDate
+                                    DeliveryDate = doc?.DocJournal?.DeliveryDate
                                 };
 
-                                if (!dc.Key.IsMarked)
+                                if (!doc.IsMarked)
                                     docComissionProcessing.DocStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed;
 
-                                dc.Key.ProcessingStatus = docComissionProcessing;
+                                doc.ProcessingStatus = docComissionProcessing;
 
                                 return docComissionProcessing;
                             });
