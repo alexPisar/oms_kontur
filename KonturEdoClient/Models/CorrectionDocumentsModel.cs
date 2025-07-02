@@ -873,7 +873,8 @@ namespace KonturEdoClient.Models
                             ReceiverInn = baseProcessing.ReceiverInn,
                             DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Ucd,
                             IdParent = baseProcessing.Id,
-                            Parent = baseProcessing
+                            Parent = baseProcessing,
+                            HonestMarkStatus = SelectedDocument.IsMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                         };
                         baseProcessing.Children.Add(newDocEdoProcessing);
                         //_abt.DocEdoProcessings.Add(newDocEdoProcessing);

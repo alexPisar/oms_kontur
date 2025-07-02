@@ -204,10 +204,7 @@ namespace EdiProcessingUnit.HonestMark
 
     public enum DocEdoProcessingStatus
     {
-        /// <summary>
-        /// Новый
-        /// </summary>
-        New,
+        None,
 
         /// <summary>
         /// Отправлен

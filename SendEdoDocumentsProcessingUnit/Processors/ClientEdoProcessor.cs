@@ -301,7 +301,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                         ReceiverName = receiver.Name,
                         ReceiverInn = receiver.Inn,
-                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                        HonestMarkStatus = doc.IsMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                     };
 
                     if (doc.ProcessingStatus as DocComissionEdoProcessing != null)
@@ -460,7 +461,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                                 UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                                 ReceiverName = receiver.Name,
                                                 ReceiverInn = receiver.Inn,
-                                                DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                                DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                                                HonestMarkStatus = doc.IsMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                                             };
 
                                             if (docComissionEdoProcessing != null)

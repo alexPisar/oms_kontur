@@ -181,6 +181,11 @@ namespace KonturEdoClient.Models
 
                                     var fileName = entity.FileName.Substring(0, fileNameLength);
 
+                                    bool isDocMarked = false;
+
+                                    if (isMarked)
+                                        isDocMarked = currentDocument.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0);
+
                                     docProcessing = new DocEdoProcessing
                                     {
                                         Id = Guid.NewGuid().ToString(),
@@ -193,7 +198,8 @@ namespace KonturEdoClient.Models
                                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                         ReceiverName = SelectedOrganization.Name,
                                         ReceiverInn = SelectedOrganization.Inn,
-                                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                                        HonestMarkStatus = isDocMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                                     };
 
                                     var comissionDocument = ComissionDocuments.FirstOrDefault(c => c.IdDoc == currentDocument.Key);
