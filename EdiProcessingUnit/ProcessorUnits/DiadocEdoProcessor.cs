@@ -87,6 +87,78 @@ namespace EdiProcessingUnit.ProcessorUnits
                     SetEdoStatus(docProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Корректировка {docProcessing.IdDoc} подписана с расхождениями.");
                 }
             }
+
+            //var comissionDocEdoProcessings = (from comissionDocEdoProcessing in _abtDbContext.DocComissionEdoProcessings
+            //                                  where comissionDocEdoProcessing.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && comissionDocEdoProcessing.DocDate > dateTimeFrom
+            //                                  join docGoods in _abtDbContext.DocGoods on comissionDocEdoProcessing.IdDoc equals docGoods.IdDoc
+            //                                  join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+            //                                  where customer.Inn == company.Inn && customer.Kpp == company.Kpp
+            //                                  select comissionDocEdoProcessing);
+
+            //foreach(var comissionDocEdoProcessing in comissionDocEdoProcessings)
+            //{
+            //    var doc = _edo.GetDocument(comissionDocEdoProcessing.MessageId, comissionDocEdoProcessing.EntityId);
+
+            //    if (doc == null)
+            //        throw new Exception($"Не удалось найти комиссионный документ в Диадоке. ID {comissionDocEdoProcessing.Id}");
+
+            //    var lastDocFlow = doc.LastOuterDocflows?.FirstOrDefault(l => l?.OuterDocflow?.DocflowNamedId == "TtGis" && l.OuterDocflow?.Status?.Type != null);
+            //    Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
+
+            //    if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
+            //        comissionDocEdoProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+            //    else if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
+            //    {
+            //        comissionDocEdoProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+
+            //        var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
+
+            //        var errorsListStr = new List<string>();
+            //        foreach (var error in errors)
+            //            errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
+
+            //        comissionDocEdoProcessing.ErrorMessage = string.Join("\n\n", errorsListStr);
+            //    }
+            //}
+
+            var markedDocEdoProcessings = (from markedDocEdoProcessing in _abtDbContext.DocEdoProcessings
+                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && markedDocEdoProcessing.DocDate > dateTimeFrom
+                                           join docGoods in _abtDbContext.DocGoods on markedDocEdoProcessing.IdDoc equals docGoods.IdDoc
+                                           join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                           where customer.Inn == company.Inn && customer.Kpp == company.Kpp
+                                           select markedDocEdoProcessing);
+
+            foreach (var markedDocEdoProcessing in markedDocEdoProcessings)
+            {
+                var doc = _edo.GetDocument(markedDocEdoProcessing.MessageId, markedDocEdoProcessing.EntityId);
+
+                if (doc == null)
+                    throw new Exception($"Не удалось найти маркированный документ в Диадоке. ID {markedDocEdoProcessing.Id}");
+
+                var lastDocFlow = doc.LastOuterDocflows?.FirstOrDefault(l => l?.OuterDocflow?.DocflowNamedId == "TtGis" && l.OuterDocflow?.Status?.Type != null);
+                Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
+
+                if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
+                {
+                    markedDocEdoProcessing.HonestMarkStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                    _abtDbContext?.SaveChanges();
+                    MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} успешно обработан.");
+                }
+                else if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
+                {
+                    markedDocEdoProcessing.HonestMarkStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+
+                    var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
+
+                    var errorsListStr = new List<string>();
+                    foreach (var error in errors)
+                        errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
+
+                    markedDocEdoProcessing.HonestMarkErrorMessage = string.Join("\n\n", errorsListStr);
+                    _abtDbContext?.SaveChanges();
+                    MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} обработан с ошибками.");
+                }
+            }
         }
 
         public override void Run()
