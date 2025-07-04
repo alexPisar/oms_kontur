@@ -122,7 +122,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             //}
 
             var markedDocEdoProcessings = (from markedDocEdoProcessing in _abtDbContext.DocEdoProcessings
-                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && markedDocEdoProcessing.DocDate > dateTimeFrom
+                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Signed && markedDocEdoProcessing.DocDate > dateTimeFrom
                                            join docGoods in _abtDbContext.DocGoods on markedDocEdoProcessing.IdDoc equals docGoods.IdDoc
                                            join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                            where customer.Inn == company.Inn && customer.Kpp == company.Kpp
