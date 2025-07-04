@@ -119,45 +119,6 @@ namespace EdiProcessingUnit.Edo.Models
         [NotMapped]
         public RefEdoGoodChannel RefEdoGoodChannel { get; set; }
 
-        [NotMapped]
-        public object ProcessingStatus
-        {
-            get {
-                if (_status != null)
-                {
-                    if (_status as IQueryable<DocComissionEdoProcessing> != null)
-                    {
-                        var query = _status as IQueryable<DocComissionEdoProcessing>;
-
-                        if (query.Any(s => s.DocStatus == 2))
-                            _status = query.FirstOrDefault(s => s.DocStatus == 2);
-                        else if (query.Any(s => s.DocStatus == 1))
-                            _status = query.FirstOrDefault(s => s.DocStatus == 1);
-                        else
-                            _status = query.FirstOrDefault();
-                    }
-                    else if (_status as IEnumerable<DocComissionEdoProcessing> != null)
-                    {
-                        var collection = _status as IEnumerable<DocComissionEdoProcessing>;
-
-                        if (collection.Any(s => s.DocStatus == 2))
-                            _status = collection.FirstOrDefault(s => s.DocStatus == 2);
-                        else if (collection.Any(s => s.DocStatus == 1))
-                            _status = collection.FirstOrDefault(s => s.DocStatus == 1);
-                        else
-                            _status = collection.FirstOrDefault();
-                    }
-                    else if (_status as DocComissionEdoProcessing == null)
-                        return null;
-                }
-
-                return _status;
-            }
-            set {
-                _status = value;
-            }
-        }
-
         public UniversalTransferDocumentV2 Init(AbtDbContext abt)
         {
             RefEdoGoodChannel refEdoGoodChannel = null;

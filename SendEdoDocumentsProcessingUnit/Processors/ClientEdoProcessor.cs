@@ -107,6 +107,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         EmchdPersonPosition = a.Position
                                     }).ToList();
 
+                        var orgsInnKpp = orgs.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
+                        orgsInnKpp.Add(new KeyValuePair<string, string>("2539108495", "253901001"));
+                        orgsInnKpp.Add(new KeyValuePair<string, string>("2536090987", "253901001"));
+
                         foreach (var myOrganization in orgs)
                         {
                             var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
@@ -142,7 +146,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     var tasks = docsFromBlock.Select((doc) =>
                                     {
                                         var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
-                                        var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee);
+                                        var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee, orgsInnKpp);
                                         return task;
                                     });
 
@@ -193,75 +197,65 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         }
 
         private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocumentV2 doc, 
-            Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee)
+            Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee, List<KeyValuePair<string, string>> orgsInnKpp = null)
         {
             var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
-
+            var docComissionProcessings = new List<DocComissionEdoProcessing>();
             try
             {
                 if (doc.IsMarked)
                 {
-                    if ((doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 2 && (doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 1)
+                    DocComissionEdoProcessing docComissionEdoProcessing = null;
+                    var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
+                    var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
+
+                    if (doc?.Details?
+                        .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
                     {
-                        DocComissionEdoProcessing docComissionEdoProcessing = null;
-                        var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
-                        var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
+                        throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                    }
+                    else if (doc?.Details?
+                        .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
+                    {
+                        throw new Exception("В данном документе есть избыток кодов маркировки.");
+                    }
 
-                        if (doc?.Details?
-                            .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
+                    if (orgsInnKpp != null)
+                    {
+                        var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
+                            .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labels.Select(l => l.DmLabel)?.ToArray())
+                            .Where(m => m.CisInfo.OwnerInn != doc.SellerInn);
+
+                        if (markedCodesInfo.Any())
                         {
-                            throw new Exception("Для некоторых товаров отсутствует маркировка.");
-                        }
-                        else if (doc?.Details?
-                            .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                            (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
-                        {
-                            throw new Exception("В данном документе есть избыток кодов маркировки.");
-                        }
+                            if (markedCodesInfo.Any(m => !orgsInnKpp.Exists(r => r.Key == m.CisInfo.OwnerInn)))
+                                throw new Exception("Среди кодов есть не принадлежащие нашей организации.");
 
-                        var labelsByReceivers = (from label in _abt.DocGoodsDetailsLabels
-                                                 where label.IdDocSale == doc.IdDocMaster && label.IdDoc > 0
-                                                 join journal in _abt.DocJournals on label.IdDoc equals journal.Id
-                                                 where journal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Receipt
-                                                 join docGood in _abt.DocGoods on journal.Id equals docGood.IdDoc
-                                                 join r in _abt.RefContractors on docGood.IdCustomer equals r.Id
-                                                 join c in _abt.RefCustomers on r.DefaultCustomer equals c.Id
-                                                 where c.Inn != doc.SellerInn
-                                                 select new { Label = label, Receiver = c }).
-                                                GroupBy(p => p.Receiver.Inn)?.ToList();
+                            var markedCodesInfoByOrganizations = markedCodesInfo.GroupBy(m => m.CisInfo.OwnerInn);
 
-                        foreach (var labelsByReceiver in labelsByReceivers)
-                        {
-                            var consignor = GetMyKontragent(labelsByReceiver.Key, labelsByReceiver?.FirstOrDefault()?.Receiver?.Kpp);
-
-                            if (consignor == null)
-                                throw new Exception("Не найден комитент.");
-
-                            if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(consignor.Certificate, consignor))
-                                throw new Exception("Не удалось авторизоваться в Честном знаке");
-
-                            var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
-                                .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labelsByReceiver.Select(l => l?.Label?.DmLabel)?.ToArray())
-                                .Where(m => m.CisInfo.OwnerInn != doc.SellerInn);
-
-                            if (!markedCodesInfo.Any())
-                                continue;
-
-                            if (markedCodesInfo.Any(m => m.CisInfo.OwnerInn != labelsByReceiver.Key))
-                                throw new Exception("Среди кодов есть не принадлежавшие организации - получателю.");
-
-                            var labelsByDoc = labelsByReceiver.Where(l => markedCodesInfo.Any(m => m.CisInfo.Cis == l.Label.DmLabel)).Select(l => l.Label)?.ToList();
-
-                            docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, consignor, labelsByDoc);
-
-                            lock (locker)
+                            foreach (var markedCodesInfoByOrganization in markedCodesInfoByOrganizations)
                             {
-                                _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
-                                _abt.SaveChanges();
-                            }
+                                var orgInnKpp = orgsInnKpp.First(o => o.Key == markedCodesInfoByOrganization.Key);
 
-                            doc.ProcessingStatus = docComissionEdoProcessing;
+                                var org = GetMyKontragent(orgInnKpp.Key, orgInnKpp.Value);
+
+                                if (org == null)
+                                    throw new Exception($"Не найдена наша организация с ИНН {orgInnKpp.Key}.");
+
+                                var labelsByDoc = labels.Where(l => markedCodesInfoByOrganization.Any(m => m.CisInfo.Cis == l.DmLabel))?.ToList();
+
+                                docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, org, labelsByDoc);
+
+                                lock (locker)
+                                {
+                                    _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                                    _abt.SaveChanges();
+                                }
+
+                                docComissionProcessings.Add(docComissionEdoProcessing);
+                            }
                         }
                     }
                 }
@@ -305,9 +299,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         HonestMarkStatus = doc.IsMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                     };
 
-                    if (doc.ProcessingStatus as DocComissionEdoProcessing != null)
+                    if (docComissionProcessings.Count == 1)
                     {
-                        var docComissionEdoProcessing = doc.ProcessingStatus as DocComissionEdoProcessing;
+                        var docComissionEdoProcessing = docComissionProcessings.First();
                         docProcessing.IdComissionDocument = docComissionEdoProcessing.Id;
                         docProcessing.ComissionDocument = docComissionEdoProcessing;
                         docComissionEdoProcessing.MainDocuments.Add(docProcessing);
@@ -417,13 +411,12 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                         DocComissionEdoProcessing docComissionEdoProcessing = null;
                                         if (doc.IsMarked)
-                                            if ((doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 2 && (doc.ProcessingStatus as DocComissionEdoProcessing)?.DocStatus != 1)
-                                            {
-                                                var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
-                                                docComissionEdoProcessing = SendComissionDocumentForHonestMark(myOrganization, doc, docJournal).Result;
-                                                _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
-                                                _abt.SaveChanges();
-                                            }
+                                        {
+                                            var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
+                                            docComissionEdoProcessing = SendComissionDocumentForHonestMark(myOrganization, doc, docJournal).Result;
+                                            _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                                            _abt.SaveChanges();
+                                        }
 
                                         var universalDocument = GetUniversalDocument(doc, myOrganization, doc.Details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
 
@@ -1703,7 +1696,6 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             if (!document.IsMarked)
                 docComissionProcessing.DocStatus = 2;
 
-            document.ProcessingStatus = docComissionProcessing;
             return docComissionProcessing;
         }
     }
