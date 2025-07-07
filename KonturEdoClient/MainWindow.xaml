@@ -165,16 +165,15 @@
                     <dxg:GridControl.View>
                         <dxg:TableView>
                             <dxg:TableView.FormatConditions>
-                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked]" >
-                                    <!--  And [ProcessingStatus.DocStatus] != 2 And [ProcessingStatus.DocStatus] != 8 And [ProcessingStatus.IsMainDocumentError] != 1 And [ProcessingStatus.AnnulmentStatus] != 8 -->
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked] And ([EdoProcessing.HonestMarkStatus] &lt;= 1)" >
                                     <dxg:Format Background="#FF27C3E6"/>
                                 </dxg:FormatCondition>
-                                <!--<dxg:FormatCondition ApplyToRow="True"  Expression="[ProcessingStatus.DocStatus] == 2 And [ProcessingStatus.IsMainDocumentError] != 1 And [ProcessingStatus.AnnulmentStatus] != 8" >
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarkedDocumentProcessed]" >
                                     <dxg:Format Background="#7cfc00"/>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition ApplyToRow="True"  Expression="[ProcessingStatus.DocStatus] == 8 || [ProcessingStatus.IsMainDocumentError] == 1 || [ProcessingStatus.AnnulmentStatus] == 8" >
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarkedDocumentProcessingError]" >
                                     <dxg:Format Background="#FFF95A52"/>
-                                </dxg:FormatCondition>-->
+                                </dxg:FormatCondition>
                             </dxg:TableView.FormatConditions>
                         </dxg:TableView>
                     </dxg:GridControl.View>
