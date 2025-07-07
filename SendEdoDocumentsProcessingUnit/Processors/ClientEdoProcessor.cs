@@ -205,6 +205,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                 if (doc.IsMarked)
                 {
+                    if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
+                        throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
+
                     DocComissionEdoProcessing docComissionEdoProcessing = null;
                     var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
                     var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
