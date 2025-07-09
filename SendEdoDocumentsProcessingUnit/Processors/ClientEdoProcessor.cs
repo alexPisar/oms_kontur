@@ -164,7 +164,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     var docProcessing = docProcessingResult.Entity;
                                     if (docProcessing.ComissionDocument != null && !_abt.DocEdoProcessings.Any(d => d.Id == docProcessing.Id))
                                         _abt.DocEdoProcessings.Add(docProcessing);
-                                    else
+                                    else if (docProcessing.ComissionDocument == null)
                                         _abt.DocEdoProcessings.Add(docProcessing);
 
                                     MailReporter.Add(docProcessingResult.Description);

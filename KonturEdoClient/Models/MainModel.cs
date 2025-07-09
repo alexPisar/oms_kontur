@@ -1025,10 +1025,6 @@ namespace KonturEdoClient.Models
                                                        join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                                        where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
                                                        let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == docMaster.Id select label).Count() > 0
-                                                       let honestMarkStatus = (from docComissionEdoProcessing in _abt.DocComissionEdoProcessings
-                                                                               where docComissionEdoProcessing.IdDoc == docMaster.Id
-                                                                               orderby docComissionEdoProcessing.DocDate descending
-                                                                               select docComissionEdoProcessing)
                                                        let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
                                                                                where docEdo.IdDoc == docMaster.Id && docEdo.DocType == updDocType
                                                                                orderby docEdo.DocDate descending
@@ -1079,10 +1075,6 @@ namespace KonturEdoClient.Models
                                                        join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                                        where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
                                                        let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.Id select label).Count() > 0
-                                                       let honestMarkStatus = (from docComissionEdoProcessing in _abt.DocComissionEdoProcessings
-                                                                               where docComissionEdoProcessing.IdDoc == doc.Id
-                                                                               orderby docComissionEdoProcessing.DocDate descending
-                                                                               select docComissionEdoProcessing)
                                                        where isMarked || !OnlyMarkedOrders
                                                        join storeRecipient in _abt.RefStores
                                                        on docGoods.IdStoreReciepient equals storeRecipient.Id
@@ -1936,6 +1928,13 @@ namespace KonturEdoClient.Models
 
         private void ReprocessDocument()
         {
+            if (SelectedOrganization == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не выбрана организация.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
             if (!WorkWithDocumentsPermission)
             {
                 System.Windows.MessageBox.Show(
@@ -1989,7 +1988,7 @@ namespace KonturEdoClient.Models
 
             try
             {
-                var consignor = TryGetConsignorFromDocument(SelectedDocument);
+                _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(SelectedOrganization.Certificate, SelectedOrganization);
 
                 if (!_authInHonestMark)
                 {
@@ -1997,9 +1996,6 @@ namespace KonturEdoClient.Models
                         "Повторная обработка невозможна, так как авторизация в Честном знаке не была успешной.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-
-                if (consignor == null)
-                    return;
 
                 EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().ReprocessDocument(processingStatus.FileName);
 

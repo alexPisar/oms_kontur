@@ -1049,48 +1049,74 @@ namespace EdiTest
         {
             using (var abt = new AbtDbContext())
             {
-                //var count = abt.DocGoodsDetailsLabels.Count();
-                //var label = abt.DocGoodsDetailsLabels.FirstOrDefault(l => l.IdDocSale == 291089005);
-                //var labelIdGood = label.IdGood;
+                var newDocEdoProcessings = new List<DocEdoProcessing>();
 
+                {
+                    var docJournal = abt.DocJournals.FirstOrDefault(d => d.Id == 1158091600);
+                    var docComissionEdoProcessing = abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158091600);
 
-                ExcelColumnCollection columnCollection = new ExcelColumnCollection();
+                    var oldDocEdoProcessing = abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158091600);
 
-                columnCollection.AddColumn("Code", "Код");
-                columnCollection.AddColumn("Filial", "Филиал");
+                    var newDocEdoProcessing = new DocEdoProcessing
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageId = "dd17317a-ab2f-4761-ad01-730d3f8c71e7",
+                        EntityId = "dd579f4a-a772-462e-aa0e-70ade6df8d3f",
+                        FileName = "ON_NSCHFDOPPR_2AE9F7B7221-16F7-4835-8CB0-9A117BF18394_2BM-2504000010-2012052808301120662630000000000_20250707_9409a655-7d02-4672-bbc3-552364ba067c_0_1_0_0_0_00",
+                        IsReprocessingStatus = 0,
+                        IdDoc = 1158091600,
+                        DocDate = DateTime.Now,
+                        UserName = "edi",
+                        ReceiverName = oldDocEdoProcessing.ReceiverName,
+                        ReceiverInn = oldDocEdoProcessing.ReceiverInn,
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                        HonestMarkStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent
+                    };
 
-                var markedCodesList = new ExcelDocumentData(columnCollection);
+                    docComissionEdoProcessing.MainDocuments.Add(newDocEdoProcessing);
+                    newDocEdoProcessing.IdComissionDocument = docComissionEdoProcessing.Id;
+                    newDocEdoProcessing.ComissionDocument = docComissionEdoProcessing;
 
-                List<ExcelDocumentData> markedCodesLists = new List<ExcelDocumentData>(new ExcelDocumentData[] {
-                        markedCodesList
-                    });
+                    newDocEdoProcessings.Add(newDocEdoProcessing);
+                }
 
-                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\MarkedCodes.xlsx", markedCodesLists);
+                {
+                    var docJournal = abt.DocJournals.FirstOrDefault(d => d.Id == 1158089300);
+                    var docComissionEdoProcessing = abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158089300);
 
-                worker.ImportData<DocGoodLabelForImportClass>();
+                    var oldDocEdoProcessing = abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158089300);
+                    var newDocEdoProcessing = new DocEdoProcessing
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageId = "328ec4b1-5220-4888-b3eb-923389cf80a8",
+                        EntityId = "93b295c3-eacf-4d54-ae95-c4cdad0ccc78",
+                        FileName = "ON_NSCHFDOPPR_2AEC3E004A1-71B8-42F1-872C-C3FAE7DF7D4E_2BM-2504000010-2012052808301120662630000000000_20250707_a6c93451-13ce-4b7f-9691-e8a443a9003c_0_1_0_0_0_00",
+                        IsReprocessingStatus = 0,
+                        IdDoc = 1158089300,
+                        DocDate = DateTime.Now,
+                        UserName = "edi",
+                        ReceiverName = oldDocEdoProcessing.ReceiverName,
+                        ReceiverInn = oldDocEdoProcessing.ReceiverInn,
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                        HonestMarkStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent
+                    };
 
-                var markedCodesFromFilial = markedCodesList.Data.Cast<DocGoodLabelForImportClass>().Where(c => c.Filial == "Владивосток").ToList();
-                var labels = markedCodesList.Data.Cast<DocGoodLabelForImportClass>().Where(c => c.Filial == "Владивосток").Select(c => c.GetLabel(abt)).Where(l => l != null).ToList();
+                    docComissionEdoProcessing.MainDocuments.Add(newDocEdoProcessing);
+                    newDocEdoProcessing.IdComissionDocument = docComissionEdoProcessing.Id;
+                    newDocEdoProcessing.ComissionDocument = docComissionEdoProcessing;
 
-                abt.DocGoodsDetailsLabels.AddRange(labels);
+                    newDocEdoProcessings.Add(newDocEdoProcessing);
+                }
+
+                foreach (var newDocEdoProcessing in newDocEdoProcessings)
+                {
+                    if (newDocEdoProcessing.ComissionDocument != null && !abt.DocEdoProcessings.Any(d => d.Id == newDocEdoProcessing.Id))
+                        abt.DocEdoProcessings.Add(newDocEdoProcessing);
+                    else if(newDocEdoProcessing.ComissionDocument == null)
+                        abt.DocEdoProcessings.Add(newDocEdoProcessing);
+                }
+
                 abt.SaveChanges();
-                //foreach (var l in markedCodesList.Data)
-                //{
-                //    var label = l as DocGoodsDetailsLabels;
-                //    label.LabelStatus = 2;
-                //    label.IdDoc = 0;
-
-                //    var barCode = label.DmLabel.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
-                //    decimal? idGood = abt?.RefBarCodes?.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == false)?.IdGood;
-
-                //    if(idGood != null)
-                //    {
-                //        //label.IdGood = idGood.Value;
-                //        //abt.DocGoodsDetailsLabels.Add(label);
-                //    }
-                //}
-
-
             }
         }
 
