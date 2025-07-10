@@ -249,7 +249,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                 var labelsByDoc = labels.Where(l => markedCodesInfoByOrganization.Any(m => m.CisInfo.Cis == l.DmLabel))?.ToList();
 
-                                docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, org, labelsByDoc);
+                                docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, org, labelsByDoc, docComissionProcessings.Count + 1);
 
                                 lock (locker)
                                 {
@@ -1568,7 +1568,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return kontragent;
         }
 
-        private async Task<DocComissionEdoProcessing> SendComissionDocumentForHonestMark(Kontragent myOrganization, UniversalTransferDocumentV2 document, DocJournal docJournal, Kontragent consignor = null, IEnumerable<DocGoodsDetailsLabels> labels = null)
+        private async Task<DocComissionEdoProcessing> SendComissionDocumentForHonestMark(Kontragent myOrganization, UniversalTransferDocumentV2 document, DocJournal docJournal, Kontragent consignor = null, IEnumerable<DocGoodsDetailsLabels> labels = null, int? numberOfDocument = null)
         {
             if (myOrganization == null)
                 throw new Exception("Не задана организация.");
@@ -1612,7 +1612,12 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             var crypt = new WinApiCryptWrapper(consignor.Certificate);
             _edo.Authenticate(false, consignor.Certificate, consignor.Inn);
 
-            string documentNumber = document.InvoiceNumber;
+            string documentNumber;
+            if(numberOfDocument != null)
+                documentNumber = numberOfDocument.Value > 9 ? $"{document.InvoiceNumber}-{numberOfDocument.Value}" : $"{document.InvoiceNumber}-0{numberOfDocument.Value}";
+            else
+                documentNumber = document.InvoiceNumber;
+
             var comissionDocument = await CreateShipmentDocumentAsync(docJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, document.Employee, true);
             var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, comissionDocument);
             byte[] signature = crypt.Sign(generatedFile.Content, true);

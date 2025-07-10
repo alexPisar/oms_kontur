@@ -589,6 +589,9 @@ namespace EdiProcessingUnit.Edo
         {
             var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(inn, kpp)));
 
+            if(organizations?.Organizations == null || organizations.Organizations?.Count == 0)
+                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(inn, null)));
+
             Organization organization = null;
 
             if(isNotRoaming)
