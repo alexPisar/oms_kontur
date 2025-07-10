@@ -775,8 +775,6 @@ namespace KonturEdoClient.Models
 
                             if (docJournalTag != null)
                                 additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.DocReturnNumberUcdId, Value = docJournalTag.TagValue });
-                            else
-                                throw new Exception("Не найден номер возвратного документа.");
                         }
 
                         if (SelectedDocument?.CorrectionDocJournal?.Id != null && !string.IsNullOrEmpty(refEdoGoodChannel.DocReturnDateUcdId))
@@ -785,8 +783,6 @@ namespace KonturEdoClient.Models
 
                             if (docJournalTag != null)
                                 additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = refEdoGoodChannel.DocReturnDateUcdId, Value = docJournalTag.TagValue });
-                            else
-                                throw new Exception("Не найдена дата возвратного документа.");
                         }
                     }
 
