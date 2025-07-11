@@ -7,7 +7,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
         public RefEdoUcdValuesConfiguration()
         {
             this
-                .HasKey(r => new { r.IdEdoGoodChannel, r.Key })
+                .HasKey(r => new { r.IdEdoGoodChannel, r.Key, r.IdDocType })
                 .ToTable("REF_EDO_UCD_VALUES", "EDI");
 
             this
