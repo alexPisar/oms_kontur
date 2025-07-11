@@ -196,20 +196,34 @@ namespace KonturEdoClient.Models
             if (SelectedDocument.CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
             {
                 sellerContractor = SelectedDocument.CorrectionDocJournal?.DocGoods?.Customer;
-                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
-                (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
+
+                var baseProcessings = from pr in _abt.DocEdoProcessings
+                                      where pr.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && pr.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Revoked
+                                      select pr;
+                baseProcessing = baseProcessings.FirstOrDefault(d => 
+                d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned);
 
                 if(baseProcessing == null)
-                    baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
+                    baseProcessing = baseProcessings.FirstOrDefault();
             }
             else if (SelectedDocument.CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
             {
                 sellerContractor = SelectedDocument.InvoiceDocJournal?.DocMaster?.DocGoods?.Seller;
-                baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd &&
-                (d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned));
+
+                var baseProcessings = from pr in _abt.DocEdoProcessings
+                                      where pr.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && pr.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed
+                                      && pr.AnnulmentStatus != (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Revoked
+                                      select pr;
+                baseProcessing = baseProcessings.FirstOrDefault(d =>
+                d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned);
 
                 if(baseProcessing == null)
-                    baseProcessing = _abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == SelectedDocument.InvoiceDocJournal.IdDocMaster && d.DocType == (int)EdiProcessingUnit.Enums.DocEdoType.Upd);
+                    baseProcessing = baseProcessings.FirstOrDefault();
             }
 
             if (sellerContractor?.DefaultCustomer == null)
