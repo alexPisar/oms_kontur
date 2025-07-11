@@ -27,6 +27,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasColumnName(@"VALUE")
                 .HasMaxLength(2000);
 
+            this
+                .Property(r => r.IdDocType)
+                .HasColumnName(@"ID_DOC_TYPE")
+                .IsRequired();
+
             OnCreated();
         }
 

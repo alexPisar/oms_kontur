@@ -219,6 +219,15 @@ namespace KonturEdoClient.Models
                 return;
             }
 
+            if (baseProcessing == null)
+                throw new Exception("Не найден базовый документ в системе.");
+
+            RefContractor buyerContractor = _abt.DocGoods.FirstOrDefault(g => g.IdDoc == baseProcessing.IdDoc)?.Customer;
+
+            RefCustomer buyerCustomer = null;
+            if(buyerContractor?.DefaultCustomer != null)
+                buyerCustomer = _abt.RefCustomers.FirstOrDefault(r => r.Id == buyerContractor.DefaultCustomer);
+
             _log.Log($"CorrectionDocumentsModel : начало отправки в методе SendDocument");
 
             var loadContext = new LoadModel();
@@ -276,15 +285,35 @@ namespace KonturEdoClient.Models
 
                     var counteragentBox = baseDocument.CounteragentBoxId;
 
-                    correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
-                    {
-                        Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationReference
+                    if(buyerContractor?.DefaultCustomer != null)
+                        correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
                         {
-                            BoxId = counteragentBox,
-                            ShortOrgName = baseProcessing.ReceiverName,
-                            OrgType = baseProcessing.ReceiverInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity
-                        }
-                    };
+                            Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
+                            {
+                                OrgName = buyerCustomer.Name,
+                                OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                Inn = buyerCustomer.Inn,
+                                Kpp = buyerCustomer.Kpp,
+                                Address = new Diadoc.Api.DataXml.Ucd736.Address_ForeignAddress1000
+                                {
+                                    Item = new Diadoc.Api.DataXml.Ucd736.ForeignAddress1000
+                                    {
+                                        Country = Properties.Settings.Default.DefaultOrgCountryCode,
+                                        Address = buyerCustomer.Address
+                                    }
+                                }
+                            }
+                        };
+                    else
+                        correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
+                        {
+                            Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationReference
+                            {
+                                BoxId = counteragentBox,
+                                ShortOrgName = baseProcessing.ReceiverName,
+                                OrgType = baseProcessing.ReceiverInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity
+                            }
+                        };
 
                     Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle[] signer;
                     if (string.IsNullOrEmpty(_currentOrganization.EmchdId))
@@ -766,7 +795,8 @@ namespace KonturEdoClient.Models
                             }
                         }
 
-                        foreach (var keyValuePair in refEdoGoodChannel.EdoUcdValuesPairs)
+                        foreach (var keyValuePair in refEdoGoodChannel.EdoUcdValuesPairs.Where(
+                            u => (SelectedDocument.CorrectionDocJournal?.IdDocType != null && u.IdDocType == SelectedDocument.CorrectionDocJournal.IdDocType) || u.IdDocType == 0))
                             additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
 
                         if (SelectedDocument?.CorrectionDocJournal?.Id != null && !string.IsNullOrEmpty(refEdoGoodChannel.DocReturnNumberUcdId))

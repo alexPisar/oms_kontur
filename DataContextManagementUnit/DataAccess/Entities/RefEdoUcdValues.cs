@@ -18,6 +18,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string IdEdoGoodChannel { get; set; }
         public virtual string Key { get; set; }
         public virtual string Value { get; set; }
+        public virtual decimal IdDocType { get; set; }
 
         #endregion
 
