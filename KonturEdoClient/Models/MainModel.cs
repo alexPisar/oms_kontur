@@ -2718,6 +2718,22 @@ namespace KonturEdoClient.Models
                                         }
                                     }
                         };
+
+                        var contractNumber = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 200 && c.IdObject == buyerCustomer.Id)?.TagValue;
+                        var contractDate = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 199 && c.IdObject == buyerCustomer.Id)?.TagValue;
+
+                        if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                        {
+                            document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
+                            {
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
+                                {
+                                    DocumentName = "Договор поставки",
+                                    DocumentNumber = contractNumber,
+                                    DocumentDate = contractDate
+                                }
+                            };
+                        }
                     }
                 }
             }
