@@ -601,6 +601,19 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 };
             }
 
+            if (!(string.IsNullOrEmpty(d.ContractNumber) || string.IsNullOrEmpty(d.ContractDate)))
+            {
+                document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
+                {
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
+                    {
+                        DocumentName = "Договор поставки",
+                        DocumentNumber = d.ContractNumber,
+                        DocumentDate = d.ContractDate
+                    }
+                };
+            }
+
             Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 senderAddress = organization?.Address?.RussianAddress != null ?
                             new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                             {

@@ -113,6 +113,12 @@ namespace EdiProcessingUnit.Edo.Models
         [Column("GLN_SHIP_TO")]
         public virtual string GlnShipTo { get; set; }
 
+        [Column("CONTRACT_NUMBER")]
+        public virtual string ContractNumber { get; set; }
+
+        [Column("CONTRACT_DATE")]
+        public virtual string ContractDate { get; set; }
+
         [NotMapped]
         public List<UniversalTransferDocumentDetail> Details { get; set; }
 
