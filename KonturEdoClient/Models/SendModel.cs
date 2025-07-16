@@ -209,10 +209,8 @@ namespace KonturEdoClient.Models
                                         var comDoc = _abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == currentDocument.Key &&
                                         (d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent));
 
-                                        if (comDoc == null)
-                                            throw new Exception("Не найден комиссионный документ.");
-
-                                        comissionDocument = comDoc;
+                                        if (comDoc != null)
+                                            comissionDocument = comDoc;
                                     }
 
                                     if (comissionDocument != null)
