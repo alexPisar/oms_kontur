@@ -300,6 +300,10 @@ namespace KonturEdoClient.Models
                     var counteragentBox = baseDocument.CounteragentBoxId;
 
                     if(buyerContractor?.DefaultCustomer != null)
+                    {
+                        var counteragent = EdiProcessingUnit.Edo.Edo.GetInstance().GetKontragents(_currentOrganization.OrgId)?
+                        .FirstOrDefault(c => c?.Organization?.Inn == buyerCustomer.Inn);
+
                         correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
                         {
                             Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
@@ -318,6 +322,10 @@ namespace KonturEdoClient.Models
                                 }
                             }
                         };
+
+                        if (!string.IsNullOrEmpty(counteragent?.Organization?.FnsParticipantId))
+                            (correctionDocument.Buyer.Item as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000).FnsParticipantId = counteragent.Organization.FnsParticipantId;
+                    }
                     else
                         correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
                         {
