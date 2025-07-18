@@ -2417,7 +2417,15 @@ namespace KonturEdoClient.Models
 
         private async void ReturnMarkedCodesToStore(object sender, EventArgs e)
         {
-            if (SelectedDocument.EdoProcessing == null)
+            if (SelectedDocument == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не выбран документ.", 
+                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && SelectedDocument?.EdoProcessing == null)
             {
                 System.Windows.MessageBox.Show(
                     "Документ с данными кодами маркировки не был ранее отправлен.\n" +
@@ -2425,29 +2433,32 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var docProcessing = (DocEdoProcessing)SelectedDocument.EdoProcessing;
+            var docProcessing = SelectedDocument?.EdoProcessing as DocEdoProcessing;
 
-            if(docProcessing != null && (docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing || docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested))
+            if(docProcessing != null)
             {
-                System.Windows.MessageBox.Show(
-                    "Документ с данными кодами маркировки находится в процессе аннулирования.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
+                if (docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing || docProcessing.AnnulmentStatus == (int)EdiProcessingUnit.HonestMark.AnnulmentDocumentStatus.Requested)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Документ с данными кодами маркировки находится в процессе аннулирования.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
 
-            if (docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent)
-            {
-                System.Windows.MessageBox.Show(
-                    "Документ с данными кодами маркировки обрабатывается в Честном знаке.\n" +
-                    "Дождитесь конца обработки и повторите попытку.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
+                if (docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Документ с данными кодами маркировки обрабатывается в Честном знаке.\n" +
+                        "Дождитесь конца обработки и повторите попытку.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
 
-            if (docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError)
-            {
-                System.Windows.MessageBox.Show(
-                    "Документ с данными кодами маркировки был обработан с ошибками в Честном знаке.\n" +
-                    "Поэтому по ним невозможно осуществить возврат.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
+                if (docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.ProcessingError)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Документ с данными кодами маркировки был обработан с ошибками в Честном знаке.\n" +
+                        "Поэтому по ним невозможно осуществить возврат.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
             }
 
             var labels = ((MarkedCodesWindow)sender).SelectedCodes;
@@ -2464,11 +2475,25 @@ namespace KonturEdoClient.Models
                 var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
                     .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labels.Select(l => l.DmLabel).ToArray());
 
-                if (markedCodesInfo.Any(m => m?.CisInfo?.OwnerInn != SelectedOrganization.Inn))
+                if (SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && 
+                    markedCodesInfo.Any(m => m?.CisInfo?.OwnerInn != SelectedOrganization.Inn))
                 {
                     System.Windows.MessageBox.Show(
                         "В списке кодов маркировки есть те, которые не принадлежат нашей организации.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
+                }
+                else if(SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
+                {
+                    var orgsInnKpp = Organizations.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
+                    orgsInnKpp.Add(new KeyValuePair<string, string>("2539108495", "253901001"));
+                    orgsInnKpp.Add(new KeyValuePair<string, string>("2536090987", "253901001"));
+
+                    if(markedCodesInfo.Any(m => !orgsInnKpp.Exists(r => r.Key == m.CisInfo?.OwnerInn)))
+                    {
+                        System.Windows.MessageBox.Show(
+                        "В списке кодов маркировки есть те, которые не принадлежат одной из наших организаций.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        return;
+                    }
                 }
             }
             else
