@@ -1696,7 +1696,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
                            t?.DocumentInfo?.DocumentNumber == document.InvoiceNumber);
 
-            var fileNameLength = entity.DocumentInfo.FileName.LastIndexOf('.');
+            var fileNameLength = entity?.DocumentInfo?.FileName?.LastIndexOf('.') ?? 0;
 
             if (fileNameLength < 0)
                 fileNameLength = entity.DocumentInfo.FileName.Length;
@@ -1705,13 +1705,13 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                 Id = Guid.NewGuid().ToString(),
                 MessageId = message.MessageId,
-                EntityId = entity.EntityId,
+                EntityId = entity?.EntityId,
                 IdDoc = document.IdDocMaster,
                 SenderInn = consignor.Inn,
                 ReceiverInn = myOrganization.Inn,
                 DocStatus = 1,
                 UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
-                FileName = entity.DocumentInfo.FileName.Substring(0, fileNameLength),
+                FileName = entity?.DocumentInfo?.FileName?.Substring(0, fileNameLength),
                 DocDate = DateTime.Now,
                 DeliveryDate = document?.InvoiceDate
             };
