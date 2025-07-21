@@ -149,7 +149,7 @@ namespace EdiProcessingUnit.Edo.Models
                            IdGood = docGoodDetailI.IdGood
                        }).ToList();
 
-            Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel))?.ToList();
+            Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
 
             if(this.IsMarked)
                 _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings

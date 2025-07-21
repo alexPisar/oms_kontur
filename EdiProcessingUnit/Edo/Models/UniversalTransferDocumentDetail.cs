@@ -114,6 +114,18 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public UniversalTransferDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
+        {
+            if (_good != null && string.IsNullOrEmpty(_barCode))
+            {
+                _barCode = abtContext?.RefBarCodes?
+                    .FirstOrDefault(b => b.IdGood == _good.Id && b.IsPrimary == false)?
+                    .BarCode;
+            }
+
+            return this;
+        }
+
         public UniversalTransferDocumentDetail Init(AbtDbContext abtContext, RefEdoGoodChannel edoGoodChannel = null)
         {
             _barCode = this.ItemVendorCode;
