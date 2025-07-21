@@ -128,7 +128,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             }
 
             var comissionDocEdoProcessings = (from comissionDocEdoProcessing in _abtDbContext.DocComissionEdoProcessings
-                                              where comissionDocEdoProcessing.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && comissionDocEdoProcessing.DocDate > dateTimeFrom
+                                              where comissionDocEdoProcessing.EntityId != null && comissionDocEdoProcessing.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && comissionDocEdoProcessing.DocDate > dateTimeFrom
                                               join docGoods in _abtDbContext.DocGoods on comissionDocEdoProcessing.IdDoc equals docGoods.IdDoc
                                               join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                               where customer.Inn == company.Inn && customer.Kpp == company.Kpp
