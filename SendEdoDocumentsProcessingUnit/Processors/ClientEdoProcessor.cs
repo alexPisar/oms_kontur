@@ -1694,7 +1694,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 attachments, myOrganizationPowerOfAttorneyToPost);
 
             var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
-                           t?.DocumentInfo?.DocumentNumber == document.InvoiceNumber);
+                           t?.DocumentInfo?.DocumentNumber == documentNumber);
 
             var fileNameLength = entity?.DocumentInfo?.FileName?.LastIndexOf('.') ?? 0;
 
