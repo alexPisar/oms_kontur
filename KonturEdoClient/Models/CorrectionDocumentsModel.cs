@@ -325,6 +325,35 @@ namespace KonturEdoClient.Models
 
                         if (!string.IsNullOrEmpty(counteragent?.Organization?.FnsParticipantId))
                             (correctionDocument.Buyer.Item as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000).FnsParticipantId = counteragent.Organization.FnsParticipantId;
+
+                        var contractNumber = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 200 && c.IdObject == buyerCustomer.Id)?.TagValue;
+                        var contractDate = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 199 && c.IdObject == buyerCustomer.Id)?.TagValue;
+
+                        if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                        {
+                            correctionDocument.EventContent = new Diadoc.Api.DataXml.Ucd736.EventContent()
+                            {
+                                OperationContent = "Изменение стоимости товаров и услуг",
+                                TransferDocDetails = new Diadoc.Api.DataXml.Ucd736.DocType[]
+                                {
+                                    new Diadoc.Api.DataXml.Ucd736.DocType
+                                    {
+                                        BaseDocumentName = "УПД",
+                                        BaseDocumentNumber = SelectedDocument?.InvoiceDocJournal?.Code,
+                                        BaseDocumentDate = SelectedDocument?.InvoiceDocJournal?.DeliveryDate?.Date.ToString("dd.MM.yyyy")
+                                    }
+                                },
+                                CorrectionBase = new Diadoc.Api.DataXml.Ucd736.DocType[]
+                                {
+                                    new Diadoc.Api.DataXml.Ucd736.DocType
+                                    {
+                                        BaseDocumentName = "Договор поставки",
+                                        BaseDocumentNumber = contractNumber,
+                                        BaseDocumentDate = contractDate
+                                    }
+                                }
+                            };
+                        }
                     }
                     else
                         correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
