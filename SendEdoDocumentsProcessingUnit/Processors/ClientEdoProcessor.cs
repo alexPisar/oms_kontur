@@ -788,7 +788,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                                 new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
                                 {
-                                    DocumentName = "Счет-фактура и документ об отгрузке товаров (выполнении работ), передаче имущественных прав (документ об оказании услуг)",
+                                    DocumentName = "Универсальный передаточный документ",
                                     DocumentNumber = d.InvoiceNumber,
                                     DocumentDate = d.InvoiceDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                                 }

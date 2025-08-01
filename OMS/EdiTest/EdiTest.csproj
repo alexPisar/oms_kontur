@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DocGoodLabelForImportClass.cs" />
+    <Compile Include="DocGoodsDetailsLabelsForLoad.cs" />
     <Compile Include="InboxMessage.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

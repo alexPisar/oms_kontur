@@ -1120,6 +1120,73 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void ReplaceMarkedCodesTest()
+        {
+            using(var abt = new AbtDbContext())
+            {
+                ExcelColumnCollection columnCollection = new ExcelColumnCollection();
+
+                columnCollection.AddColumn("DmLabel", "Код");
+                columnCollection.AddColumn("Gtin", "GTIN");
+
+                var doc = new ExcelDocumentData(columnCollection);
+
+                List<ExcelDocumentData> docs = new List<ExcelDocumentData>(new ExcelDocumentData[] {
+                        doc
+                    });
+
+                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\MarkedCodes_31_07_2025.xlsx", docs);
+
+                worker.ImportData<DocGoodsDetailsLabelsForLoad>();
+                var nonBarCodes = new List<string>();
+
+                IEnumerable<DocGoodsDetailsLabels> labels = new List<DocGoodsDetailsLabels>();
+
+                foreach (var d in doc.Data)
+                {
+                    var docGoodsDetailsLabelsForLoad = (DocGoodsDetailsLabelsForLoad)d;
+
+                    //var res = abt.SelectSingleValue($"select 1 from doc_goods_details_labels where dm_label = '{docGoodsDetailsLabelsForLoad.DmLabel}'");
+
+                    //if (res == "1")
+                    //    continue;
+
+                    string barCodeStr = docGoodsDetailsLabelsForLoad.Gtin.TrimStart('0');
+
+                    var refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr && r.IsPrimary == false);
+
+                    if (refBarCode?.IdGood == null)
+                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr);
+
+                    if (refBarCode?.IdGood == null)
+                    {
+                        if (!nonBarCodes.Exists(n => n == barCodeStr))
+                            nonBarCodes.Add(barCodeStr);
+
+                        continue;
+                    }
+
+                    var label = new DocGoodsDetailsLabels
+                    {
+                        IdDoc = 0,
+                        IdGood = refBarCode.IdGood.Value,
+                        DmLabel = docGoodsDetailsLabelsForLoad.DmLabel,
+                        InsertDateTime = DateTime.Now
+                        //LabelStatus = 2
+                    };
+
+                    (labels as List<DocGoodsDetailsLabels>).Add(label);
+                }
+
+                File.WriteAllText("C:\\Users\\developer3\\Desktop\\BarCodesList.txt", string.Join("\n", nonBarCodes));
+
+                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel));
+                abt.DocGoodsDetailsLabels.AddRange(labels);
+                abt.SaveChanges();
+            }
+        }
+
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
         {
             using (var abt = new AbtDbContext())
