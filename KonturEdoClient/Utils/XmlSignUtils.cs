@@ -124,9 +124,8 @@ namespace KonturEdoClient.Utils
             else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
                 version = "utd970_05_03_01";
 
-            return SetCustomValuesForGeneratedFile(
-                Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
-                "СЧФДОП", version, 0, document), version);
+            return Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
+                "СЧФДОП", version, 0, document);
         }
 
         public Diadoc.Api.Proto.Events.GeneratedFile SetCustomValuesForGeneratedFile(Diadoc.Api.Proto.Events.GeneratedFile generatedFile, string version)

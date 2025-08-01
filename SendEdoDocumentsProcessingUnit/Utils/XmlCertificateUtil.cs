@@ -166,10 +166,10 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
                 version = "utd970_05_03_01";
 
-            var generatedFile = await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync("UniversalTransferDocument",
+            return await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync("UniversalTransferDocument",
                 "СЧФДОП", version, 0, document);
-            generatedFile = SetCustomValuesForGeneratedFile(generatedFile, version);
-            return generatedFile;
+            //generatedFile = SetCustomValuesForGeneratedFile(generatedFile, version);
+            //return generatedFile;
         }
 
         public Diadoc.Api.Proto.Events.GeneratedFile GetGeneratedFile(object document)
@@ -181,9 +181,8 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             else if (document as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
                 version = "utd970_05_03_01";
 
-            return SetCustomValuesForGeneratedFile(
-                EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
-                "СЧФДОП", version, 0, document), version);
+            return EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
+                "СЧФДОП", version, 0, document);
         }
 
         public Diadoc.Api.Proto.Events.GeneratedFile SetCustomValuesForGeneratedFile(Diadoc.Api.Proto.Events.GeneratedFile generatedFile, string version)
