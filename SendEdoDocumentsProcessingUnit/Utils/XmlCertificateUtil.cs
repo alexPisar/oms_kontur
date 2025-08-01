@@ -168,8 +168,6 @@ namespace SendEdoDocumentsProcessingUnit.Utils
 
             return await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync("UniversalTransferDocument",
                 "СЧФДОП", version, 0, document);
-            //generatedFile = SetCustomValuesForGeneratedFile(generatedFile, version);
-            //return generatedFile;
         }
 
         public Diadoc.Api.Proto.Events.GeneratedFile GetGeneratedFile(object document)
@@ -183,25 +181,6 @@ namespace SendEdoDocumentsProcessingUnit.Utils
 
             return EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument",
                 "СЧФДОП", version, 0, document);
-        }
-
-        public Diadoc.Api.Proto.Events.GeneratedFile SetCustomValuesForGeneratedFile(Diadoc.Api.Proto.Events.GeneratedFile generatedFile, string version)
-        {
-            if (version == "utd970_05_03_01")
-            {
-                var xml = new System.Xml.XmlDocument();
-                xml.LoadXml(Encoding.GetEncoding(1251).GetString(generatedFile.Content));
-                System.Xml.XmlNode docShipmentElement = xml.SelectSingleNode("/Файл/Документ/СвСчФакт/ДокПодтвОтгрНом");
-
-                if (docShipmentElement != null)
-                {
-                    var docShipmentNameAttribute = docShipmentElement.Attributes["РеквНаимДок"];
-                    docShipmentNameAttribute.Value = "Универсальный передаточный документ";
-                    generatedFile = new Diadoc.Api.Proto.Events.GeneratedFile(generatedFile.FileName, Encoding.GetEncoding(1251).GetBytes(xml.OuterXml));
-                }
-            }
-
-            return generatedFile;
         }
 
         public string ParseCertAttribute(string certData, string attributeName)

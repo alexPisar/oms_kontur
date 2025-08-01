@@ -128,25 +128,6 @@ namespace KonturEdoClient.Utils
                 "СЧФДОП", version, 0, document);
         }
 
-        public Diadoc.Api.Proto.Events.GeneratedFile SetCustomValuesForGeneratedFile(Diadoc.Api.Proto.Events.GeneratedFile generatedFile, string version)
-        {
-            if (version == "utd970_05_03_01")
-            {
-                var xml = new XmlDocument();
-                xml.LoadXml(Encoding.GetEncoding(1251).GetString(generatedFile.Content));
-                XmlNode docShipmentElement = xml.SelectSingleNode("/Файл/Документ/СвСчФакт/ДокПодтвОтгрНом");
-
-                if (docShipmentElement != null)
-                {
-                    var docShipmentNameAttribute = docShipmentElement.Attributes["РеквНаимДок"];
-                    docShipmentNameAttribute.Value = "Универсальный передаточный документ";
-                    generatedFile = new Diadoc.Api.Proto.Events.GeneratedFile(generatedFile.FileName, Encoding.GetEncoding(1251).GetBytes(xml.OuterXml));
-                }
-            }
-
-            return generatedFile;
-        }
-
         public string ParseCertAttribute(string certData, string attributeName)
         {
             string result = String.Empty;
