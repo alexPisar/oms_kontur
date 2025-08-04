@@ -1433,17 +1433,6 @@ namespace KonturEdoClient.Models
 
                 if (changePathDialog.ShowDialog() ?? false)
                 {
-                    var xml = new XmlDocument();
-                    xml.LoadXml(Encoding.GetEncoding(1251).GetString(file.Content));
-                    XmlNode docShipmentElement = xml.SelectSingleNode("/Файл/Документ/СвСчФакт/ДокПодтвОтгрНом");
-
-                    if (docShipmentElement != null)
-                    {
-                        var docShipmentNameAttribute = docShipmentElement.Attributes["РеквНаимДок"];
-                        docShipmentNameAttribute.Value = "Универсальный передаточный документ";
-                        file = new Diadoc.Api.Proto.Events.GeneratedFile(file.FileName, Encoding.GetEncoding(1251).GetBytes(xml.OuterXml));
-                    }
-
                     file.SaveContentToFile(changePathDialog.FileName);
                     _loadContext = new LoadModel();
                     var loadWindow = new LoadWindow();
