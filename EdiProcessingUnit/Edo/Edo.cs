@@ -78,6 +78,8 @@ namespace EdiProcessingUnit.Edo
             return universalTransferDocument;
         }
 
+        public string ActualBoxId => _actualBoxId;
+
         public GeneratedFile GenerateTitleXml(string typeNameId,
             string function,
             string version,

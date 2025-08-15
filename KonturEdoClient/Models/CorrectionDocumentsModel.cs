@@ -274,9 +274,22 @@ namespace KonturEdoClient.Models
                         DocumentDate = SelectedDocument?.CorrectionDocJournal?.DocDatetime.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
                     };
 
-                    correctionDocument.Seller = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
+                    correctionDocument.Seller = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000();
+
+                    if (!string.IsNullOrEmpty(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId))
                     {
-                        Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
+                        (correctionDocument.Seller as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000).Item =
+                        new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationReference
+                        {
+                            BoxId = EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId,
+                            ShortOrgName = sellerCustomer.Name,
+                            OrgType = sellerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity
+                        };
+                    }
+                    else
+                    {
+                        (correctionDocument.Seller as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000).Item = 
+                        new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
                         {
                             Inn = sellerCustomer.Inn,
                             Kpp = sellerCustomer.Kpp,
@@ -290,8 +303,8 @@ namespace KonturEdoClient.Models
                                     Address = sellerContractor.Address
                                 }
                             }
-                        }
-                    };
+                        };
+                    }
 
                     var orgInn = _currentOrganization.Inn;
 
