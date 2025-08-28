@@ -90,6 +90,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
                 {
+                    var docflow = _edo.GetDocFlow(docEdoProcessing.MessageId, docEdoProcessing.EntityId, true);
+                    var signatureRejection = docflow?.Docflow?.RecipientResponse?.Rejection;
+
+                    if(signatureRejection != null)
+                        docEdoProcessing.RejectionReason = signatureRejection.PlainText;
+
                     SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.");
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)

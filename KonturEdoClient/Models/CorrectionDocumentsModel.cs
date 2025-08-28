@@ -749,6 +749,9 @@ namespace KonturEdoClient.Models
                                 }
                             };
 
+                            if (oldVat == newVat)
+                                throw new Exception($"Сумма НДС до и после изменения не должны совпадать. ID товара {detail.IdGood}");
+
                             var country = _abt.RefCountries.FirstOrDefault(c => c.Id == detail.Good.IdCountry);
 
                             if (country != null)

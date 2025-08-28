@@ -19,6 +19,7 @@
             <dxg:GridColumn FieldName="ReceiverInn" Header="ИНН получателя" Width="100"/>
             <dxg:GridColumn FieldName="SignStatus" Header="Статус подписания" Width="120"/>
             <dxg:GridColumn FieldName="AnnullmentStatus" Header="Статус аннулирования" Width="150"/>
+            <dxg:GridColumn FieldName="RejectionReason" Header="Причина отклонения" Width="150"/>
             <dxg:GridColumn FieldName="UserName" Header="Имя пользователя" Width="120"/>
             <dxg:GridControl.View>
                 <dxg:TableView AllowEditing="False" 

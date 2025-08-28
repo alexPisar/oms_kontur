@@ -32,7 +32,8 @@ namespace EdiProcessingUnit.Edo
         private string _actualBoxId;
         private string _actualBoxIdGuid;
 		private DiadocHttpApi _api;
-		private X509Certificate2 _certificate;
+        private DiadocHttpApi.DocflowHttpApi _docflowApi = null;
+        private X509Certificate2 _certificate;
 
 
         public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalTransferDocument(
@@ -487,6 +488,31 @@ namespace EdiProcessingUnit.Edo
             //    return messageToPost;
             //});
             return await CallApiSafeAsync(new Func<Task<Message>>(async () => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
+        }
+
+        public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV3 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
+        {
+            if(_docflowApi == null)
+                _docflowApi = new DiadocHttpApi.DocflowHttpApi(_api);
+
+            var request = new Diadoc.Api.Proto.Docflow.GetDocflowBatchRequest
+            {
+                Requests =
+                {
+                    new Diadoc.Api.Proto.Docflow.GetDocflowRequest
+                    {
+                        DocumentId = new DocumentId
+                        {
+                            MessageId = messageId,
+                            EntityId = entityId
+                        },
+                        InjectEntityContent = injectEntityContent
+                    }
+                }
+            };
+            
+            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV3>(() => _docflowApi.GetDocflows(_authToken, _actualBoxId, request)));
+            return docs?.Documents?.FirstOrDefault();
         }
 
         public List<Counteragent> GetKontragents(string orgId = null)

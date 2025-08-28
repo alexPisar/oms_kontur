@@ -17,6 +17,7 @@ namespace KonturEdoClient.Models
         public DateTime DocDate => _docEdoProcessing.DocDate;
         public string ReceiverName => _docEdoProcessing.ReceiverName;
         public string ReceiverInn => _docEdoProcessing.ReceiverInn;
+        public string RejectionReason => _docEdoProcessing.RejectionReason;
         public string SignStatus
         {
             get {

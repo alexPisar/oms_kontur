@@ -34,6 +34,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string IdParent { get; set; }
         public virtual int HonestMarkStatus { get; set; }
         public virtual string HonestMarkErrorMessage { get; set; }
+        public virtual string RejectionReason { get; set; }
         #endregion
 
         #region Navigation Properties

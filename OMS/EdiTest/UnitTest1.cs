@@ -598,7 +598,13 @@ namespace EdiTest
             var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
             edo.Authenticate(false, cert, "2504000010");
 
-            var document = edo.GetDocument("6f5b2a5a-dbc6-410b-b462-5951c8cf0ff1", "3bb9e00f-b759-45b4-a264-bf9cc80c4e12");
+            var document = edo.GetDocument("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a");
+            //var message = edo.GetMessage("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a", true);
+            //var entity = message.Entities.FirstOrDefault(ent => ent.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.XmlSignatureRejection);
+            //var docFlow = edo.GetDocFlow("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a", true);
+            //var signerRejectionDocFlow = docFlow?.Docflow?.RecipientResponse?.Rejection;
+
+            //var text = signerRejectionDocFlow?.PlainText;
         }
 
         [TestMethod]
