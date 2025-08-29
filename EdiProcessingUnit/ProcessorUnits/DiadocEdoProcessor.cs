@@ -98,6 +98,10 @@ namespace EdiProcessingUnit.ProcessorUnits
                     if(signatureRejection != null)
                         rejectionReason = signatureRejection.PlainText;
 
+                    if (!string.IsNullOrEmpty(rejectionReason))
+                        if (rejectionReason.Length > 2000)
+                            rejectionReason = rejectionReason.Substring(0, 2000);
+
                     SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.", rejectionReason);
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)

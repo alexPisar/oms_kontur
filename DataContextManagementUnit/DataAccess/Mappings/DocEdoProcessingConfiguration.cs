@@ -97,7 +97,8 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
 
             this
                 .Property(d => d.RejectionReason)
-                .HasColumnName("REJECTION_REASON");
+                .HasColumnName("REJECTION_REASON")
+                .HasMaxLength(4000);
 
             this
                 .HasMany(d => d.Children)
