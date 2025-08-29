@@ -32,7 +32,6 @@ namespace EdiProcessingUnit.Edo
         private string _actualBoxId;
         private string _actualBoxIdGuid;
 		private DiadocHttpApi _api;
-        private DiadocHttpApi.DocflowHttpApi _docflowApi = null;
         private X509Certificate2 _certificate;
 
 
@@ -492,9 +491,6 @@ namespace EdiProcessingUnit.Edo
 
         public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV3 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
         {
-            if(_docflowApi == null)
-                _docflowApi = new DiadocHttpApi.DocflowHttpApi(_api);
-
             var request = new Diadoc.Api.Proto.Docflow.GetDocflowBatchRequest
             {
                 Requests =
@@ -511,7 +507,7 @@ namespace EdiProcessingUnit.Edo
                 }
             };
             
-            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV3>(() => _docflowApi.GetDocflows(_authToken, _actualBoxId, request)));
+            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV3>(() => _api.Docflow.GetDocflows(_authToken, _actualBoxId, request)));
             return docs?.Documents?.FirstOrDefault();
         }
 

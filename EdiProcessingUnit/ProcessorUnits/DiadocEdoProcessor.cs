@@ -18,10 +18,11 @@ namespace EdiProcessingUnit.ProcessorUnits
             return _edo?.Authenticate(true, null, OrgInn) ?? false;
         }
 
-        private void SetEdoStatus(DocEdoProcessing docEdoProcessing, int newStatus, string textMessage = null)
+        private void SetEdoStatus(DocEdoProcessing docEdoProcessing, int newStatus, string textMessage = null, string rejectionReason = null)
         {
             _abtDbContext.Entry(docEdoProcessing)?.Reload();
             docEdoProcessing.DocStatus = newStatus;
+            docEdoProcessing.RejectionReason = rejectionReason;
             _abtDbContext?.SaveChanges();
 
             if (!string.IsNullOrEmpty(textMessage))
@@ -90,13 +91,14 @@ namespace EdiProcessingUnit.ProcessorUnits
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
                 {
+                    string rejectionReason = null;
                     var docflow = _edo.GetDocFlow(docEdoProcessing.MessageId, docEdoProcessing.EntityId, true);
                     var signatureRejection = docflow?.Docflow?.RecipientResponse?.Rejection;
 
                     if(signatureRejection != null)
-                        docEdoProcessing.RejectionReason = signatureRejection.PlainText;
+                        rejectionReason = signatureRejection.PlainText;
 
-                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.");
+                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.", rejectionReason);
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
                 {
