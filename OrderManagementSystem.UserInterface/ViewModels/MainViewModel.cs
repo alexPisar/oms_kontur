@@ -334,6 +334,35 @@ namespace OMS.ViewModels
                 if (idSeller == null)
                     throw new Exception("Не удалось определить организацию-продавца из заказа.");
 
+                var defaultSellerByShipToStr = _abt.RefRefTags?.FirstOrDefault(t => t.IdTag == 204 && t.IdObject == SelectedItem.ShipTo.IdContractor)?.TagValue;
+
+                if (!string.IsNullOrEmpty(defaultSellerByShipToStr))
+                {
+                    var idDefaultSellerByShipTo = Decimal.Parse(defaultSellerByShipToStr);
+
+                    if(idSeller != idDefaultSellerByShipTo)
+                    {
+                        decimal idSellerContractor = idSeller.Value;
+                        var sellerCustomer = (from contr in _abt.RefContractors
+                                             where contr.Id == idSellerContractor
+                                             join cust in _abt.RefCustomers
+                                             on contr.DefaultCustomer equals cust.Id
+                                             select cust)?.FirstOrDefault();
+
+                        var defaultSellerCustomer = (from contr in _abt.RefContractors
+                                                     where contr.Id == idDefaultSellerByShipTo
+                                                     join cust in _abt.RefCustomers
+                                                     on contr.DefaultCustomer equals cust.Id
+                                                     select cust)?.FirstOrDefault();
+
+                        if(sellerCustomer != null && sellerCustomer.Inn != defaultSellerCustomer?.Inn)
+                        {
+                            System.Windows.MessageBox.Show("Поставщик из заказа не соответствует поставщику по умолчанию в Трейдере!", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                            return;
+                        }
+                    }
+                }
+
                 Dictionary<decimal?, DocJournal> docInfosByManufacturers = new Dictionary<decimal?, DocJournal>();
                 List<decimal?> docsWithoutManufacturers = new List<decimal?>();
 

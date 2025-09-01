@@ -184,6 +184,7 @@
                         </dxg:GridColumn.EditSettings>
                     </dxg:GridColumn>
                     <dxg:GridColumn Header="Покупатель" Width="120" FieldName="Buyer.Name"/>
+                    <dxg:GridColumn Header="Продавец" Width="120" FieldName="Seller.Name" />
                     <dxg:GridColumn Header="Отправитель" Width="120" FieldName="Sender.Name"/>
                     <dxg:GridColumn Header="GLN отправителя" Width="120" FieldName="GlnSender"/>
                     <dxg:GridColumn Header="Точка доставки" Width="120" FieldName="NameShipTo"/>
