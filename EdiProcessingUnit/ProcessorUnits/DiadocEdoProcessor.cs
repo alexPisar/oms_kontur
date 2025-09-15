@@ -68,7 +68,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                     foreach (var error in errors)
                         errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
 
-                    markedDocEdoProcessing.HonestMarkErrorMessage = string.Join("\n\n", errorsListStr);
+                    var honestMarkErrorMessage = string.Join("\n\n", errorsListStr);
+
+                    if (honestMarkErrorMessage.Length > 500)
+                        honestMarkErrorMessage = honestMarkErrorMessage.Substring(0, 500);
+
+                    markedDocEdoProcessing.HonestMarkErrorMessage = honestMarkErrorMessage;
                     _abtDbContext?.SaveChanges();
                     MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} обработан с ошибками.");
                 }
