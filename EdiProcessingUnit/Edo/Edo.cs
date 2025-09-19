@@ -356,6 +356,95 @@ namespace EdiProcessingUnit.Edo
             return CallApiSafe(new Func<Message>(()=> { return _api.PostMessage(_authToken, messageToPost); }));
         }
 
+        public async Task<Message> SendDocumentAttachmentAsync(string ourBoxId, string counteragentBoxId, string typeNameId, string function, string version,
+            List<SignedContent> contents, string comment = null, string customDocumentId = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null,
+            DocumentId initialDocumentId = null)
+        {
+            var messageToPost = new MessageToPost
+            {
+                FromBoxId = ourBoxId ?? _actualBoxId,
+                ToBoxId = counteragentBoxId
+            };
+
+            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
+            if (powerOfAttorneyToPost != null)
+            {
+                powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async() =>
+                {
+                    return await _api.PrevalidatePowerOfAttorneyAsync(_authToken, ourBoxId ?? _actualBoxId,
+                        powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                        {
+                            ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
+                            {
+                                Content = new Content_v3
+                                {
+                                    Content = _certificate.RawData
+                                }
+                            }
+                        });
+                }));
+
+                if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                {
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                    {
+                        var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
+
+                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        {
+                            errorText = errorText + "Список ошибок:\r\n";
+
+                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            {
+                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                            }
+                        }
+
+                        throw new Exception(errorText);
+                    }
+                    else
+                    {
+                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        {
+                            var errorText = "Список ошибок:\r\n";
+
+                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            {
+                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                            }
+                            throw new Exception(errorText);
+                        }
+                    }
+                }
+            }
+
+            foreach (var content in contents)
+            {
+                var documentAttachment = new DocumentAttachment
+                {
+                    TypeNamedId = typeNameId,
+                    Function = function,
+                    Version = version,
+                    SignedContent = content
+                };
+
+                if (powerOfAttorneyStatus != null && powerOfAttorneyToPost != null)
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                        documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
+                documentAttachment.Comment = comment;
+                documentAttachment.CustomDocumentId = customDocumentId;
+
+                if (initialDocumentId != null)
+                    documentAttachment.InitialDocumentIds.Add(initialDocumentId);
+
+                messageToPost.DocumentAttachments.Add(documentAttachment);
+            }
+            return await CallApiSafeAsync(new Func<Task<Message>>(async() => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
+        }
+
         public async Task<Message> SendXmlDocumentAsync(string senderOrgId,
             string recipientOrgId,
             bool isOurRecipient,
@@ -645,6 +734,12 @@ namespace EdiProcessingUnit.Edo
         public Diadoc.Api.Proto.Documents.Document GetDocument(string messageId, string entityId)
         {
             var document = CallApiSafe(new Func<Diadoc.Api.Proto.Documents.Document>(() => _api.GetDocument(_authToken, _actualBoxId, messageId, entityId)));
+            return document;
+        }
+
+        public async Task<Diadoc.Api.Proto.Documents.Document> GetDocumentAsync(string messageId, string entityId)
+        {
+            var document = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.Documents.Document>>(async () => await _api.GetDocumentAsync(_authToken, _actualBoxId, messageId, entityId)));
             return document;
         }
 

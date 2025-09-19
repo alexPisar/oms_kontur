@@ -113,7 +113,6 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                         foreach (var myOrganization in orgs)
                         {
-                            var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
                             try
                             {
                                 var certs = personalCertificates.Where(c => myOrganization.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
@@ -124,60 +123,11 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                 _edo.SetOrganizationParameters(myOrganization);
 
-                                var addressSender = myOrganization?.Address?.RussianAddress?.ZipCode +
-                                                    (string.IsNullOrEmpty(myOrganization?.Address?.RussianAddress?.City) ? "" : $", {myOrganization.Address.RussianAddress.City}") +
-                                                    (string.IsNullOrEmpty(myOrganization?.Address?.RussianAddress?.Street) ? "" : $", {myOrganization.Address.RussianAddress.Street}") +
-                                                    (string.IsNullOrEmpty(myOrganization?.Address?.RussianAddress?.Building) ? "" : $", {myOrganization.Address.RussianAddress.Building}");
-
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                                 var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
 
-                                IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
-
-                                int position = 0, block = 10, count = docs.Count();
-                                docs = docs ?? new List<UniversalTransferDocumentV2>();
-                                var errors = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
-
-                                while (count > position)
-                                {
-                                    var length = count - position > block ? block : count - position;
-                                    var docsFromBlock = docs.Skip(position).Take(length);
-
-                                    var tasks = docsFromBlock.Select((doc) =>
-                                    {
-                                        var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
-                                        var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee, orgsInnKpp);
-                                        return task;
-                                    });
-
-                                    var result = await Task.WhenAll(tasks);
-                                    var docProcessings = result.Where(r => r.Entity != null);
-
-                                    totalDocProcessings.AddRange(docProcessings);
-                                    errors.AddRange(result.Where(r => r.Entity == null));
-
-                                    position += block;
-                                }
-
-                                foreach (var docProcessingResult in totalDocProcessings)
-                                {
-                                    var docProcessing = docProcessingResult.Entity;
-                                    if (docProcessing.ComissionDocument != null && !_abt.DocEdoProcessings.Any(d => d.Id == docProcessing.Id))
-                                        _abt.DocEdoProcessings.Add(docProcessing);
-                                    else if (docProcessing.ComissionDocument == null)
-                                        _abt.DocEdoProcessings.Add(docProcessing);
-
-                                    MailReporter.Add(docProcessingResult.Description);
-                                }
-
-                                if (totalDocProcessings.Count > 0)
-                                    _abt.SaveChanges();
-
-                                foreach (var error in errors)
-                                {
-                                    _log.Log(error.Exception);
-                                    MailReporter.Add(error.Exception, $"{error.Description}:\r\n");
-                                }
+                                await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, employee, orgsInnKpp);
+                                await SendReturnsCorrectionDocuments(myOrganization, counteragents);
                             }
                             catch (Exception ex)
                             {
@@ -194,6 +144,99 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 }
             }
             return true;
+        }
+
+        private async Task SendUniversalTransferDocuments(Kontragent myOrganization, List<Kontragent> counteragents, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee, List<KeyValuePair<string, string>> orgsInnKpp)
+        {
+            var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
+            IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
+
+            int position = 0, block = 10, count = docs.Count();
+            docs = docs ?? new List<UniversalTransferDocumentV2>();
+            var errors = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
+
+            while (count > position)
+            {
+                var length = count - position > block ? block : count - position;
+                var docsFromBlock = docs.Skip(position).Take(length);
+
+                var tasks = docsFromBlock.Select((doc) =>
+                {
+                    var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
+                    var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee, orgsInnKpp);
+                    return task;
+                });
+
+                var result = await Task.WhenAll(tasks);
+                var docProcessings = result.Where(r => r.Entity != null);
+
+                totalDocProcessings.AddRange(docProcessings);
+                errors.AddRange(result.Where(r => r.Entity == null));
+
+                position += block;
+            }
+
+            foreach (var docProcessingResult in totalDocProcessings)
+            {
+                var docProcessing = docProcessingResult.Entity;
+                if (docProcessing.ComissionDocument != null && !_abt.DocEdoProcessings.Any(d => d.Id == docProcessing.Id))
+                    _abt.DocEdoProcessings.Add(docProcessing);
+                else if (docProcessing.ComissionDocument == null)
+                    _abt.DocEdoProcessings.Add(docProcessing);
+
+                MailReporter.Add(docProcessingResult.Description);
+            }
+
+            if (totalDocProcessings.Count > 0)
+                _abt.SaveChanges();
+
+            foreach (var error in errors)
+            {
+                _log.Log(error.Exception);
+                MailReporter.Add(error.Exception, $"{error.Description}:\r\n");
+            }
+        }
+
+        private async Task SendReturnsCorrectionDocuments(Kontragent myOrganization, List<Kontragent> counteragents)
+        {
+            var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
+            var returnCorrDocs = GetCorrectionReturnsForEdoAutomaticSend(myOrganization) ?? new List<UniversalCorrectionDocumentV2>();
+
+            int position = 0, block = 10, count = returnCorrDocs.Count();
+            var errors = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
+
+            while(count > position)
+            {
+                var length = count - position > block ? block : count - position;
+                var returnCorrDocsFromBlock = returnCorrDocs.Skip(position).Take(length);
+
+                var tasks = returnCorrDocsFromBlock.Select(doc => 
+                {
+                    var receiver = counteragents.FirstOrDefault(c => c.Inn == doc.BuyerInn);
+                    var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc);
+                    return task;
+                });
+
+                var result = await Task.WhenAll(tasks);
+                var docProcessings = result.Where(r => r.Entity != null);
+
+                totalDocProcessings.AddRange(docProcessings);
+                errors.AddRange(result.Where(r => r.Entity == null));
+
+                position += block;
+            }
+
+            foreach (var docProcessingResult in totalDocProcessings)
+                MailReporter.Add(docProcessingResult.Description);
+
+            if (totalDocProcessings.Count > 0)
+                _abt.SaveChanges();
+
+            foreach(var error in errors)
+            {
+                _log.Log(error.Exception);
+                MailReporter.Add(error.Exception, $"{error.Description}:\r\n");
+            }
         }
 
         private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocumentV2 doc, 
@@ -317,6 +360,117 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             catch(Exception ex)
             {
                 operationEntityResult.SetException(ex, $"Произошла ошибка при отправке документа {doc.InvoiceNumber}");
+            }
+
+            return operationEntityResult;
+        }
+
+        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalCorrectionDocumentV2 doc)
+        {
+            var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
+            var typeNamedId = "UniversalCorrectionDocument";
+            var function = "КСЧФДИС";
+            var version = "ucd736_05_01_02";
+
+            try
+            {
+                if (doc.BaseProcessing == null)
+                    throw new Exception($"Не найден основной документ для корректировки {doc.CorrectionNumber}");
+
+                var baseDocument = await EdiProcessingUnit.Edo.Edo.GetInstance().GetDocumentAsync(doc.BaseProcessing.MessageId, doc.BaseProcessing.EntityId);
+
+                if (baseDocument == null)
+                    throw new Exception("Не найден базовый документ.");
+
+                var universalCorrectionDocument = await GetUniversalCorrectionDocumentAsync(doc, myOrganization, receiver, baseDocument);
+
+                if (universalCorrectionDocument == null)
+                    throw new Exception("Не удалось сформировать корректировочный документ.");
+
+                var generatedFile = await EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXmlAsync(typeNamedId,
+                                function, version, 0, universalCorrectionDocument);
+
+                var crypt = new WinApiCryptWrapper(myOrganization.Certificate);
+                var signature = crypt.Sign(generatedFile.Content, true);
+
+                Diadoc.Api.Proto.Events.Message message;
+
+                var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+                {
+                    Content = generatedFile.Content,
+                    Signature = signature
+                };
+
+                if (!string.IsNullOrEmpty(myOrganization.EmchdId))
+                {
+                    var powerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                    {
+                        UseDefault = false,
+                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                        {
+                            RegistrationNumber = myOrganization.EmchdId,
+                            IssuerInn = myOrganization.Inn
+                        }
+                    };
+
+                    message = await EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachmentAsync(null, baseDocument.CounteragentBoxId, typeNamedId, function, version,
+                        new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }),
+                        null, null, powerOfAttorneyToPost,
+                        new Diadoc.Api.Proto.DocumentId
+                        {
+                            MessageId = doc.BaseProcessing.MessageId,
+                            EntityId = doc.BaseProcessing.EntityId
+                        });
+                }
+                else
+                {
+                    message = await EdiProcessingUnit.Edo.Edo.GetInstance().SendDocumentAttachmentAsync(null, baseDocument.CounteragentBoxId, typeNamedId, function, version,
+                        new List<Diadoc.Api.Proto.Events.SignedContent>(new[] { signedContent }),
+                            null, null, null,
+                            new Diadoc.Api.Proto.DocumentId
+                            {
+                                MessageId = doc.BaseProcessing.MessageId,
+                                EntityId = doc.BaseProcessing.EntityId
+                            });
+                }
+
+                if (message != null)
+                {
+                    var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalCorrectionDocument);
+
+                    var fileNameLength = entity.FileName.LastIndexOf('.');
+
+                    if (fileNameLength < 0)
+                        fileNameLength = entity.FileName.Length;
+
+                    var fileName = entity.FileName.Substring(0, fileNameLength);
+
+                    var newDocEdoProcessing = new DocEdoProcessing
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageId = message.MessageId,
+                        EntityId = entity.EntityId,
+                        FileName = fileName,
+                        IsReprocessingStatus = 0,
+                        IdDoc = doc.IdDoc,
+                        DocDate = DateTime.Now,
+                        UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
+                        ReceiverName = doc.BaseProcessing.ReceiverName,
+                        ReceiverInn = doc.BaseProcessing.ReceiverInn,
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Ucd,
+                        IdParent = doc.BaseProcessing.Id,
+                        Parent = doc.BaseProcessing,
+                        HonestMarkStatus = doc.IsMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
+                    };
+                    doc.BaseProcessing.Children.Add(newDocEdoProcessing);
+
+                    operationEntityResult.Entity = newDocEdoProcessing;
+                    operationEntityResult.Description = $"Корректировка {doc?.CorrectionNumber} успешно отправлена и сохранена.";
+                }
+            }
+            catch (Exception ex)
+            {
+                operationEntityResult.SetException(ex, $"Произошла ошибка при отправке корректировки {doc.CorrectionNumber}");
             }
 
             return operationEntityResult;
@@ -541,6 +695,48 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 {
                     _log.Log(ex);
                     MailReporter.Add(ex, $"Ошибка в документе {u.InvoiceNumber}: ");
+                    return null;
+                }
+            }).Where(u => u != null).ToList();
+            return docs;
+        }
+
+        private List<UniversalCorrectionDocumentV2> GetCorrectionReturnsForEdoAutomaticSend(Kontragent organization)
+        {
+            var fileController = new WebService.Controllers.FileController();
+            var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+            var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+            fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
+
+            string sqlString = string.Empty;
+            var properties = typeof(UniversalCorrectionDocumentV2).GetProperties();
+
+            foreach (var property in properties)
+            {
+                var colAttribute = property?.GetCustomAttributes(false)?
+                    .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                if (colAttribute != null)
+                    sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+            }
+
+            sqlString = $"select {sqlString} from VIEW_RETURNS_EDO_AUTOMATIC where " +
+                $"DOC_DATE >= :FromDate and " +
+                $"SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'";
+
+            var docs = _abt.Database.SqlQuery<UniversalCorrectionDocumentV2>(sqlString, fromDateParam).ToList();
+
+            docs = docs.Select(u =>
+            {
+                try
+                {
+                    return u.Init(_abt);
+                }
+                catch (Exception ex)
+                {
+                    _log.Log(ex);
+                    MailReporter.Add(ex, $"Ошибка в корректировке {u.DocNumber}: ");
                     return null;
                 }
             }).Where(u => u != null).ToList();
@@ -959,6 +1155,445 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             document.Table.Item = details.ToArray();
 
             return document;
+        }
+
+        public async Task<Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument> GetUniversalCorrectionDocumentAsync(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, Diadoc.Api.Proto.Documents.Document baseDocument)
+        {
+            var detailsList = d.Details.ToList();
+
+            var result = await Task.Run(() =>
+            {
+                var universalCorrectionDocument = GetUniversalCorrectionDocument(d, organization, receiver, baseDocument.CounteragentBoxId, detailsList, d.RefEdoGoodChannel);
+                return universalCorrectionDocument;
+            });
+
+            return result;
+        }
+
+        public Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument GetUniversalCorrectionDocument(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, string counteragentBoxId, List<UniversalCorrectionDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null)
+        {
+            if (d?.BaseProcessing == null)
+                throw new Exception($"Не найден основной документ для корректировки {d?.CorrectionNumber}");
+
+            var correctionDocument = new Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument
+            {
+                Currency = Properties.Settings.Default.DefaultCurrency,
+                Function = Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocumentFunction.КСЧФДИС,
+                DocumentNumber = d.CorrectionNumber,
+                DocumentDate = d.DocDate.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
+            };
+
+            correctionDocument.Seller = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000();
+
+            if (!string.IsNullOrEmpty(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId))
+            {
+                (correctionDocument.Seller as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000).Item =
+                new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationReference
+                {
+                    BoxId = EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId,
+                    ShortOrgName = d.SellerOrgName,
+                    OrgType = d.SellerInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity
+                };
+            }
+            else
+            {
+                (correctionDocument.Seller as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000).Item =
+                new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
+                {
+                    Inn = d.SellerInn,
+                    Kpp = d.SellerKpp,
+                    OrgName = d.SellerOrgName,
+                    OrgType = d.SellerInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                    Address = new Diadoc.Api.DataXml.Ucd736.Address_ForeignAddress1000
+                    {
+                        Item = new Diadoc.Api.DataXml.Ucd736.ForeignAddress1000
+                        {
+                            Country = Properties.Settings.Default.DefaultOrgCountryCode,
+                            Address = d.SellerAddress
+                        }
+                    }
+                };
+            }
+
+            var orgInn = organization.Inn;
+
+            if (!string.IsNullOrEmpty(d?.BuyerInn))
+            {
+                correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
+                {
+                    Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000
+                    {
+                        OrgName = d.BuyerOrgName,
+                        OrgType = d.BuyerInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                        Inn = d.BuyerInn,
+                        Kpp = d.BuyerKpp,
+                        Address = new Diadoc.Api.DataXml.Ucd736.Address_ForeignAddress1000
+                        {
+                            Item = new Diadoc.Api.DataXml.Ucd736.ForeignAddress1000
+                            {
+                                Country = Properties.Settings.Default.DefaultOrgCountryCode,
+                                Address = d.BuyerAddress
+                            }
+                        }
+                    }
+                };
+
+                if (!string.IsNullOrEmpty(receiver?.FnsParticipantId))
+                    (correctionDocument.Buyer.Item as Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationDetails_ForeignAddress1000).FnsParticipantId = receiver.FnsParticipantId;
+
+                var contractNumber = d?.ContractNumber;
+                var contractDate = d?.ContractDate;
+
+                if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                {
+                    correctionDocument.EventContent = new Diadoc.Api.DataXml.Ucd736.EventContent()
+                    {
+                        OperationContent = "Изменение стоимости товаров и услуг",
+                        TransferDocDetails = new Diadoc.Api.DataXml.Ucd736.DocType[]
+                        {
+                                    new Diadoc.Api.DataXml.Ucd736.DocType
+                                    {
+                                        BaseDocumentName = "УПД",
+                                        BaseDocumentNumber = d.InvoiceNumber,
+                                        BaseDocumentDate = d.InvoiceDeliveryDate?.Date.ToString("dd.MM.yyyy")
+                                    }
+                        },
+                        CorrectionBase = new Diadoc.Api.DataXml.Ucd736.DocType[]
+                        {
+                                    new Diadoc.Api.DataXml.Ucd736.DocType
+                                    {
+                                        BaseDocumentName = "Договор поставки",
+                                        BaseDocumentNumber = contractNumber,
+                                        BaseDocumentDate = contractDate
+                                    }
+                        }
+                    };
+                }
+            }
+            else
+                correctionDocument.Buyer = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationInfo_ForeignAddress1000
+                {
+                    Item = new Diadoc.Api.DataXml.Ucd736.ExtendedOrganizationReference
+                    {
+                        BoxId = counteragentBoxId,
+                        ShortOrgName = d.BaseProcessing.ReceiverName,
+                        OrgType = d.BaseProcessing.ReceiverInn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity
+                    }
+                };
+
+            Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle[] signer;
+            if (string.IsNullOrEmpty(organization.EmchdId))
+            {
+                var firstMiddleName = _utils.ParseCertAttribute(organization.Certificate.Subject, "G");
+                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
+                string signerMiddleName = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
+                string signerLastName = _utils.ParseCertAttribute(organization.Certificate.Subject, "SN");
+
+                signer = new[]
+                {
+                    new Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle
+                    {
+                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                        FirstName = signerFirstName,
+                        MiddleName = signerMiddleName,
+                        LastName = signerLastName,
+                        SignerOrganizationName = _utils.ParseCertAttribute(organization.Certificate.Subject, "CN"),
+                        Inn = orgInn,
+                        Position = _utils.ParseCertAttribute(organization.Certificate.Subject, "T")
+                    }
+                };
+            }
+            else
+            {
+                signer = new[]
+                {
+                    new Diadoc.Api.DataXml.ExtendedSignerDetails_CorrectionSellerTitle
+                    {
+                        SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
+                        FirstName = organization.EmchdPersonName,
+                        MiddleName = organization.EmchdPersonPatronymicSurname,
+                        LastName = organization.EmchdPersonSurname,
+                        SignerOrganizationName = organization.Name,
+                        Inn = orgInn,
+                        Position = organization.EmchdPersonPosition
+                    }
+                };
+            }
+
+            correctionDocument.UseSignerDetails(signer);
+
+            correctionDocument.DocumentCreator = $"{signer.First().LastName} {signer.First().FirstName} {signer.First().MiddleName}";
+
+            var idChannel = d?.IdChannel;
+            var itemDetails = new List<Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItem>();
+
+            if (d?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
+            {
+                foreach (var docDetail in docDetails)
+                {
+                    if (docDetail?.BaseDetail == null)
+                        throw new Exception($"Не найден товар в исходном документе {d.InvoiceNumber}, ID товара {docDetail.IdGood}");
+
+                    if (docDetail?.DocDetail == null)
+                        throw new Exception($"Не найден товар в корректировочном документе {d.CorrectionNumber}, ID товара {docDetail.IdGood}");
+
+                    var additionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+
+                    int baseIndex = docDetail.BaseIndex;
+                    var barCode = docDetail.ItemVendorCode;
+                    var baseDetail = docDetail.BaseDetail;
+                    var detail = docDetail.DocDetail;
+
+                    string countryCode = docDetail.CountryCode;
+
+                    if (countryCode.Length == 1)
+                        countryCode = "00" + countryCode;
+                    else if (countryCode.Length == 2)
+                        countryCode = "0" + countryCode;
+
+                    var oldSubtotal = Math.Round(baseDetail.Quantity * ((decimal)baseDetail.Price - (decimal)baseDetail.DiscountSumm), 2);
+                    var oldVat = (decimal)Math.Round(oldSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
+                    var oldPrice = (decimal)Math.Round((oldSubtotal - oldVat) / baseDetail.Quantity, 2, MidpointRounding.AwayFromZero);
+
+                    var newSubtotal = Math.Round(detail.Quantity * ((decimal)detail.Price - (decimal)detail.DiscountSumm), 2);
+                    var newVat = (decimal)Math.Round(newSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
+                    var newPrice = (decimal)Math.Round((newSubtotal - newVat) / detail.Quantity, 2, MidpointRounding.AwayFromZero);
+
+                    var item = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItem
+                    {
+                        Product = detail.Good.Name,
+                        ItemVendorCode = barCode,
+                        OriginalNumber = baseIndex.ToString(),
+                        Unit = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemUnit
+                        {
+                            OriginalValue = Properties.Settings.Default.DefaultUnit,
+                            CorrectedValue = Properties.Settings.Default.DefaultUnit
+                        },
+                        UnitName = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemUnitName
+                        {
+                            OriginalValue = "шт.",
+                            CorrectedValue = "шт."
+                        },
+                        Quantity = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemQuantity
+                        {
+                            OriginalValue = baseDetail.Quantity,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = baseDetail.Quantity - detail.Quantity,
+                            CorrectedValueSpecified = true
+                        },
+                        TaxRate = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemTaxRate
+                        {
+                            OriginalValue = Diadoc.Api.DataXml.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent,
+                            CorrectedValue = Diadoc.Api.DataXml.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent
+                        },
+                        Price = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemPrice
+                        {
+                            OriginalValue = oldPrice,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = newPrice,
+                            CorrectedValueSpecified = true
+                        },
+                        Vat = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVat
+                        {
+                            OriginalValue = oldVat,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = oldVat - newVat,
+                            CorrectedValueSpecified = true,
+                            ItemElementName = Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVatDiffType.AmountsDec,
+                            Item = newVat
+                        },
+                        Subtotal = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotal
+                        {
+                            OriginalValue = oldSubtotal,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = oldSubtotal - newSubtotal,
+                            CorrectedValueSpecified = true,
+                            ItemElementName = Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalDiffType.AmountsDec,
+                            Item = newSubtotal
+                        },
+                        SubtotalWithVatExcluded = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcluded
+                        {
+                            OriginalValue = oldSubtotal - oldVat,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = oldSubtotal - oldVat - newSubtotal + newVat,
+                            CorrectedValueSpecified = true,
+                            Item = newSubtotal - newVat,
+                            ItemElementName = Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcludedDiffType.AmountsDec
+                        }
+                    };
+
+                    if (!string.IsNullOrEmpty(countryCode))
+                    {
+                        additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "цифровой код страны происхождения", Value = countryCode });
+                        additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "краткое наименование страны происхождения", Value = docDetail.CountryName });
+
+                        if (!string.IsNullOrEmpty(docDetail?.CustomsNo))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "регистрационный номер декларации на товары", Value = docDetail.CustomsNo });
+                    }
+
+                    if (edoGoodChannel != null)
+                    {
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailBuyerCodeUpdId))
+                        {
+                            if (!string.IsNullOrEmpty(docDetail?.BuyerCode))
+                            {
+                                additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = docDetail.BuyerCode });
+                            }
+                            else
+                                throw new Exception("Не для всех товаров заданы коды покупателя.");
+                        }
+
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = item.OriginalNumber });
+                    }
+
+                    item.AdditionalInfos = additionalInfos.ToArray();
+
+                    if (d.IsMarked)
+                    {
+                        var originalMarkedCodes = docDetail.OriginalMarkedCodes;
+                        var correctedMarkedCodes = docDetail.CorrectedMarkedCodes;
+
+                        if (originalMarkedCodes.Count > 0)
+                        {
+                            item.OriginalItemIdentificationNumbers = new Diadoc.Api.DataXml.Ucd736.ItemIdentificationNumbersItemIdentificationNumber[1];
+                            item.OriginalItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Ucd736.ItemIdentificationNumbersItemIdentificationNumber
+                            {
+                                ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[originalMarkedCodes.Count],
+                                Items = new string[originalMarkedCodes.Count]
+                            };
+
+                            int j = 0;
+                            foreach (var markedCode in originalMarkedCodes)
+                            {
+                                item.OriginalItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                                item.OriginalItemIdentificationNumbers[0].Items[j] = markedCode;
+                                j++;
+                            }
+                        }
+
+                        if (correctedMarkedCodes.Count > 0)
+                        {
+                            if (correctedMarkedCodes.Count != (int)item.Quantity.CorrectedValue)
+                                throw new Exception($"Количество кодов маркировки не совпадает с количеством товара в документе. ID товара {detail.IdGood}");
+
+                            item.CorrectedItemIdentificationNumbers = new Diadoc.Api.DataXml.Ucd736.ItemIdentificationNumbersItemIdentificationNumber[1];
+                            item.CorrectedItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Ucd736.ItemIdentificationNumbersItemIdentificationNumber
+                            {
+                                ItemsElementName = new Diadoc.Api.DataXml.ItemsChoiceType[correctedMarkedCodes.Count],
+                                Items = new string[correctedMarkedCodes.Count]
+                            };
+
+                            int j = 0;
+                            foreach (var markedCode in correctedMarkedCodes)
+                            {
+                                item.CorrectedItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ItemsChoiceType.Unit;
+                                item.CorrectedItemIdentificationNumbers[0].Items[j] = markedCode;
+                                j++;
+                            }
+                        }
+                        else
+                        {
+                            if (item.Quantity.CorrectedValue > 0)
+                                if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1))
+                                    throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
+                        }
+                    }
+                    else
+                    {
+                        if (item.Quantity.CorrectedValue > 0)
+                            if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1))
+                                throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
+                    }
+
+                    itemDetails.Add(item);
+                }
+
+                correctionDocument.Table = new Diadoc.Api.DataXml.Ucd736.InvoiceCorrectionTable
+                {
+                    TotalsDec = new Diadoc.Api.DataXml.Ucd736.InvoiceTotalsDiff736
+                    {
+                        Total = itemDetails.Sum(det => det.Subtotal.OriginalValue) - itemDetails.Sum(det => det.Subtotal.CorrectedValue),
+                        TotalSpecified = true,
+                        Vat = itemDetails.Sum(det => det.Vat.OriginalValue) - itemDetails.Sum(det => det.Vat.CorrectedValue),
+                        VatSpecified = true,
+                        TotalWithVatExcluded = itemDetails.Sum(det => det.SubtotalWithVatExcluded.OriginalValue) - itemDetails.Sum(det => det.SubtotalWithVatExcluded.CorrectedValue)
+                    },
+
+                    TotalsInc = new Diadoc.Api.DataXml.Ucd736.InvoiceTotalsDiff736
+                    {
+                        Total = 0,
+                        TotalSpecified = true,
+                        Vat = 0,
+                        VatSpecified = true,
+                        TotalWithVatExcluded = 0
+                    },
+                    Items = itemDetails.ToArray()
+                };
+            }
+
+            correctionDocument.Invoices = new[]
+                    {
+                        new Diadoc.Api.DataXml.Ucd736.InvoiceForCorrectionInfo
+                        {
+                            Date = d.InvoiceDeliveryDate?.Date.ToString("dd.MM.yyyy"),
+                            Number = d.InvoiceNumber
+                        }
+                    };
+
+            var additionalInfoList = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+
+            if(edoGoodChannel != null)
+            {
+                if (!string.IsNullOrEmpty(edoGoodChannel.NumberUpdId))
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.NumberUpdId, Value = d.InvoiceNumber });
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.OrderNumberUpdId))
+                {
+                    if (string.IsNullOrEmpty(d.OrderNumber))
+                        throw new Exception("Отсутствует номер заказа покупателя.");
+
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderNumberUpdId, Value = d.OrderNumber });
+                }
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.OrderDateUpdId))
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.OrderDateUpdId, Value = d.OrderDate.ToString("dd.MM.yyyy") });
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.GlnShipToUpdId))
+                {
+                    if (string.IsNullOrEmpty(d.GlnShipTo))
+                        throw new Exception("Не указан GLN грузополучателя.");
+
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.GlnShipToUpdId, Value = d.GlnShipTo });
+                }
+
+                foreach (var keyValuePair in edoGoodChannel.EdoUcdValuesPairs.Where(
+                    u => (d?.IdDocType != null && u.IdDocType == d.IdDocType) || u.IdDocType == 0))
+                    additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = keyValuePair.Key, Value = keyValuePair.Value });
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.DocReturnNumberUcdId))
+                {
+                    if (!string.IsNullOrEmpty(d.DocReturnNumber))
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DocReturnNumberUcdId, Value = d.DocReturnNumber });
+                }
+
+                if (!string.IsNullOrEmpty(edoGoodChannel.DocReturnDateUcdId))
+                {
+                    if (!string.IsNullOrEmpty(d.DocReturnDate))
+                        additionalInfoList.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DocReturnDateUcdId, Value = d.DocReturnDate });
+                }
+            }
+
+            if (additionalInfoList.Count > 0)
+                correctionDocument.AdditionalInfoId = new Diadoc.Api.DataXml.AdditionalInfoId736
+                {
+                    AdditionalInfo = additionalInfoList.ToArray()
+                };
+
+            return correctionDocument;
         }
 
         private Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle CreateBuyerShipmentDocument(Kontragent receiverOrganization)
