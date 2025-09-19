@@ -72,6 +72,8 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                         if (parent == null)
                             parent = _abtDbContext.DocEdoProcessings.FirstOrDefault(p => p.Id == markedDocEdoProcessing.IdParent);
+                        else
+                            _abtDbContext.Entry(parent)?.Reload();
 
                         if (parent.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Processed)
                         {
