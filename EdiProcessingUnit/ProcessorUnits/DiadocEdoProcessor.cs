@@ -36,10 +36,20 @@ namespace EdiProcessingUnit.ProcessorUnits
             var dateTimeFrom = DateTime.Now.AddMonths(-6);
 
             var markedDocEdoProcessings = (from markedDocEdoProcessing in _abtDbContext.DocEdoProcessings
-                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Signed && markedDocEdoProcessing.DocDate > dateTimeFrom
+                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && 
+                                           (markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Signed || markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned) && 
+                                           markedDocEdoProcessing.DocDate > dateTimeFrom
+                                           join docJournal in _abtDbContext.DocJournals on markedDocEdoProcessing.IdDoc equals docJournal.Id
                                            join docGoods in _abtDbContext.DocGoods on markedDocEdoProcessing.IdDoc equals docGoods.IdDoc
-                                           join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
-                                           where customer.Inn == company.Inn && customer.Kpp == company.Kpp
+                                           let sellers = (from cust in _abtDbContext.RefCustomers
+                                                          where cust.IdContractor == docGoods.IdSeller && cust.Inn == company.Inn && cust.Kpp == company.Kpp
+                                                          select cust)
+                                           let customers = (from cust in _abtDbContext.RefCustomers
+                                                            where docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && 
+                                                            cust.IdContractor == docGoods.IdCustomer && cust.Inn == company.Inn && cust.Kpp == company.Kpp
+                                                            select cust)
+                                           where docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && customers.Count() > 0 || 
+                                           docJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && sellers.Count() > 0
                                            select markedDocEdoProcessing);
 
             foreach (var markedDocEdoProcessing in markedDocEdoProcessings)
@@ -55,6 +65,32 @@ namespace EdiProcessingUnit.ProcessorUnits
                 if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
                 {
                     markedDocEdoProcessing.HonestMarkStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+
+                    if(markedDocEdoProcessing.DocType == (int)Enums.DocEdoType.Ucd && !string.IsNullOrEmpty(markedDocEdoProcessing.IdParent))
+                    {
+                        var parent = markedDocEdoProcessing.Parent;
+
+                        if (parent == null)
+                            parent = _abtDbContext.DocEdoProcessings.FirstOrDefault(p => p.Id == markedDocEdoProcessing.IdParent);
+
+                        if (parent.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Processed)
+                        {
+                            IEnumerable<DocGoodsDetailsLabels> returnedLabels = (from label in _abtDbContext.DocGoodsDetailsLabels
+                                                                                 where label.IdDocReturn == markedDocEdoProcessing.IdDoc && label.IdDocSale == parent.IdDoc
+                                                                                 select label);
+
+                            if (returnedLabels == null)
+                                returnedLabels = new List<DocGoodsDetailsLabels>();
+
+                            foreach (var label in returnedLabels)
+                            {
+                                label.IdDocSale = null;
+                                label.SaleDmLabel = null;
+                                label.SaleDateTime = null;
+                            }
+                        }
+                    }
+
                     _abtDbContext?.SaveChanges();
                     MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} успешно обработан.");
                 }
