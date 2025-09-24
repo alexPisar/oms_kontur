@@ -99,8 +99,16 @@ namespace EdiProcessingUnit.Edo.Models
 
         public UniversalCorrectionDocumentV2 Init(AbtDbContext abt)
         {
-            var invoiceDocJournal = abt.DocJournals.FirstOrDefault(inv => inv.IdDocMaster == this.IdDocMaster 
-            && inv.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && inv.Code == this.InvoiceNumber);
+            DocJournal invoiceDocJournal;
+
+            if (IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
+                invoiceDocJournal = abt.DocJournals.FirstOrDefault(inv => inv.IdDocMaster == this.IdDocMaster
+                && inv.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && inv.Code == this.InvoiceNumber);
+            else if (IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
+                invoiceDocJournal = abt.DocJournals.FirstOrDefault(inv => inv.Id == this.IdDocMaster
+                && inv.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && inv.Code == this.InvoiceNumber);
+            else
+                throw new Exception($"Неизвестный формат корректировки {CorrectionNumber}");
 
             RefEdoGoodChannel refEdoGoodChannel = null;
             if (IdChannel != null && IdChannel != 99001)
@@ -114,13 +122,22 @@ namespace EdiProcessingUnit.Edo.Models
                                      where s != null
                                      select s.RefEdoGoodChannel)?.FirstOrDefault();
 
-            Details = (from docGoodDetail in abt.DocGoodsDetails
-                       where docGoodDetail.IdDoc == this.IdDoc
-                       select new UniversalCorrectionDocumentDetail
-                       {
-                           DocDetail = docGoodDetail,
-                           IdGood = docGoodDetail.IdGood
-                       }).ToList();
+            if(IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
+                Details = (from docGoodDetail in abt.DocGoodsDetails
+                           where docGoodDetail.IdDoc == this.IdDoc
+                           select new UniversalCorrectionDocumentDetail
+                           {
+                               DocDetail = docGoodDetail,
+                               IdGood = docGoodDetail.IdGood
+                           }).ToList();
+            else if(IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
+                Details = (from docGoodDetail in abt.DocGoodsDetailsIs
+                           where docGoodDetail.IdDoc == this.IdDoc
+                           select new UniversalCorrectionDocumentDetail
+                           {
+                               DocDetailsI = docGoodDetail,
+                               IdGood = docGoodDetail.IdGood
+                           }).ToList();
 
             Details = Details?.Select(u => u.Init(abt, invoiceDocJournal, this.IsMarked, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
 
@@ -132,6 +149,20 @@ namespace EdiProcessingUnit.Edo.Models
             {
                 var baseProcessings = from pr in abt.DocEdoProcessings
                                       where pr.IdDoc == this.IdDocMaster && pr.DocType == (int)Enums.DocEdoType.Upd
+                                      && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing
+                                      && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed
+                                      && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.Revoked
+                                      select pr;
+                baseProcessing = baseProcessings.FirstOrDefault(d =>
+                d.DocStatus == (int)Enums.DocEdoSendStatus.Signed || d.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned);
+
+                if (baseProcessing == null)
+                    baseProcessing = baseProcessings.FirstOrDefault();
+            }
+            else if (IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
+            {
+                var baseProcessings = from pr in abt.DocEdoProcessings
+                                      where pr.IdDoc == invoiceDocJournal.IdDocMaster && pr.DocType == (int)Enums.DocEdoType.Upd
                                       && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing
                                       && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.RevokedAndProcessed
                                       && pr.AnnulmentStatus != (int)HonestMark.AnnulmentDocumentStatus.Revoked

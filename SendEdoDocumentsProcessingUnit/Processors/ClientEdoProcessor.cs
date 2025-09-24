@@ -1534,6 +1534,158 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     Items = itemDetails.ToArray()
                 };
             }
+            else if (d?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
+            {
+                foreach(var docDetail in docDetails)
+                {
+                    if (docDetail?.BaseDetail == null)
+                        throw new Exception($"Не найден товар в исходном документе {d.InvoiceNumber}, ID товара {docDetail.IdGood}");
+
+                    if (docDetail?.DocDetailsI == null)
+                        throw new Exception($"Не найден товар в корректировочном документе {d.CorrectionNumber}, ID товара {docDetail.IdGood}");
+
+                    var additionalInfos = new List<Diadoc.Api.DataXml.AdditionalInfo>();
+
+                    var baseDetail = docDetail.BaseDetail;
+                    int baseIndex = docDetail.BaseIndex;
+                    var barCode = docDetail.ItemVendorCode;
+                    var detail = docDetail.DocDetailsI;
+
+                    string countryCode = docDetail.CountryCode;
+
+                    if (countryCode.Length == 1)
+                        countryCode = "00" + countryCode;
+                    else if (countryCode.Length == 2)
+                        countryCode = "0" + countryCode;
+
+                    var oldSubtotal = Math.Round(baseDetail.Quantity * ((decimal)baseDetail.Price - (decimal)baseDetail.DiscountSumm), 2);
+                    var oldVat = (decimal)Math.Round(oldSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
+                    var oldPrice = (decimal)Math.Round((oldSubtotal - oldVat) / baseDetail.Quantity, 2, MidpointRounding.AwayFromZero);
+
+                    var newSubtotal = Math.Round(detail.Quantity * ((decimal)detail.Price - (decimal)detail.DiscountSumm), 2);
+                    var newVat = (decimal)Math.Round(newSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
+                    var newPrice = (decimal)Math.Round((newSubtotal - newVat) / detail.Quantity, 2, MidpointRounding.AwayFromZero);
+
+                    var item = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItem
+                    {
+                        Product = detail.Good.Name,
+                        ItemVendorCode = barCode,
+                        OriginalNumber = baseIndex.ToString(),
+                        Unit = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemUnit
+                        {
+                            OriginalValue = Properties.Settings.Default.DefaultUnit,
+                            CorrectedValue = Properties.Settings.Default.DefaultUnit
+                        },
+                        UnitName = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemUnitName
+                        {
+                            OriginalValue = "шт.",
+                            CorrectedValue = "шт."
+                        },
+                        Quantity = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemQuantity
+                        {
+                            OriginalValue = baseDetail.Quantity,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = detail.Quantity,
+                            CorrectedValueSpecified = true
+                        },
+                        TaxRate = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemTaxRate
+                        {
+                            OriginalValue = Diadoc.Api.DataXml.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent,
+                            CorrectedValue = Diadoc.Api.DataXml.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent
+                        },
+                        Price = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemPrice
+                        {
+                            OriginalValue = oldPrice,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = newPrice,
+                            CorrectedValueSpecified = true
+                        },
+                        Vat = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVat
+                        {
+                            OriginalValue = oldVat,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = newVat,
+                            CorrectedValueSpecified = true,
+                            ItemElementName = oldVat > newVat ? Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVatDiffType.AmountsDec : Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVatDiffType.AmountsInc,
+                            Item = Math.Abs(newVat - oldVat)
+                        },
+                        Subtotal = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotal
+                        {
+                            OriginalValue = oldSubtotal,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = newSubtotal,
+                            CorrectedValueSpecified = true,
+                            ItemElementName = oldSubtotal > newSubtotal ? Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalDiffType.AmountsDec : Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalDiffType.AmountsInc,
+                            Item = Math.Abs(newSubtotal - oldSubtotal)
+                        },
+                        SubtotalWithVatExcluded = new Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcluded
+                        {
+                            OriginalValue = oldSubtotal - oldVat,
+                            OriginalValueSpecified = true,
+                            CorrectedValue = newSubtotal - newVat,
+                            CorrectedValueSpecified = true,
+                            Item = Math.Abs(oldSubtotal - oldVat - newSubtotal + newVat),
+                            ItemElementName = oldSubtotal - oldVat - newSubtotal + newVat > 0 ? Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcludedDiffType.AmountsDec : Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcludedDiffType.AmountsInc
+                        }
+                    };
+
+                    if (oldVat == newVat)
+                        throw new Exception($"Сумма НДС до и после изменения не должны совпадать. ID товара {detail.IdGood}");
+
+                    if (!string.IsNullOrEmpty(countryCode))
+                    {
+                        additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "цифровой код страны происхождения", Value = countryCode });
+                        additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "краткое наименование страны происхождения", Value = docDetail.CountryName });
+
+                        if (!string.IsNullOrEmpty(docDetail?.CustomsNo))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = "регистрационный номер декларации на товары", Value = docDetail.CustomsNo });
+                    }
+
+                    if (edoGoodChannel != null)
+                    {
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailBuyerCodeUpdId))
+                        {
+                            if (!string.IsNullOrEmpty(docDetail?.BuyerCode))
+                            {
+                                additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBuyerCodeUpdId, Value = docDetail.BuyerCode });
+                            }
+                            else
+                                throw new Exception("Не для всех товаров заданы коды покупателя.");
+                        }
+
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailBarCodeUpdId))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailBarCodeUpdId, Value = barCode });
+
+                        if (!string.IsNullOrEmpty(edoGoodChannel.DetailPositionUpdId))
+                            additionalInfos.Add(new Diadoc.Api.DataXml.AdditionalInfo { Id = edoGoodChannel.DetailPositionUpdId, Value = item.OriginalNumber });
+                    }
+
+                    item.AdditionalInfos = additionalInfos.ToArray();
+                    itemDetails.Add(item);
+                }
+
+                correctionDocument.Table = new Diadoc.Api.DataXml.Ucd736.InvoiceCorrectionTable
+                {
+                    TotalsDec = new Diadoc.Api.DataXml.Ucd736.InvoiceTotalsDiff736
+                    {
+                        Total = itemDetails.Where(i => i.Subtotal.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalDiffType.AmountsDec).Sum(det => det.Subtotal.Item),
+                        TotalSpecified = true,
+                        Vat = itemDetails.Where(i => i.Vat.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVatDiffType.AmountsDec).Sum(det => det.Vat.Item),
+                        VatSpecified = true,
+                        TotalWithVatExcluded = itemDetails.Where(i => i.SubtotalWithVatExcluded.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcludedDiffType.AmountsDec).Sum(det => det.SubtotalWithVatExcluded.Item)
+                    },
+
+                    TotalsInc = new Diadoc.Api.DataXml.Ucd736.InvoiceTotalsDiff736
+                    {
+                        Total = itemDetails.Where(i => i.Subtotal.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalDiffType.AmountsInc).Sum(det => det.Subtotal.Item),
+                        TotalSpecified = true,
+                        Vat = itemDetails.Where(i => i.Vat.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemVatDiffType.AmountsInc).Sum(det => det.Vat.Item),
+                        VatSpecified = true,
+                        TotalWithVatExcluded = itemDetails.Where(i => i.SubtotalWithVatExcluded.ItemElementName == Diadoc.Api.DataXml.Ucd736.ExtendedInvoiceCorrectionItemSubtotalWithVatExcludedDiffType.AmountsInc).Sum(det => det.SubtotalWithVatExcluded.Item)
+                    },
+                    Items = itemDetails.ToArray()
+                };
+            }
 
             correctionDocument.Invoices = new[]
                     {

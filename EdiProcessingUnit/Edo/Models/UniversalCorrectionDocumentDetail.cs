@@ -16,6 +16,7 @@ namespace EdiProcessingUnit.Edo.Models
         private string _customsNo = null;
 
         public decimal IdGood { get; set; }
+        public DocGoodsDetailsI DocDetailsI { get; set; }
         public DocGoodsDetail DocDetail { get; set; }
         public DocGoodsDetailsI BaseDetail { get; set; }
         public RefGoodMatching GoodMatching { get; set; }
@@ -25,8 +26,13 @@ namespace EdiProcessingUnit.Edo.Models
         {
             get
             {
-                if (_barCode == null && (DocDetail?.Good?.BarCodes?.Count() ?? 0) > 0)
-                    _barCode = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
+                if (_barCode == null)
+                {
+                    if ((DocDetail?.Good?.BarCodes?.Count() ?? 0) > 0)
+                        _barCode = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
+                    else if((DocDetailsI?.Good?.BarCodes?.Count() ?? 0) > 0)
+                        _barCode = DocDetailsI?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetailsI?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
+                }
 
                 return _barCode;
             }
@@ -108,8 +114,8 @@ namespace EdiProcessingUnit.Edo.Models
                 {
                     DateTime? docDateTime = null;
 
-                    if (DocDetail?.DocJournal?.IdDocMaster != null)
-                        docDateTime = invoiceDocJournal?.DocMaster?.DocDatetime.Date;
+                    if (invoiceDocJournal?.DocMaster != null)
+                        docDateTime = invoiceDocJournal.DocMaster?.DocDatetime.Date;
 
                     if (docDateTime != null)
                         GoodMatching = abtContext.RefGoodMatchings.FirstOrDefault(r => r.DisabledDatetime != null && r.IdChannel == idChannel &&
@@ -123,10 +129,13 @@ namespace EdiProcessingUnit.Edo.Models
                     throw new Exception("Не для всех товаров заданы коды покупателя.");
             }
 
-            if (DocDetail != null)
-            {
+            if(DocDetailsI != null)
+                _good = DocDetailsI.Good;
+            else if (DocDetail != null)
                 _good = DocDetail.Good;
 
+            if(_good != null)
+            {
                 var country = abtContext.RefCountries.FirstOrDefault(c => c.Id == _good.IdCountry);
 
                 if(country != null)
@@ -134,9 +143,9 @@ namespace EdiProcessingUnit.Edo.Models
                     _countryCode = country.NumCode?.ToString();
                     _countryName = country.Name;
                 }
-
-                _customsNo = _good?.CustomsNo;
             }
+
+            _customsNo = _good?.CustomsNo;
 
             if(isMarked)
             {
