@@ -1510,14 +1510,14 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         else
                         {
                             if (item.Quantity.CorrectedValue > 0)
-                                if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1))
+                                if (docDetail.HonestMarkGood)
                                     throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                         }
                     }
                     else
                     {
                         if (item.Quantity.CorrectedValue > 0)
-                            if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1))
+                            if (docDetail.HonestMarkGood)
                                 throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                     }
 

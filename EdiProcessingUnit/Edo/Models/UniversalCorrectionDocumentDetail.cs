@@ -14,6 +14,7 @@ namespace EdiProcessingUnit.Edo.Models
         private string _countryCode = null;
         private string _countryName = null;
         private string _customsNo = null;
+        private bool _honestMarkGood;
 
         public decimal IdGood { get; set; }
         public DocGoodsDetailsI DocDetailsI { get; set; }
@@ -80,6 +81,8 @@ namespace EdiProcessingUnit.Edo.Models
                 return GoodMatching?.CustomerArticle;
             }
         }
+
+        public bool HonestMarkGood => _honestMarkGood;
 
         public UniversalCorrectionDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
         {
@@ -149,6 +152,7 @@ namespace EdiProcessingUnit.Edo.Models
 
             if(isMarked)
             {
+                _honestMarkGood = abtContext.RefItems.Any(r => r.IdName == 30071 && r.IdGood == this.IdGood && r.Quantity == 1);
                 var originalLabels = (from label in abtContext.DocGoodsDetailsLabels
                                       where label.IdDocSale == invoiceDocJournal.IdDocMaster && label.IdGood == this.IdGood
                                       select label)?.ToList();
