@@ -127,7 +127,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
 
                                 await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, employee, orgsInnKpp);
-                                await SendReturnsCorrectionDocuments(myOrganization, counteragents);
+                                await SendUniversalCorrectionDocuments(myOrganization, counteragents);
                             }
                             catch (Exception ex)
                             {
@@ -197,20 +197,29 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
         }
 
-        private async Task SendReturnsCorrectionDocuments(Kontragent myOrganization, List<Kontragent> counteragents)
+        private async Task SendUniversalCorrectionDocuments(Kontragent myOrganization, List<Kontragent> counteragents)
         {
             var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
-            var returnCorrDocs = GetCorrectionReturnsForEdoAutomaticSend(myOrganization) ?? new List<UniversalCorrectionDocumentV2>();
+            List<UniversalCorrectionDocumentV2> corrDocs = new List<UniversalCorrectionDocumentV2>();
 
-            int position = 0, block = 10, count = returnCorrDocs.Count();
+            var fileController = new WebService.Controllers.FileController();
+            var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+            var returnCorrDocs = GetCorrectionDocumentsForEdoAutomaticSend(myOrganization, "VIEW_RETURNS_EDO_AUTOMATIC", dateTimeLastPeriod) ?? new List<UniversalCorrectionDocumentV2>();
+            corrDocs.AddRange(returnCorrDocs);
+
+            var corrInvoices = GetCorrectionDocumentsForEdoAutomaticSend(myOrganization, "VIEW_CORRECTIONS_EDO_AUTOMATIC", dateTimeLastPeriod) ?? new List<UniversalCorrectionDocumentV2>();
+            corrDocs.AddRange(corrInvoices);
+
+            int position = 0, block = 10, count = corrDocs.Count();
             var errors = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
 
             while(count > position)
             {
                 var length = count - position > block ? block : count - position;
-                var returnCorrDocsFromBlock = returnCorrDocs.Skip(position).Take(length);
+                var corrDocsFromBlock = corrDocs.Skip(position).Take(length);
 
-                var tasks = returnCorrDocsFromBlock.Select(doc => 
+                var tasks = corrDocsFromBlock.Select(doc => 
                 {
                     var receiver = counteragents.FirstOrDefault(c => c.Inn == doc.BuyerInn);
                     var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc);
@@ -701,12 +710,15 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return docs;
         }
 
-        private List<UniversalCorrectionDocumentV2> GetCorrectionReturnsForEdoAutomaticSend(Kontragent organization)
+        private List<UniversalCorrectionDocumentV2> GetCorrectionDocumentsForEdoAutomaticSend(Kontragent organization, string viewName, DateTime? dateTimeLastPeriod = null)
         {
-            var fileController = new WebService.Controllers.FileController();
-            var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+            if (dateTimeLastPeriod == null)
+            {
+                var fileController = new WebService.Controllers.FileController();
+                dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+            }
 
-            var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+            var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod.Value);
             fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
 
             string sqlString = string.Empty;
@@ -721,7 +733,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
             }
 
-            sqlString = $"select {sqlString} from VIEW_RETURNS_EDO_AUTOMATIC where " +
+            sqlString = $"select {sqlString} from {viewName} where " +
                 $"DOC_DATE >= :FromDate and " +
                 $"SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'";
 
