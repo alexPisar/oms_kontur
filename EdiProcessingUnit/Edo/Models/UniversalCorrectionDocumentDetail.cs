@@ -135,7 +135,10 @@ namespace EdiProcessingUnit.Edo.Models
             if(DocDetailsI != null)
                 _good = DocDetailsI.Good;
             else if (DocDetail != null)
+            {
                 _good = DocDetail.Good;
+                _honestMarkGood = abtContext.RefItems.Any(r => r.IdName == 30071 && r.IdGood == this.IdGood && r.Quantity == 1);
+            }
 
             if(_good != null)
             {
@@ -152,7 +155,6 @@ namespace EdiProcessingUnit.Edo.Models
 
             if(isMarked)
             {
-                _honestMarkGood = abtContext.RefItems.Any(r => r.IdName == 30071 && r.IdGood == this.IdGood && r.Quantity == 1);
                 var originalLabels = (from label in abtContext.DocGoodsDetailsLabels
                                       where label.IdDocSale == invoiceDocJournal.IdDocMaster && label.IdGood == this.IdGood
                                       select label)?.ToList();
