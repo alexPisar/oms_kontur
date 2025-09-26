@@ -1193,6 +1193,21 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void SendDesadvForOrdersTest()
+        {
+            using (var ediDbContext = new EdiDbContext())
+            {
+                EdiProcessingUnit.EdiProcessorFactory processorFactory = new EdiProcessingUnit.EdiProcessorFactory();
+                processorFactory.OrganizationGln = "4607196304521";
+
+                var docOrder = ediDbContext.DocOrders.First(d => d.Number == "00-00179851");
+
+                var processor = new EdiProcessingUnit.ProcessorUnits.DespatchAdviceProcessor(new List<DocOrder>(new[] { docOrder }));
+                processorFactory.RunProcessor(processor);
+            }
+        }
+
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
         {
             using (var abt = new AbtDbContext())
