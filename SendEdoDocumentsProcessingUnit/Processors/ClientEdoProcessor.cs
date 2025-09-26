@@ -733,9 +733,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
             }
 
-            sqlString = $"select {sqlString} from {viewName} where " +
+            sqlString = $"select {sqlString} from {viewName} C where " +
                 $"DOC_DATE >= :FromDate and " +
-                $"SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'";
+                $"SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}' and " +
+                $"exists(select * from log_actions where id_object = C.ID_DOC and id_action = C.ACT_STATUS and action_datetime > sysdate - 14)";
 
             var docs = _abt.Database.SqlQuery<UniversalCorrectionDocumentV2>(sqlString, fromDateParam).ToList();
 
