@@ -418,7 +418,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                         {
                             RegistrationNumber = myOrganization.EmchdId,
-                            IssuerInn = myOrganization.Inn
+                            IssuerInn = myOrganization.Inn,
+                            RepresentativeInn = myOrganization.EmchdPersonInn
                         }
                     };
 
@@ -2454,7 +2455,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                     {
                         RegistrationNumber = consignor.EmchdId,
-                        IssuerInn = consignor.Inn
+                        IssuerInn = consignor.Inn,
+                        RepresentativeInn = consignor.EmchdPersonInn
                     }
                 };
 
@@ -2487,7 +2489,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                     {
                         RegistrationNumber = myOrganization.EmchdId,
-                        IssuerInn = myOrganization.Inn
+                        IssuerInn = myOrganization.Inn,
+                        RepresentativeInn = myOrganization.EmchdPersonInn
                     }
                 };
 

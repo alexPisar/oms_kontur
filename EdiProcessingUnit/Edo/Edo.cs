@@ -282,10 +282,15 @@ namespace EdiProcessingUnit.Edo
             {
                 powerOfAttorneyStatus = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>(() =>
                 {
-                    return _api.PrevalidatePowerOfAttorney(_authToken, ourBoxId ?? _actualBoxId,
-                        powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
-                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                    return _api.PrevalidatePowerOfAttorneyV2(_authToken, ourBoxId ?? _actualBoxId,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
                         {
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                            },
                             ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
                             {
                                 Content = new Content_v3
@@ -299,34 +304,41 @@ namespace EdiProcessingUnit.Edo
                 if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                 {
                     if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
                     {
                         var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
                         {
                             errorText = errorText + "Список ошибок:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status != 
+                            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
                             {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                if (!string.IsNullOrEmpty(res?.Name))
+                                    errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                if (res.Error != null)
+                                {
+                                    errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                }
+
+                                if(res?.Status != null)
+                                    errorText = errorText + $"Статус: {(int)res.Status}\r\n";
                             }
                         }
 
                         throw new Exception(errorText);
                     }
-                    else
+                    else if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                     {
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                        {
-                            var errorText = "Список ошибок:\r\n";
+                        var errorText = "Произошла ошибка проверки:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                            {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                            }
-                            throw new Exception(errorText);
-                        }
+                        if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                            errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+                        
+                        throw new Exception(errorText);
                     }
                 }
             }
@@ -371,10 +383,15 @@ namespace EdiProcessingUnit.Edo
             {
                 powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async() =>
                 {
-                    return await _api.PrevalidatePowerOfAttorneyAsync(_authToken, ourBoxId ?? _actualBoxId,
-                        powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
-                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                    return await _api.PrevalidatePowerOfAttorneyV2Async(_authToken, ourBoxId ?? _actualBoxId,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
                         {
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                            },
                             ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
                             {
                                 Content = new Content_v3
@@ -388,34 +405,41 @@ namespace EdiProcessingUnit.Edo
                 if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                 {
                     if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
                     {
                         var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
                         {
                             errorText = errorText + "Список ошибок:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status !=
+                            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
                             {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                if (!string.IsNullOrEmpty(res?.Name))
+                                    errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                if (res.Error != null)
+                                {
+                                    errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                }
+
+                                if (res?.Status != null)
+                                    errorText = errorText + $"Статус: {(int)res.Status}\r\n";
                             }
                         }
 
                         throw new Exception(errorText);
                     }
-                    else
+                    else if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                     {
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                        {
-                            var errorText = "Список ошибок:\r\n";
+                        var errorText = "Произошла ошибка проверки:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                            {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                            }
-                            throw new Exception(errorText);
-                        }
+                        if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                            errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+
+                        throw new Exception(errorText);
                     }
                 }
             }
@@ -511,10 +535,15 @@ namespace EdiProcessingUnit.Edo
                 {
                     powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async () =>
                     {
-                        return await _api.PrevalidatePowerOfAttorneyAsync(_authToken, messageToPost.FromBoxId,
-                            powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
-                            new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                        return await _api.PrevalidatePowerOfAttorneyV2Async(_authToken, messageToPost.FromBoxId,
+                            new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
                             {
+                                FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                                {
+                                    RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                    IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                    RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                                },
                                 ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
                                 {
                                     Content = new Content_v3
@@ -528,34 +557,41 @@ namespace EdiProcessingUnit.Edo
                     if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                     {
                         if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                            powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
                         {
                             var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                            if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
                             {
                                 errorText = errorText + "Список ошибок:\r\n";
 
-                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                                foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status !=
+                                Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
                                 {
-                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                    if (!string.IsNullOrEmpty(res?.Name))
+                                        errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                    if (res.Error != null)
+                                    {
+                                        errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                    }
+
+                                    if (res?.Status != null)
+                                        errorText = errorText + $"Статус: {(int)res.Status}\r\n";
                                 }
                             }
 
                             throw new Exception(errorText);
                         }
-                        else
+                        else if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                         {
-                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                            {
-                                var errorText = "Список ошибок:\r\n";
+                            var errorText = "Произошла ошибка проверки:\r\n";
 
-                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                                {
-                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                                }
-                                throw new Exception(errorText);
-                            }
+                            if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                                errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+
+                            throw new Exception(errorText);
                         }
                     }
                 }
@@ -934,14 +970,15 @@ namespace EdiProcessingUnit.Edo
         /// <summary>
         /// Отправка запроса на регистрацию машиночитаемой доверенности (МЧД)
         /// </summary>
-        public string RegisterPowerOfAttorneyByRegNumber(string registrationNumber, string issuerInn)
+        public string RegisterPowerOfAttorneyByRegNumber(string registrationNumber, string issuerInn, string representativeInn = null)
         {
             var powerOfAttorneyToRegister = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyToRegister
             {
                 FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                 {
                     RegistrationNumber = registrationNumber,
-                    IssuerInn = issuerInn
+                    IssuerInn = issuerInn,
+                    RepresentativeInn = representativeInn
                 }
             };
 

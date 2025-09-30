@@ -57,7 +57,8 @@ namespace KonturEdoClient.Utils
                         FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                         {
                             RegistrationNumber = sender.EmchdId,
-                            IssuerInn = sender.Inn
+                            IssuerInn = sender.Inn,
+                            RepresentativeInn = sender.EmchdPersonInn
                         }
                     };
             }

@@ -1786,7 +1786,8 @@ namespace KonturEdoClient.Models
                                     FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                                     {
                                         RegistrationNumber = org.EmchdId,
-                                        IssuerInn = org.Inn
+                                        IssuerInn = org.Inn,
+                                        RepresentativeInn = org.EmchdPersonInn
                                     }
                                 };
 
@@ -1821,7 +1822,8 @@ namespace KonturEdoClient.Models
                                     FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                                     {
                                         RegistrationNumber = SelectedOrganization.EmchdId,
-                                        IssuerInn = SelectedOrganization.Inn
+                                        IssuerInn = SelectedOrganization.Inn,
+                                        RepresentativeInn = SelectedOrganization.EmchdPersonInn
                                     }
                                 };
 
@@ -2111,7 +2113,8 @@ namespace KonturEdoClient.Models
                         FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                         {
                             RegistrationNumber = SelectedOrganization.EmchdId,
-                            IssuerInn = SelectedOrganization.Inn
+                            IssuerInn = SelectedOrganization.Inn,
+                            RepresentativeInn = SelectedOrganization.EmchdPersonInn
                         }
                     };
 
