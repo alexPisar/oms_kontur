@@ -2460,42 +2460,53 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 throw new Exception("Не найден комитент.");
 
             var crypt = new WinApiCryptWrapper(consignor.Certificate);
-            _edo.Authenticate(false, consignor.Certificate, consignor.Inn);
 
+            Diadoc.Api.Proto.Events.Message message;
             string documentNumber;
-            if(numberOfDocument != null)
-                documentNumber = numberOfDocument.Value > 9 ? $"{document.InvoiceNumber}-{numberOfDocument.Value}" : $"{document.InvoiceNumber}-0{numberOfDocument.Value}";
-            else
-                documentNumber = document.InvoiceNumber;
-
-            var comissionDocument = await CreateShipmentDocumentAsync(docJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, document.Employee, true);
-            var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, comissionDocument);
-            byte[] signature = crypt.Sign(generatedFile.Content, true);
-
-            var signedContent = new Diadoc.Api.Proto.Events.SignedContent
+            try
             {
-                Content = generatedFile.Content
-            };
+                _edo.Authenticate(false, consignor.Certificate, consignor.Inn);
 
-            signedContent.Signature = signature ?? throw new Exception("Не удалось вычислить подпись.");
+                if(numberOfDocument != null)
+                    documentNumber = numberOfDocument.Value > 9 ? $"{document.InvoiceNumber}-{numberOfDocument.Value}" : $"{document.InvoiceNumber}-0{numberOfDocument.Value}";
+                else
+                    documentNumber = document.InvoiceNumber;
 
-            Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+                var comissionDocument = await CreateShipmentDocumentAsync(docJournal, consignor, myOrganization, document.Details.ToList(), labels.ToList(), documentNumber, document.Employee, true);
+                var generatedFile = await _edo.GenerateTitleXmlAsync("UniversalTransferDocument", "ДОП", "utd970_05_03_01", 0, comissionDocument);
+                byte[] signature = crypt.Sign(generatedFile.Content, true);
 
-            if (!string.IsNullOrEmpty(consignor.EmchdId))
-                consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                var signedContent = new Diadoc.Api.Proto.Events.SignedContent
                 {
-                    UseDefault = false,
-                    FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
-                    {
-                        RegistrationNumber = consignor.EmchdId,
-                        IssuerInn = consignor.Inn,
-                        RepresentativeInn = consignor.EmchdPersonInn
-                    }
+                    Content = generatedFile.Content
                 };
 
-            var message = await _edo.SendXmlDocumentAsync(consignor.OrgId, myOrganization.OrgId, false, signedContent, "ДОП", consignorPowerOfAttorneyToPost);
+                signedContent.Signature = signature ?? throw new Exception("Не удалось вычислить подпись.");
 
-            _edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn);
+                Diadoc.Api.Proto.Events.PowerOfAttorneyToPost consignorPowerOfAttorneyToPost = null;
+
+                if (!string.IsNullOrEmpty(consignor.EmchdId))
+                    consignorPowerOfAttorneyToPost = new Diadoc.Api.Proto.Events.PowerOfAttorneyToPost
+                    {
+                        UseDefault = false,
+                        FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                        {
+                            RegistrationNumber = consignor.EmchdId,
+                            IssuerInn = consignor.Inn,
+                            RepresentativeInn = consignor.EmchdPersonInn
+                        }
+                    };
+
+                message = await _edo.SendXmlDocumentAsync(consignor.OrgId, myOrganization.OrgId, false, signedContent, "ДОП", consignorPowerOfAttorneyToPost);
+            }
+            finally
+            {
+                _edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn);
+            }
+
+            if (message == null)
+                throw new Exception("Не задано сообщение.");
+
             var buyerDocument = await CreateBuyerShipmentDocumentAsync(myOrganization);
             crypt.InitializeCertificate(myOrganization.Certificate);
 
