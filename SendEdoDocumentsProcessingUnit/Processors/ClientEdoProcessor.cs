@@ -158,12 +158,22 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             while (count > position)
             {
                 var length = count - position > block ? block : count - position;
-                var docsFromBlock = docs.Skip(position).Take(length);
+                var docsFromBlock = docs.Skip(position).Take(length).ToList();
+
+                foreach (var docFromBlock in docsFromBlock.Where(doc => doc.IsMarked))
+                {
+                    var sendDocComissionEdoProcessingResult = await GetDocComissionEdoProcessingAfterSending(myOrganization, docFromBlock, orgsInnKpp);
+
+                    if(sendDocComissionEdoProcessingResult.Entity != null)
+                        docFromBlock.DocComissionEdoProcessings = sendDocComissionEdoProcessingResult.Entity;
+                    else
+                        docFromBlock.Error = new KeyValuePair<string, Exception>(sendDocComissionEdoProcessingResult.Description, sendDocComissionEdoProcessingResult.Exception);
+                }
 
                 var tasks = docsFromBlock.Select((doc) =>
                 {
                     var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
-                    var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails, employee, orgsInnKpp);
+                    var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails);
                     return task;
                 });
 
@@ -248,73 +258,96 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             }
         }
 
-        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocumentV2 doc, 
-            Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee, List<KeyValuePair<string, string>> orgsInnKpp = null)
+        private async Task<Utils.AsyncOperationEntity<List<DocComissionEdoProcessing>>> GetDocComissionEdoProcessingAfterSending(Kontragent myOrganization, UniversalTransferDocumentV2 doc, List<KeyValuePair<string, string>> orgsInnKpp = null)
         {
-            var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
+            var operationEntityResult = new Utils.AsyncOperationEntity<List<DocComissionEdoProcessing>>();
+            operationEntityResult.Entity = null;
             var docComissionProcessings = new List<DocComissionEdoProcessing>();
+
             try
             {
-                if (doc.IsMarked)
+                if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
+                    throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
+
+                DocComissionEdoProcessing docComissionEdoProcessing = null;
+                var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
+                var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
+
+                if (doc?.Details?
+                    .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
                 {
-                    if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
-                        throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
+                    throw new Exception("Для некоторых товаров отсутствует маркировка.");
+                }
+                else if (doc?.Details?
+                    .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
+                    (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
+                {
+                    throw new Exception("В данном документе есть избыток кодов маркировки.");
+                }
 
-                    DocComissionEdoProcessing docComissionEdoProcessing = null;
-                    var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
-                    var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
+                if (orgsInnKpp != null)
+                {
+                    var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
+                        .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labels.Select(l => l.DmLabel)?.ToArray())
+                        .Where(m => m.CisInfo.OwnerInn != doc.SellerInn);
 
-                    if (doc?.Details?
-                        .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) < g.Quantity) ?? false)
+                    if (markedCodesInfo.Any())
                     {
-                        throw new Exception("Для некоторых товаров отсутствует маркировка.");
-                    }
-                    else if (doc?.Details?
-                        .Exists(g => _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == g.IdGood && r.Quantity == 1) &&
-                        (labels?.Where(l => l.IdGood == g.IdGood)?.Count() ?? 0) > g.Quantity) ?? false)
-                    {
-                        throw new Exception("В данном документе есть избыток кодов маркировки.");
-                    }
+                        if (markedCodesInfo.Any(m => !orgsInnKpp.Exists(r => r.Key == m.CisInfo.OwnerInn)))
+                            throw new Exception("Среди кодов есть не принадлежащие нашей организации.");
 
-                    if (orgsInnKpp != null)
-                    {
-                        var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance()
-                            .GetMarkCodesInfo(EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, labels.Select(l => l.DmLabel)?.ToArray())
-                            .Where(m => m.CisInfo.OwnerInn != doc.SellerInn);
+                        var markedCodesInfoByOrganizations = markedCodesInfo.GroupBy(m => m.CisInfo.OwnerInn);
 
-                        if (markedCodesInfo.Any())
+                        foreach (var markedCodesInfoByOrganization in markedCodesInfoByOrganizations)
                         {
-                            if (markedCodesInfo.Any(m => !orgsInnKpp.Exists(r => r.Key == m.CisInfo.OwnerInn)))
-                                throw new Exception("Среди кодов есть не принадлежащие нашей организации.");
+                            var orgInnKpp = orgsInnKpp.First(o => o.Key == markedCodesInfoByOrganization.Key);
 
-                            var markedCodesInfoByOrganizations = markedCodesInfo.GroupBy(m => m.CisInfo.OwnerInn);
+                            var org = GetMyKontragent(orgInnKpp.Key, orgInnKpp.Value);
 
-                            foreach (var markedCodesInfoByOrganization in markedCodesInfoByOrganizations)
+                            if (org == null)
+                                throw new Exception($"Не найдена наша организация с ИНН {orgInnKpp.Key}.");
+
+                            var labelsByDoc = labels.Where(l => markedCodesInfoByOrganization.Any(m => m.CisInfo.Cis == l.DmLabel))?.ToList();
+
+                            docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, org, labelsByDoc, docComissionProcessings.Count + 1);
+
+                            lock (locker)
                             {
-                                var orgInnKpp = orgsInnKpp.First(o => o.Key == markedCodesInfoByOrganization.Key);
-
-                                var org = GetMyKontragent(orgInnKpp.Key, orgInnKpp.Value);
-
-                                if (org == null)
-                                    throw new Exception($"Не найдена наша организация с ИНН {orgInnKpp.Key}.");
-
-                                var labelsByDoc = labels.Where(l => markedCodesInfoByOrganization.Any(m => m.CisInfo.Cis == l.DmLabel))?.ToList();
-
-                                docComissionEdoProcessing = await SendComissionDocumentForHonestMark(myOrganization, doc, docJournal, org, labelsByDoc, docComissionProcessings.Count + 1);
-
-                                lock (locker)
-                                {
-                                    _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
-                                    _abt.SaveChanges();
-                                }
-
-                                docComissionProcessings.Add(docComissionEdoProcessing);
+                                _abt.DocComissionEdoProcessings.Add(docComissionEdoProcessing);
+                                _abt.SaveChanges();
                             }
+
+                            docComissionProcessings.Add(docComissionEdoProcessing);
                         }
                     }
                 }
 
+                operationEntityResult.Entity = docComissionProcessings;
+            }
+            catch (Exception ex)
+            {
+                operationEntityResult.SetException(ex, $"Произошла ошибка при отправке комиссионного документа {doc.InvoiceNumber}");
+            }
+
+            return operationEntityResult;
+        }
+
+        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalTransferDocumentV2 doc, 
+            Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails)
+        {
+            var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
+            var docComissionProcessings = doc?.DocComissionEdoProcessings ?? new List<DocComissionEdoProcessing>();
+
+            if (doc.IsMarked && doc.Error != null)
+            {
+                var error = doc.Error.Value;
+                operationEntityResult.SetException(error.Value, error.Key);
+                return operationEntityResult;
+            }
+
+            try
+            {
                 var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, signerDetails);
 
                 if (universalDocument == null)

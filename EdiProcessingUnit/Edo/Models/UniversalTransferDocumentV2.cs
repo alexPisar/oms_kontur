@@ -125,6 +125,12 @@ namespace EdiProcessingUnit.Edo.Models
         [NotMapped]
         public RefEdoGoodChannel RefEdoGoodChannel { get; set; }
 
+        [NotMapped]
+        public List<DocComissionEdoProcessing> DocComissionEdoProcessings { get; set; }
+
+        [NotMapped]
+        public KeyValuePair<string, Exception>? Error { get; set; } = null;
+
         public UniversalTransferDocumentV2 Init(AbtDbContext abt)
         {
             RefEdoGoodChannel refEdoGoodChannel = null;
