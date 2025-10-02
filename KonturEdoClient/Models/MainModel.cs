@@ -2184,41 +2184,55 @@ namespace KonturEdoClient.Models
                         {
                             loadContext.Text = "Формирование файла отказа.";
 
-                            Diadoc.Api.Proto.Invoicing.Signer signer;
+                            Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133 signer;
 
                             if (string.IsNullOrEmpty(SelectedOrganization.EmchdId))
                             {
-                                var firstMiddleName = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "G");
-                                string signerFirstName = firstMiddleName.IndexOf(" ") > 0 ? firstMiddleName.Substring(0, firstMiddleName.IndexOf(" ")) : string.Empty;
-                                string signerPatronymic = firstMiddleName.IndexOf(" ") >= 0 && firstMiddleName.Length > firstMiddleName.IndexOf(" ") + 1 ? firstMiddleName.Substring(firstMiddleName.IndexOf(" ") + 1) : string.Empty;
-
-                                signer = new Diadoc.Api.Proto.Invoicing.Signer
+                                signer = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133
                                 {
-                                    SignerCertificate = SelectedOrganization.Certificate.RawData,
-                                    SignerCertificateThumbprint = SelectedOrganization.Certificate.Thumbprint,
-                                    SignerDetails = new Diadoc.Api.Proto.Invoicing.SignerDetails()
+                                    Certificate = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.Certificate
                                     {
-                                        Surname = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "SN"),
-                                        FirstName = signerFirstName,
-                                        Patronymic = signerPatronymic,
-                                        Inn = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "ИНН").TrimStart('0'),
-                                        JobTitle = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "T")
-                                    }
+                                        CertificateBytes = SelectedOrganization.Certificate.RawData
+                                    },
+                                    Position = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133Position
+                                    {
+                                        PositionSource = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133PositionPositionSource.Manual,
+                                        Value = _utils.ParseCertAttribute(SelectedOrganization.Certificate.Subject, "T")
+                                    },
+                                    SignerStatusSpecified = true,
+                                    SignerStatus = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133SignerStatus.Item1
                                 };
                             }
                             else
                             {
-                                signer = new Diadoc.Api.Proto.Invoicing.Signer
+                                signer = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133
                                 {
-                                    SignerCertificate = SelectedOrganization.Certificate.RawData,
-                                    SignerCertificateThumbprint = SelectedOrganization.Certificate.Thumbprint,
-                                    SignerDetails = new Diadoc.Api.Proto.Invoicing.SignerDetails()
+                                    Certificate = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.Certificate
                                     {
-                                        Surname = SelectedOrganization.EmchdPersonSurname,
-                                        FirstName = SelectedOrganization.EmchdPersonName,
-                                        Patronymic = SelectedOrganization.EmchdPersonPatronymicSurname,
-                                        Inn = SelectedOrganization.EmchdPersonInn,
-                                        JobTitle = SelectedOrganization.EmchdPersonPosition
+                                        CertificateBytes = SelectedOrganization.Certificate.RawData
+                                    },
+                                    Position = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133Position
+                                    {
+                                        PositionSource = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133PositionPositionSource.Manual,
+                                        Value = SelectedOrganization.EmchdPersonPosition
+                                    },
+                                    SignerStatusSpecified = true,
+                                    SignerStatus = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133SignerStatus.Item2,
+                                    PowerOfAttorney = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.PowerOfAttorney
+                                    {
+                                        Item = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.Electronic
+                                        {
+                                            MethodOfProviding = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.ElectronicMethodOfProviding.Item2,
+                                            Item = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.Storage
+                                            {
+                                                UseDefault = Diadoc.Api.DataXml.TechnologicalSigner133UserContract.StorageUseDefault.@false,
+                                                FullId = new Diadoc.Api.DataXml.TechnologicalSigner133UserContract.StorageFullId
+                                                {
+                                                    RegistrationNumber = SelectedOrganization.EmchdId,
+                                                    IssuerInn = SelectedOrganization.Inn
+                                                }
+                                            }
+                                        }
                                     }
                                 };
                             }

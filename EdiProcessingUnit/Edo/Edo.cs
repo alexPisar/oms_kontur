@@ -95,8 +95,6 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
-            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
-                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument != null)
                 userDataContract = ((Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument)userDocument).SerializeToXml();
             else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
@@ -166,8 +164,6 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
-            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
-                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument != null)
                 userDataContract = ((Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
@@ -740,10 +736,10 @@ namespace EdiProcessingUnit.Edo
 
         public Models.Kontragent GetKontragentByInnKpp(string inn, string kpp = null, bool isNotRoaming = true)
         {
-            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(inn, kpp)));
+            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, kpp)));
 
             if(organizations?.Organizations == null || organizations.Organizations?.Count == 0)
-                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(inn, null)));
+                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, null)));
 
             Organization organization = null;
 
@@ -934,15 +930,18 @@ namespace EdiProcessingUnit.Edo
             return CallApiSafe(new Func<MessagePatch>(() => { return _api.PostMessagePatch(_authToken, messageToPost); }));
         }
 
-        public GeneratedFile GenerateSignatureRejectionXml(string messageId, string entityId, string text, Diadoc.Api.Proto.Invoicing.Signer signer)
+        public GeneratedFile GenerateSignatureRejectionXml(string messageId, string entityId, string text, 
+            Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133 signer)
         {
-            var xmlRejectionInfo = new Diadoc.Api.Proto.Invoicing.SignatureRejectionInfo
+            var signatureRejectionGenerationRequest = new Diadoc.Api.Proto.Invoicing.SignatureRejectionGenerationRequestV2
             {
+                MessageId = messageId,
                 ErrorMessage = text,
-                Signer = signer
+                AttachmentId = entityId,
+                SignerContent = signer.SerializeToXml()
             };
 
-            return _api.GenerateSignatureRejectionXml(_authToken, _actualBoxId, messageId, entityId, xmlRejectionInfo);
+            return _api.GenerateSignatureRejectionXmlV2(_authToken, _actualBoxId, signatureRejectionGenerationRequest);
         }
 
         public void SendRejectionDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
