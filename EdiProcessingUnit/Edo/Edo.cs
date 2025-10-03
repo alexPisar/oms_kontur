@@ -80,6 +80,8 @@ namespace EdiProcessingUnit.Edo
 
         public string ActualBoxId => _actualBoxId;
 
+        public string ActualBoxIdGuid => _actualBoxIdGuid ?? _actualBoxId?.Substring(0, _actualBoxId.IndexOf('@'));
+
         public GeneratedFile GenerateTitleXml(string typeNameId,
             string function,
             string version,
@@ -247,7 +249,9 @@ namespace EdiProcessingUnit.Edo
             }
             else
             {
-                var counteragents = GetKontragents(senderOrgId);
+                var senderBoxIdGuid = senderOrganization?.Boxes?.FirstOrDefault()?.BoxIdGuid;
+
+                var counteragents = GetKontragents(senderBoxIdGuid, myOrganizations);
 
                 counteragents = counteragents.Where(c => c.Organization?.OrgId == recipientOrgId)?
                     .ToList() ?? new List<Counteragent>();
@@ -636,26 +640,30 @@ namespace EdiProcessingUnit.Edo
             return docs?.Documents?.FirstOrDefault();
         }
 
-        public List<Counteragent> GetKontragents(string orgId = null)
+        public List<Counteragent> GetKontragents(string boxId = null, OrganizationList MyOrganizations = null)
         {
             CounteragentList list;
             List<Counteragent> result = new List<Counteragent>();
 
             string currentIndexKey = null;
 
-            do
+            if (string.IsNullOrEmpty(boxId))
             {
-                if (string.IsNullOrEmpty(orgId))
-                {
-                    OrganizationList MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
-                    Organization myOrganization = MyOrganizations.Organizations.First();
-
-                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, myOrganization.OrgId, "IsMyCounteragent", currentIndexKey); }));
-                }
+                if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                    boxId = _actualBoxIdGuid;
                 else
                 {
-                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, orgId, "IsMyCounteragent", currentIndexKey); }));
+                    if (MyOrganizations == null)
+                        MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
+
+                    Organization myOrganization = MyOrganizations.Organizations.First();
+                    boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
                 }
+            }
+
+            do
+            {
+                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragentsV3(_authToken, boxId, "IsMyCounteragent", currentIndexKey); }));
 
                 currentIndexKey = null;
 
@@ -681,11 +689,16 @@ namespace EdiProcessingUnit.Edo
 
             if (string.IsNullOrEmpty(boxId))
             {
-                if (MyOrganizations == null)
-                    MyOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
+                if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                    boxId = _actualBoxIdGuid;
+                else
+                {
+                    if (MyOrganizations == null)
+                        MyOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
 
-                Organization myOrganization = MyOrganizations.Organizations.First();
-                boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+                    Organization myOrganization = MyOrganizations.Organizations.First();
+                    boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+                }
             }
 
             do
@@ -708,14 +721,14 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
-        public List<Models.Kontragent> GetOrganizations(string orgId = null)
+        public List<Models.Kontragent> GetOrganizations(string boxIdGuid = null)
         {
             var counterAgents = new List<Counteragent>();
 
-            if (string.IsNullOrEmpty(orgId))
+            if (string.IsNullOrEmpty(boxIdGuid))
                 counterAgents = GetKontragents();
             else
-                counterAgents = GetKontragents(orgId);
+                counterAgents = GetKontragents(boxIdGuid);
 
             List<Models.Kontragent> organizations = new List<Models.Kontragent>();
 

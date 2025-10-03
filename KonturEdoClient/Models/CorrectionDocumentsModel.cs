@@ -314,7 +314,7 @@ namespace KonturEdoClient.Models
                     
                     if(buyerContractor?.DefaultCustomer != null)
                     {
-                        var counteragent = EdiProcessingUnit.Edo.Edo.GetInstance().GetKontragents(_currentOrganization.OrgId)?
+                        var counteragent = EdiProcessingUnit.Edo.Edo.GetInstance().GetKontragents(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxIdGuid)?
                         .FirstOrDefault(c => c?.Organization?.Inn == buyerCustomer.Inn);
 
                         correctionDocument.Buyer = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000

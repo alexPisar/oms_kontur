@@ -1255,10 +1255,10 @@ namespace KonturEdoClient.Models
             UniversalTransferDocument.DbContext = null;
         }
 
-        private List<Kontragent> SetCounteragents()
+        private List<Kontragent> SetCounteragents(string boxIdGuid)
         {
             _log.Log($"SetCounteragents: загрузка контрагентов для организации {SelectedOrganization.Name}, OrgId: {SelectedOrganization.OrgId}");
-            var counteragents = Edo.GetInstance().GetOrganizations(SelectedOrganization.OrgId);
+            var counteragents = Edo.GetInstance().GetOrganizations(boxIdGuid);
             OnAllPropertyChanged();
             _log.Log("SetCounteragents: выполнено");
             return counteragents;
@@ -1529,6 +1529,7 @@ namespace KonturEdoClient.Models
                 if (!result)
                     throw new Exception("Не удалось авторизоваться в системе по сертификату.");
 
+                var selectedOrganizationBoxIdGuid = Edo.GetInstance().ActualBoxIdGuid;
                 SendWindow sendWindow = new SendWindow();
 
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
@@ -1552,7 +1553,7 @@ namespace KonturEdoClient.Models
                         sendModel.BeforeSendEventHandler += (object s, EventArgs e) => { SendComissionDocumentForHonestMark(s); };
                 }
 
-                sendModel.Organizations = SetCounteragents();
+                sendModel.Organizations = SetCounteragents(selectedOrganizationBoxIdGuid);
                 sendWindow.DataContext = sendModel;
                 sendModel.Owner = sendWindow;
 

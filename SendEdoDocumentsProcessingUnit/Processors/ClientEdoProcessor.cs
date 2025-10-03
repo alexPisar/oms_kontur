@@ -121,10 +121,11 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 if (!_edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn))
                                     throw new Exception("Не удалось авторизоваться в системе по сертификату.");
 
+                                var myOrganizationBoxIdGuid = _edo.ActualBoxIdGuid;
                                 _edo.SetOrganizationParameters(myOrganization);
 
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
-                                var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
+                                var counteragents = _edo.GetOrganizations(myOrganizationBoxIdGuid);
 
                                 await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, employee, orgsInnKpp);
                                 await SendUniversalCorrectionDocuments(myOrganization, counteragents);
@@ -588,6 +589,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 if (!_edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn))
                                     throw new Exception("Не удалось авторизоваться в системе по сертификату.");
 
+                                var myOrganizationBoxIdGuid = _edo.ActualBoxIdGuid;
                                 _edo.SetOrganizationParameters(myOrganization);
 
                                 var addressSender = myOrganization?.Address?.RussianAddress?.ZipCode +
@@ -596,7 +598,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     (string.IsNullOrEmpty(myOrganization?.Address?.RussianAddress?.Building) ? "" : $", {myOrganization.Address.RussianAddress.Building}");
 
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
-                                var counteragents = _edo.GetOrganizations(myOrganization.OrgId);
+                                var counteragents = _edo.GetOrganizations(myOrganizationBoxIdGuid);
 
                                 IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
 
