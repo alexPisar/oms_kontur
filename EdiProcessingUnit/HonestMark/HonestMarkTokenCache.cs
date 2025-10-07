@@ -14,8 +14,10 @@ namespace EdiProcessingUnit.HonestMark
 
         public HonestMarkTokenCache()
         {
-            if (!System.IO.Directory.Exists(ConfigFolder + "\\" + localPath))
-                System.IO.Directory.CreateDirectory(ConfigFolder + "\\" + localPath);
+            string currentDirectoryPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+            if (!System.IO.Directory.Exists(currentDirectoryPath + "\\" + ConfigFolder + "\\" + localPath))
+                System.IO.Directory.CreateDirectory(currentDirectoryPath + "\\" + ConfigFolder + "\\" + localPath);
         }
 
         public string Token { get; set; }
