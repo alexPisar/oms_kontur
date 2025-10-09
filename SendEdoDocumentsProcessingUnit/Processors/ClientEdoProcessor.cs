@@ -82,7 +82,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 {
                     try
                     {
-                        string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
+                        _abt.Database.CommandTimeout = 500;
                         var docJournals = _abt.Set<DocJournal>().Include("DocMaster").Include("DocGoodsI").Include("DocGoodsDetailsIs");
 
                         var orgs = (from a in _abt.RefAuthoritySignDocuments
@@ -127,7 +127,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                                 var counteragents = _edo.GetOrganizations(myOrganizationBoxIdGuid);
 
-                                await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, employee, orgsInnKpp);
+                                await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, orgsInnKpp);
                                 await SendUniversalCorrectionDocuments(myOrganization, counteragents);
                             }
                             catch (Exception ex)
@@ -147,7 +147,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return true;
         }
 
-        private async Task SendUniversalTransferDocuments(Kontragent myOrganization, List<Kontragent> counteragents, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, string employee, List<KeyValuePair<string, string>> orgsInnKpp)
+        private async Task SendUniversalTransferDocuments(Kontragent myOrganization, List<Kontragent> counteragents, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, List<KeyValuePair<string, string>> orgsInnKpp)
         {
             var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
             IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
