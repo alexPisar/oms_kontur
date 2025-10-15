@@ -2462,7 +2462,7 @@ namespace KonturEdoClient.Models
                     return;
                 }
 
-                if (docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent)
+                if ((docProcessing.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.Signed || docProcessing.DocStatus == (int)EdiProcessingUnit.Enums.DocEdoSendStatus.PartialSigned) && docProcessing.HonestMarkStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent)
                 {
                     System.Windows.MessageBox.Show(
                         "Документ с данными кодами маркировки обрабатывается в Честном знаке.\n" +
