@@ -275,36 +275,43 @@ namespace KonturEdoClient.Models
                     };
 
                     correctionDocument.Seller = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000();
-                    
-                    if (!string.IsNullOrEmpty(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId))
+
+                    object sellerAddress;
+
+                    if(_currentOrganization?.Address?.RussianAddress != null)
                     {
-                        (correctionDocument.Seller as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000).Item =
-                        new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationReference
+                        sellerAddress = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.RussianAddress
                         {
-                            BoxId = EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxId,
-                            ShortOrgName = sellerCustomer.Name,
-                            OrgType = sellerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item2 : Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item1
+                            ZipCode = _currentOrganization.Address.RussianAddress.ZipCode,
+                            Region = _currentOrganization.Address.RussianAddress.Region,
+                            Street = string.IsNullOrEmpty(_currentOrganization?.Address?.RussianAddress?.Street) ? null : _currentOrganization.Address.RussianAddress.Street,
+                            City = string.IsNullOrEmpty(_currentOrganization?.Address?.RussianAddress?.City) ? null : _currentOrganization.Address.RussianAddress.City,
+                            Locality = string.IsNullOrEmpty(_currentOrganization?.Address?.RussianAddress?.Locality) ? null : _currentOrganization.Address.RussianAddress.Locality,
+                            Territory = string.IsNullOrEmpty(_currentOrganization?.Address?.RussianAddress?.Territory) ? null : _currentOrganization.Address.RussianAddress.Territory,
+                            Building = string.IsNullOrEmpty(_currentOrganization?.Address?.RussianAddress?.Building) ? null : _currentOrganization.Address.RussianAddress.Building
                         };
                     }
                     else
                     {
-                        (correctionDocument.Seller as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000).Item = 
-                        new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationDetails_ForeignAddress1000
+                        sellerAddress = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ForeignAddress1000
                         {
-                            Inn = sellerCustomer.Inn,
-                            Kpp = sellerCustomer.Kpp,
-                            OrgName = sellerCustomer.Name,
-                            OrgType = sellerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item2 : Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item1,
-                            Address = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.Address_ForeignAddress1000
-                            {
-                                Item = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ForeignAddress1000
-                                {
-                                    Country = Properties.Settings.Default.DefaultOrgCountryCode,
-                                    Address = sellerContractor.Address
-                                }
-                            }
+                            Country = Properties.Settings.Default.DefaultOrgCountryCode,
+                            Address = sellerContractor.Address
                         };
                     }
+
+                    (correctionDocument.Seller as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000).Item = 
+                    new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationDetails_ForeignAddress1000
+                    {
+                        Inn = sellerCustomer.Inn,
+                        Kpp = sellerCustomer.Kpp,
+                        OrgName = sellerCustomer.Name,
+                        OrgType = sellerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item2 : Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item1,
+                        Address = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.Address_ForeignAddress1000
+                        {
+                            Item = sellerAddress
+                        }
+                    };
 
                     var orgInn = _currentOrganization.Inn;
 
