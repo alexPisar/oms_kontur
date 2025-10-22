@@ -809,6 +809,42 @@ namespace KonturEdoClient.Models
                             }
 
                             item.AdditionalInfos = additionalInfos.ToArray();
+
+                            if (SelectedDocument.IsMarked)
+                            {
+                                var markedCodes = (from label in _abt.DocGoodsDetailsLabels
+                                                           where label.IdDocSale == SelectedDocument.InvoiceDocJournal.IdDocMaster && label.IdGood == detail.IdGood
+                                                           select label).ToArray();
+
+                                if (markedCodes.Length > 0)
+                                {
+                                    item.OriginalItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                    item.OriginalItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                    {
+                                        ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[markedCodes.Length],
+                                        Items = new string[markedCodes.Length]
+                                    };
+
+                                    item.CorrectedItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                    item.CorrectedItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                    {
+                                        ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[markedCodes.Length],
+                                        Items = new string[markedCodes.Length]
+                                    };
+
+                                    int j = 0;
+                                    foreach (var docGoodsDetailLabel in markedCodes)
+                                    {
+                                        item.OriginalItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.Unit;
+                                        item.OriginalItemIdentificationNumbers[0].Items[j] = docGoodsDetailLabel.DmLabel;
+
+                                        item.CorrectedItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.Unit;
+                                        item.CorrectedItemIdentificationNumbers[0].Items[j] = docGoodsDetailLabel.DmLabel;
+                                        j++;
+                                    }
+                                }
+                            }
+
                             itemDetails.Add(item);
                         }
 
