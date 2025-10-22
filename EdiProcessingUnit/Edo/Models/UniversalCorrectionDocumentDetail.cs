@@ -159,7 +159,12 @@ namespace EdiProcessingUnit.Edo.Models
                                       where label.IdDocSale == invoiceDocJournal.IdDocMaster && label.IdGood == this.IdGood
                                       select label)?.ToList();
 
-                var correctedLabels = originalLabels?.Where(o => o.IdDocReturn == null);
+                IEnumerable<DocGoodsDetailsLabels> correctedLabels;
+
+                if(DocDetailsI != null)
+                    correctedLabels = originalLabels;
+                else
+                    correctedLabels = originalLabels?.Where(o => o.IdDocReturn == null);
 
                 OriginalMarkedCodes = originalLabels?.Select(o => o.DmLabel)?.ToList() ?? new List<string>();
                 CorrectedMarkedCodes = correctedLabels?.Select(c => c.DmLabel)?.ToList() ?? new List<string>();

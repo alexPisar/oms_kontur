@@ -1718,6 +1718,52 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     }
 
                     item.AdditionalInfos = additionalInfos.ToArray();
+
+                    if (d.IsMarked)
+                    {
+                        var originalMarkedCodes = docDetail.OriginalMarkedCodes;
+                        var correctedMarkedCodes = docDetail.CorrectedMarkedCodes;
+
+                        if (originalMarkedCodes.Count > 0)
+                        {
+                            item.OriginalItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                            item.OriginalItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                            {
+                                ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[originalMarkedCodes.Count],
+                                Items = new string[originalMarkedCodes.Count]
+                            };
+
+                            int j = 0;
+                            foreach (var markedCode in originalMarkedCodes)
+                            {
+                                item.OriginalItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.Unit;
+                                item.OriginalItemIdentificationNumbers[0].Items[j] = markedCode;
+                                j++;
+                            }
+                        }
+
+                        if (correctedMarkedCodes.Count > 0)
+                        {
+                            if (correctedMarkedCodes.Count != (int)item.Quantity.CorrectedValue)
+                                throw new Exception($"Количество кодов маркировки не совпадает с количеством товара в документе. ID товара {detail.IdGood}");
+
+                            item.CorrectedItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                            item.CorrectedItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                            {
+                                ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[correctedMarkedCodes.Count],
+                                Items = new string[correctedMarkedCodes.Count]
+                            };
+
+                            int j = 0;
+                            foreach (var markedCode in correctedMarkedCodes)
+                            {
+                                item.CorrectedItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.Unit;
+                                item.CorrectedItemIdentificationNumbers[0].Items[j] = markedCode;
+                                j++;
+                            }
+                        }
+                    }
+
                     itemDetails.Add(item);
                 }
 
