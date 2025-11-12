@@ -36,6 +36,7 @@ namespace KonturEdoClient.Models
         public RelayCommand ShowDocumentSendHistoryCommand => new RelayCommand((o) => { ShowDocumentSendHistory(); });
         public RelayCommand LoadUnsentDocumentCommand => new RelayCommand((o) => { LoadUnsentDocument(); });
         public RelayCommand ShowCorrectionDocumentsCommand => new RelayCommand((o) => { ShowCorrectionDocuments(); });
+        public RelayCommand UploadProductsAndCodesToEdoLiteCommand => new RelayCommand((o) => { UploadProductsAndCodesToEdoLite(); });
         public List<Kontragent> Organizations { get; set; }
         public Kontragent SelectedOrganization { get; set; }
 
@@ -3408,6 +3409,150 @@ namespace KonturEdoClient.Models
 
                 errorWindow.ShowDialog();
             }
+        }
+
+        private async void UploadProductsAndCodesToEdoLite()
+        {
+            if (SelectedOrganization == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не выбрана организация.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedDocument == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не выбран документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedDocuments.Count > 1)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для выгрузки нужно выбрать один документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedDocument.CurrentDocJournalId == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не задан документ из Трейдера.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var changePathDialog = new Microsoft.Win32.SaveFileDialog();
+                changePathDialog.Title = "Сохранение файла";
+                changePathDialog.Filter = "CSV Files|*.csv";
+                changePathDialog.FileName = $"{SelectedDocument.DocJournal.Code}.csv";
+
+                if (changePathDialog.ShowDialog() == true)
+                {
+                    decimal idDoc = SelectedDocument.CurrentDocJournalId.Value;
+
+                    var markedCodes = _abt.DocGoodsDetailsLabels?
+                    .Where(l => l.IdDocSale == idDoc)?.ToList();
+
+                    using (var fileStream = new System.IO.FileStream(changePathDialog.FileName, System.IO.FileMode.Create))
+                    {
+                        using (var streamWriter = new System.IO.StreamWriter(fileStream))
+                        {
+                            int i = 0;
+                            if (SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                            {
+                                foreach (var detail in SelectedDocument.DocJournal.DocGoodsDetailsIs)
+                                {
+                                    var subtotal = Math.Round(detail.Quantity * ((decimal)detail.Price - (decimal)detail.DiscountSumm), 2);
+                                    var vat = (decimal)Math.Round(subtotal * detail.TaxRate / (detail.TaxRate + 100), 2, MidpointRounding.AwayFromZero);
+
+                                    decimal price = 0;
+
+                                    if (detail.Quantity > 0)
+                                        price = (decimal)Math.Round((subtotal - vat) / detail.Quantity, 2, MidpointRounding.AwayFromZero);
+                                    else
+                                        price = (decimal)Math.Round(detail.Price - detail.DiscountSumm - detail.TaxSumm, 2);
+
+                                    string csvPositionStr = $"{++i},{EscapeCsvString(detail.Good.Name)},{price},{detail.Quantity},{Properties.Settings.Default.DefaultUnit},{detail.TaxRate}%";
+
+                                    var markedCodesForDetail = markedCodes?.Where(m => m.IdGood == detail.IdGood)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+
+                                    if (markedCodesForDetail.Count > 0)
+                                        csvPositionStr = csvPositionStr + ",КИЗ";
+
+                                    foreach(var markedCode in markedCodesForDetail)
+                                    {
+                                        var dmLabel = EscapeCsvString(markedCode.DmLabel);
+                                        csvPositionStr = csvPositionStr + $",{dmLabel}";
+                                    }
+
+                                    await streamWriter.WriteLineAsync(csvPositionStr);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var detail in SelectedDocument.DocJournal.Details)
+                                {
+                                    var price = (decimal)Math.Round(detail.Price - detail.DiscountSumm, 2);
+                                    string csvPositionStr = $"{++i},{EscapeCsvString(detail.Good.Name)},{price},{detail.Quantity},{Properties.Settings.Default.DefaultUnit},20%";
+
+                                    var markedCodesForDetail = markedCodes?.Where(m => m.IdGood == detail.IdGood)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+
+                                    if (markedCodesForDetail.Count > 0)
+                                        csvPositionStr = csvPositionStr + ",КИЗ";
+
+                                    foreach (var markedCode in markedCodesForDetail)
+                                    {
+                                        var dmLabel = EscapeCsvString(markedCode.DmLabel);
+                                        csvPositionStr = csvPositionStr + $",{dmLabel}";
+                                    }
+
+                                    await streamWriter.WriteLineAsync(csvPositionStr);
+                                }
+                            }
+                        }
+                    }
+
+                    _loadContext = new LoadModel();
+                    var loadWindow = new LoadWindow();
+                    loadWindow.DataContext = _loadContext;
+                    loadWindow.SetSuccessFullLoad(_loadContext, $"Файл успешно сохранён.");
+                    loadWindow.ShowDialog();
+
+                    _log.Log("UploadProductsAndCodesToEdoLite: успешно завершено.");
+                }
+            }
+            catch(Exception ex)
+            {
+                _log.Log($"UploadProductsAndCodesToEdoLite Exception: {_log.GetRecursiveInnerException(ex)}");
+
+                var errorWindow = new ErrorWindow(
+                            "Произошла ошибка выгрузки товаров с кодами.",
+                            new List<string>(
+                                new string[]
+                                {
+                                    ex.Message,
+                                    ex.StackTrace
+                                }
+                                ));
+
+                errorWindow.ShowDialog();
+            }
+        }
+
+        private string EscapeCsvString(string objStr)
+        {
+            if (objStr == null)
+                return "";
+
+            if (objStr.Contains(',') || objStr.Contains('"') || objStr.Contains('\n') || objStr.Contains('\r'))
+            {
+                string result = objStr.Replace("\"", "\"\"");
+                return "\"" + result + "\"";
+            }
+
+            return objStr;
         }
     }
 }

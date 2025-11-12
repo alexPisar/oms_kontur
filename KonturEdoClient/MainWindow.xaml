@@ -12,7 +12,7 @@
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="ЭДО Диадок" Height="800" Width="1350" Background="#FFD4D3D3" Closing="MainWindow_Closing">
+        Title="ЭДО Диадок" Height="800" Width="1450" Background="#FFD4D3D3" Closing="MainWindow_Closing">
     <Window.Resources>
         <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
         <BitmapImage x:Key="HonestMarkImage" UriSource="pack://siteoforigin:,,,/Resources/HonestMark.png" />
@@ -76,6 +76,12 @@
                                        LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_List.svg}"
                                        IsEnabled="{Binding Path=IsSended}"
                                        Command="{Binding ShowDocumentSendHistoryCommand}"/>
+                    <dxb:BarButtonItem Content="Выгрузить товары и коды" 
+                                       RibbonStyle="Large"
+                                       LargeGlyph="{DynamicResource HonestMarkImage}"
+                                       IsEnabled="{Binding Path=IsDocumentMarked}"
+                                       ToolTip="Выгрузить товары и коды для системы ЭДО Lite"
+                                       Command="{Binding UploadProductsAndCodesToEdoLiteCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Действия" IsEnabled="{Binding WorkWithDocumentsPermission}">
                     <dxb:BarButtonItem Content="Отправить корректировку"
