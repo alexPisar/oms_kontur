@@ -1921,7 +1921,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.StorageFullId
                                 {
                                     RegistrationNumber = receiverOrganization.EmchdId,
-                                    IssuerInn = receiverOrganization.Inn
+                                    IssuerInn = receiverOrganization.Inn,
+                                    RepresentativeInn = receiverOrganization.EmchdPersonInn
                                 }
                             }
                         }
