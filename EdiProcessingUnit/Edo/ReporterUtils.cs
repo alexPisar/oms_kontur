@@ -35,7 +35,7 @@ namespace EdiProcessingUnit.Edo
         public string CurrentFileName => _currentFileName;
 
         public TReport GetReport<TReport>(Models.Kontragent sender, RefCustomer receiver, DocJournal docJournal, X509Certificate2 senderCertificate, bool isMarked = false,
-            List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null) where TReport:class,IReport,new()
+            List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null, KeyValuePair<string, string>? contract = null) where TReport:class,IReport,new()
         {
             TReport resultObj=new TReport();
 
@@ -43,7 +43,7 @@ namespace EdiProcessingUnit.Edo
             if (resultObj is UniversalTransferSellerDocumentUtd970)
             {
                 resultObj = GetUniversalTransferDocumentUtd970(sender, receiver, docJournal, senderCertificate, isMarked,
-                    markedCodes, edoGoodChannel, docJournalTags, resultObj as UniversalTransferSellerDocumentUtd970) as TReport;
+                    markedCodes, edoGoodChannel, docJournalTags, contract, resultObj as UniversalTransferSellerDocumentUtd970) as TReport;
             }
             else return null;
 
@@ -51,13 +51,13 @@ namespace EdiProcessingUnit.Edo
         }
 
         public byte[] GetReportXmlContent(Models.Kontragent sender, RefCustomer receiver, DocJournal docJournal, X509Certificate2 senderCertificate, bool isMarked = false,
-            List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null)
+            List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null, KeyValuePair<string, string>? contract = null)
         {
             IReport report;
 
             if (docJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                report = GetReport<UniversalTransferSellerDocumentUtd970>(sender, receiver, docJournal, senderCertificate, isMarked, markedCodes, edoGoodChannel, docJournalTags);
+                report = GetReport<UniversalTransferSellerDocumentUtd970>(sender, receiver, docJournal, senderCertificate, isMarked, markedCodes, edoGoodChannel, docJournalTags, contract);
                 _currentFileName = (report as UniversalTransferSellerDocumentUtd970).FileName;
             }
             else
@@ -69,7 +69,7 @@ namespace EdiProcessingUnit.Edo
         }
 
         public UniversalTransferSellerDocumentUtd970 GetUniversalTransferDocumentUtd970(Models.Kontragent sender, RefCustomer receiver, DocJournal docJournal, X509Certificate2 senderCertificate, 
-            bool isMarked = false, List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null, 
+            bool isMarked = false, List<DocGoodsDetailsLabels> markedCodes = null, RefEdoGoodChannel edoGoodChannel = null, List<DocJournalTag> docJournalTags = null, KeyValuePair<string, string>? contract = null,
             UniversalTransferSellerDocumentUtd970 reportObj = null)
         {
             if (docJournal?.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
@@ -233,6 +233,13 @@ namespace EdiProcessingUnit.Edo
             reportObj.ShippingDate = docJournal.DeliveryDate?.Date ?? DateTime.Now.Date;
             //reportObj.BasisDocumentName = "Без документа-основания";
 
+            if(contract != null)
+            {
+                reportObj.BasisDocumentName = "Договор поставки";
+                reportObj.BasisDocumentNumber = contract.Value.Key;
+                reportObj.BasisDocumentDate = DateTime.ParseExact(contract.Value.Value, "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
             if (!(string.IsNullOrEmpty(Employee) || string.IsNullOrEmpty(EmployeePosition)))
             {
                 reportObj.PersonTransferedTheGoods = new Reporter.Entities.OrganizationEmployee
@@ -330,10 +337,12 @@ namespace EdiProcessingUnit.Edo
                 var refGood = detail.Good;
 
                 product.OriginCode = refGood?.Country?.NumCode?.ToString();
-                product.OriginCountryName = refGood?.Country?.Name?.ToString();
 
                 if (!string.IsNullOrEmpty(refGood?.CustomsNo))
+                {
                     product.CustomsDeclarationCode = refGood?.CustomsNo;
+                    product.OriginCountryName = refGood?.Country?.Name?.ToString();
+                }
 
                 if(isMarked && markedCodes != null)
                 {

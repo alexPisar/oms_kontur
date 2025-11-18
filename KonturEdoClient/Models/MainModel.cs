@@ -1430,13 +1430,49 @@ namespace KonturEdoClient.Models
 
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
-                var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
-                var file = _utils.GetGeneratedFile(doc);
-                changePathDialog.FileName = file.FileName;
+                byte[] content;
+
+                var idCustomer = SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? SelectedDocument.DocJournal.DocMaster?.DocGoods?.IdCustomer : null;
+                if (idCustomer != null)
+                {
+                    var buyerContractor = SelectedDocument.DocJournal?.DocMaster?.DocGoods?.Customer;
+
+                    var buyerCustomer = _abt.RefCustomers?
+                        .Where(r => r.Id == buyerContractor.DefaultCustomer)?
+                        .FirstOrDefault();
+
+                    var docGoodDetailLabels = _abt?.DocGoodsDetailsLabels?.Where(l => l.IdDocSale == SelectedDocument.DocJournal.IdDocMaster)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+
+                    var reporterUtils = new ReporterUtils(_abt, "Вирэй ЭДО", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString());
+
+                    reporterUtils.EmployeePosition = Properties.Settings.Default.DefaultEmployePosition;
+                    reporterUtils.Employee = employee;
+
+                    KeyValuePair<string, string>? contract = null;
+                    var contractNumber = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 200 && c.IdObject == buyerCustomer.Id)?.TagValue;
+                    var contractDate = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 199 && c.IdObject == buyerCustomer.Id)?.TagValue;
+
+                    if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                        contract = new KeyValuePair<string, string>(contractNumber, contractDate);
+
+                    var docJournalTags = _abt.DocJournalTags.Where(t => t.IdDoc == SelectedDocument.DocJournal.IdDocMaster && (t.IdTad == 137 || t.IdTad == 222)).ToList();
+
+                    content = reporterUtils
+                        .GetReportXmlContent(SelectedOrganization, buyerCustomer, SelectedDocument.DocJournal, SelectedOrganization.Certificate, SelectedDocument.IsMarked, docGoodDetailLabels,
+                        SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel, docJournalTags, contract);
+                    changePathDialog.FileName = reporterUtils.CurrentFileName;
+                }
+                else
+                {
+                    var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
+                    var file = _utils.GetGeneratedFile(doc);
+                    changePathDialog.FileName = file.FileName;
+                    content = file.Content;
+                }
 
                 if (changePathDialog.ShowDialog() ?? false)
                 {
-                    file.SaveContentToFile(changePathDialog.FileName);
+                    System.IO.File.WriteAllBytes(changePathDialog.FileName, content);
                     _loadContext = new LoadModel();
                     var loadWindow = new LoadWindow();
                     loadWindow.DataContext = _loadContext;
