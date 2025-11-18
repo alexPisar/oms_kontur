@@ -122,6 +122,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
@@ -133,27 +134,36 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\AdditionalInfo.cs" />
+    <Compile Include="Entities\Address.cs" />
+    <Compile Include="Entities\AnotherPerson.cs" />
+    <Compile Include="Entities\Base\IReportEntity.cs" />
+    <Compile Include="Entities\DeliveryDocument.cs" />
+    <Compile Include="Entities\DocumentDetails.cs" />
+    <Compile Include="Entities\ElectronicPowerOfAttorney.cs" />
+    <Compile Include="Entities\FinSubjectCreator.cs" />
+    <Compile Include="Entities\ForeignOrganizationData.cs" />
+    <Compile Include="Entities\IndividualEntity.cs" />
+    <Compile Include="Entities\JuridicalEntity.cs" />
+    <Compile Include="Entities\OrganizationEmployee.cs" />
+    <Compile Include="Entities\OrganizationExchangeParticipantEntity.cs" />
+    <Compile Include="Entities\OrganizationRepresentative.cs" />
+    <Compile Include="Entities\Product.cs" />
+    <Compile Include="Entities\TrustedIndividual.cs" />
+    <Compile Include="Enums\MethodOfConfirmingAuthorityEnum.cs" />
+    <Compile Include="Enums\SignTypeEnum.cs" />
     <Compile Include="IReport.cs" />
-    <Compile Include="Reporter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Reporters\UniversalTransferDocumentReporter.cs" />
-    <Compile Include="Reports\UniversalTransferDocument.cs" />
-    <Compile Include="ReportWindow.xaml.cs">
-      <DependentUpon>ReportWindow.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="ReporterDll.cs" />
+    <Compile Include="Reports\UniversalTransferSellerDocumentUtd970.cs" />
     <Compile Include="XmlUtils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="ReportWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Compile Include="XsdClasses\ON_NSCHFDOPPR_1_997_01_05_03_01.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="ReportWindows\64b79c4d-b429-4577-8f65-7f44d2d535c2.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Include="XSD\ON_NSCHFDOPPR_1_997_01_05_03_01.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

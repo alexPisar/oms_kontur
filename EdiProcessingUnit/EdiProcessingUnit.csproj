@@ -169,6 +169,7 @@
     <Compile Include="Edo\Models\UniversalTransferDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentDetail.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentV2.cs" />
+    <Compile Include="Edo\ReporterUtils.cs" />
     <Compile Include="Enums\DocEdoSendStatus.cs" />
     <Compile Include="Enums\DocEdoType.cs" />
     <Compile Include="HonestMark\Enums.cs" />
@@ -233,6 +234,10 @@
     <ProjectReference Include="..\OMS\Cryptography\Cryptography.csproj">
       <Project>{a588206c-c730-4867-990e-6396c75b758f}</Project>
       <Name>Cryptography</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OMS\Reporter\Reporter.csproj">
+      <Project>{503e3c25-6312-4928-8c3f-2909c7e429a2}</Project>
+      <Name>Reporter</Name>
     </ProjectReference>
     <ProjectReference Include="..\OMS\WebService\WebService.csproj">
       <Project>{ce9f432a-bbc8-45b1-8a7f-3a533c4fb47e}</Project>
