@@ -1013,7 +1013,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
                                 {
                                     RegistrationNumber = organization.EmchdId,
-                                    IssuerInn = organization.Inn
+                                    IssuerInn = organization.Inn,
+                                    RepresentativeInn = organization.EmchdPersonInn
                                 }
                             }
                         }
@@ -1135,19 +1136,19 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 switch (docJournalDetail.TaxRate)
                 {
                     case 0:
-                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.ZeroPercent;
                         break;
                     case 10:
-                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TenPercent;
                         break;
                     //case 18:
                     //    detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                     //    break;
                     case 20:
-                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyPercent;
                         break;
                     default:
-                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
+                        detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.NoVat;
                         break;
                 }
 
@@ -2152,7 +2153,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
                                 {
                                     RegistrationNumber = senderOrganization.EmchdId,
-                                    IssuerInn = senderOrganization.Inn
+                                    IssuerInn = senderOrganization.Inn,
+                                    RepresentativeInn = senderOrganization.EmchdPersonInn
                                 }
                             }
                         }
@@ -2239,19 +2241,19 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.ZeroPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.ZeroPercent;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TenPercent;
                             break;
                         //case 18:
                         //    detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                         //    break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyPercent;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.NoVat;
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.NoVat;
                             break;
                     }
 
