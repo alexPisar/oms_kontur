@@ -30,6 +30,7 @@ namespace Reporter
             XmlSerializer ser = new XmlSerializer(typeof(T));
             StringBuilder builder = new StringBuilder();
             var _XmlWriterSettings = new XmlWriterSettings();
+            _XmlWriterSettings.Indent = true;
             _XmlWriterSettings.Encoding = encoding ?? Encoding.Unicode;
             _XmlWriterSettings.OmitXmlDeclaration = true;
 

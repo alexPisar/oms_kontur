@@ -346,7 +346,7 @@ namespace EdiProcessingUnit.Edo
 
                 if(isMarked && markedCodes != null)
                 {
-                    product.MarkedCodes = markedCodes.Select(m => m.DmLabel)?.ToList() ?? new List<string>();
+                    product.MarkedCodes = markedCodes.Where(m => m.IdGood == detail.IdGood).Select(m => m.DmLabel)?.ToList() ?? new List<string>();
 
                     if (product.MarkedCodes.Count != product.Quantity)
                         throw new Exception("Количество кодов маркировки не совпадает с количеством товара.");
