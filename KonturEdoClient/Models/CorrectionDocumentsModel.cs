@@ -52,6 +52,8 @@ namespace KonturEdoClient.Models
 
         public string BuyerGridColumnName { get; set; }
 
+        public bool IsEdoApiConnected => _currentOrganization?.IsEdoApiConnected ?? false;
+
         public CorrectionDocumentsModel(AbtDbContext abt, Kontragent currentOrganization)
         {
             _abt = abt;
@@ -187,6 +189,13 @@ namespace KonturEdoClient.Models
             {
                 System.Windows.MessageBox.Show(
                     "Не найден корректировочный документ.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (!IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 

@@ -100,10 +100,12 @@
                     <dxb:BarButtonItem Content="Отправить"
                                        RibbonStyle="Large"
                                        ToolTip="Отправка в Диадок"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                        LargeGlyph="{DynamicResource DiadocImage}" 
                                        Command="{Binding SendCommand}"/>
                     <dxb:BarButtonItem Content="Аннулировать"
                                        RibbonStyle="Large"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                        LargeGlyph="{dx:DXImage SvgImages/Snap/SnapDeleteList.svg}"
                                        Command="{Binding AnnulmentDocumentCommand}" />
                 </dxr:RibbonPageGroup>

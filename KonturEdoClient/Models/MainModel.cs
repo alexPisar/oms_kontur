@@ -54,7 +54,8 @@ namespace KonturEdoClient.Models
         public bool IsSended => WorkWithDocumentsPermission && SelectedDocument?.DocEdoSendStatus != null && SelectedDocument?.DocEdoSendStatus != "-";
         public bool IsSigned => WorkWithDocumentsPermission && (SelectedDocument?.DocEdoSendStatus == "Подписан контрагентом" || SelectedDocument?.DocEdoSendStatus == "Корректирован" ||
             SelectedDocument?.DocEdoSendStatus == "Подписан с расхождениями");
-        
+        public bool IsEdoApiConnected => SelectedOrganization?.IsEdoApiConnected ?? false;
+
 
         public List<UniversalTransferDocument> Documents { get; set; }
         public List<UniversalTransferDocument> SelectedDocuments { get; set; }
@@ -223,9 +224,18 @@ namespace KonturEdoClient.Models
                                     on cust.Id equals refUser.IdCustomer
                                     where refUser.UserName == dataBaseUser
                                     select cust;
+                    var orgsWithEdoApi = from r in _abt.RefRefTags where r.IdTag == 215 && r.TagValue == "1" select r;
 
                     foreach (var org in Organizations)
-                        org.Kpp = customers?.FirstOrDefault(c => c.Inn == org.Inn)?.Kpp;
+                    {
+                        var customer = customers?.FirstOrDefault(c => c.Inn == org.Inn);
+
+                        if (customer != null)
+                        {
+                            org.Kpp = customer.Kpp;
+                            org.IsEdoApiConnected = orgsWithEdoApi?.Any(o => o.IdObject == customer.Id) ?? false;
+                        }
+                    }
 
                     SelectedOrganization = null;
                     OnAllPropertyChanged();
@@ -991,27 +1001,35 @@ namespace KonturEdoClient.Models
                             continue;
                         }
 
-                        try
+                        string addressSender = null;
+                        if (organization.IsEdoApiConnected)
                         {
-                            var result = Edo.GetInstance().Authenticate(false, organization.Certificate, organization.Inn);
+                            try
+                            {
+                                var result = Edo.GetInstance().Authenticate(false, organization.Certificate, organization.Inn);
 
-                            if (!result)
-                                throw new Exception($"Не удалось авторизоваться в системе по сертификату {organization.Name}.");
-                        }
-                        catch(Exception ex)
-                        {
-                            string errorMessage = $"Ошибка авторизации по сертификату в Диадоке, организация {organization.Name} \nException: {_log.GetRecursiveInnerException(ex)}";
-                            _log.Log(errorMessage);
+                                if (!result)
+                                    throw new Exception($"Не удалось авторизоваться в системе по сертификату {organization.Name}.");
+                            }
+                            catch (Exception ex)
+                            {
+                                string errorMessage = $"Ошибка авторизации по сертификату в Диадоке, организация {organization.Name} \nException: {_log.GetRecursiveInnerException(ex)}";
+                                _log.Log(errorMessage);
 
-                            errorsList.Add(ex);
-                            index++;
-                            continue;
-                        }
+                                errorsList.Add(ex);
+                                index++;
+                                continue;
+                            }
 
-                        var addressSender = organization?.Address?.RussianAddress?.ZipCode +
+                            addressSender = organization?.Address?.RussianAddress?.ZipCode +
                                         (string.IsNullOrEmpty(organization?.Address?.RussianAddress?.City) ? "" : $", {organization.Address.RussianAddress.City}") +
                                         (string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Street) ? "" : $", {organization.Address.RussianAddress.Street}") +
                                         (string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? "" : $", {organization.Address.RussianAddress.Building}");
+                        }
+                        else
+                        {
+                            addressSender = organization?.CustomerAddressStr;
+                        }
 
                         var senderInnKpp = organization.Inn + "/" + organization.Kpp;
                         var updDocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd;
@@ -1119,21 +1137,25 @@ namespace KonturEdoClient.Models
                         }
 
                         Exception authInHonestMarkException = null;
-                        try
-                        {
-                            _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
 
-                            if (!_authInHonestMark)
-                                _log.Log("Не удалось авторизоваться в Честном знаке");
-                        }
-                        catch (Exception ex)
+                        if (organization.IsEdoApiConnected)
                         {
-                            _authInHonestMark = false;
-                            _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(ex)}");
-                            authInHonestMarkException = ex;
+                            try
+                            {
+                                _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(organization.Certificate, organization);
+
+                                if (!_authInHonestMark)
+                                    _log.Log("Не удалось авторизоваться в Честном знаке");
+                            }
+                            catch (Exception ex)
+                            {
+                                _authInHonestMark = false;
+                                _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(ex)}");
+                                authInHonestMarkException = ex;
+                            }
                         }
 
-                        if (authInHonestMarkException == null && !_authInHonestMark)
+                        if ((authInHonestMarkException == null && !_authInHonestMark) || !organization.IsEdoApiConnected)
                         {
                             _log.Log($"Для организации {organization.Name} получено документов {_loadedDocuments[index].Count}");
                             index++;
@@ -1244,6 +1266,7 @@ namespace KonturEdoClient.Models
             OnPropertyChanged("IsDocumentMarked");
             OnPropertyChanged("IsSended");
             OnPropertyChanged("IsSigned");
+            OnPropertyChanged("IsEdoApiConnected");
         }
 
         public void SetSelectedFilial(string userId)
@@ -1284,12 +1307,19 @@ namespace KonturEdoClient.Models
                                          on a.IdCustomer equals (c.Id)
                                          select a;
 
+            var orgsWithEdoApi = from r in _abt.RefRefTags where r.IdTag == 215 && r.TagValue == "1" select r;
+
             var orgs = customers.ToArray().Select(c => 
             {
                 var authoritySignDocument = authoritySignDocuments?.FirstOrDefault(a => a.IdCustomer == c.Id);
+                var isEdoApiConnected = orgsWithEdoApi?.Any(o => o.IdObject == c.Id) ?? false;
 
                 if (authoritySignDocument == null)
-                    return new Kontragent(c.Name, c.Inn, c.Kpp);
+                    return new Kontragent(c.Name, c.Inn, c.Kpp)
+                    {
+                        IsEdoApiConnected = isEdoApiConnected,
+                        CustomerAddressStr = c.Address
+                    };
 
                 return new Kontragent(c.Name, c.Inn, c.Kpp)
                 {
@@ -1300,7 +1330,9 @@ namespace KonturEdoClient.Models
                     EmchdPersonSurname = authoritySignDocument?.Surname,
                     EmchdPersonName = authoritySignDocument?.Name,
                     EmchdPersonPatronymicSurname = authoritySignDocument?.PatronymicSurname,
-                    EmchdPersonPosition = authoritySignDocument?.Position
+                    EmchdPersonPosition = authoritySignDocument?.Position,
+                    IsEdoApiConnected = isEdoApiConnected,
+                    CustomerAddressStr = c.Address
                 };
             }).ToList();
 
@@ -1330,8 +1362,11 @@ namespace KonturEdoClient.Models
                         if (org.EmchdEndDate != null && org.EmchdEndDate.Value < DateTime.Now)
                             throw new Exception($"Срок доверенности истёк для физ лица с ИНН {org.EmchdPersonInn}");
 
-                        Edo.GetInstance().Authenticate(false, org.Certificate, org.Inn);
-                        Edo.GetInstance().SetOrganizationParameters(org);
+                        if (org.IsEdoApiConnected)
+                        {
+                            Edo.GetInstance().Authenticate(false, org.Certificate, org.Inn);
+                            Edo.GetInstance().SetOrganizationParameters(org);
+                        }
                     }
                     catch(System.Net.WebException webEx)
                     {
@@ -1423,11 +1458,6 @@ namespace KonturEdoClient.Models
 
             try
             {
-                bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
-
-                if (!result)
-                    throw new Exception("Не удалось авторизоваться в системе по сертификату.");
-
                 string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
                 byte[] content;
@@ -1462,12 +1492,23 @@ namespace KonturEdoClient.Models
                         SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel, docJournalTags, contract);
                     changePathDialog.FileName = reporterUtils.CurrentFileName;
                 }
-                else
+                else if(SelectedOrganization.IsEdoApiConnected)
                 {
+                    bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
+
+                    if (!result)
+                        throw new Exception("Не удалось авторизоваться в системе по сертификату.");
+
                     var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
                     var file = _utils.GetGeneratedFile(doc);
                     changePathDialog.FileName = file.FileName;
                     content = file.Content;
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                    "Не удалось сформировать файл. Организация не подключена к Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
                 }
 
                 if (changePathDialog.ShowDialog() ?? false)
@@ -1529,6 +1570,13 @@ namespace KonturEdoClient.Models
             {
                 System.Windows.MessageBox.Show(
                     "Не найден сертификат отправителя.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (!SelectedOrganization.IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации отправка недоступна, \nтак как для неё не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
@@ -1950,7 +1998,7 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            var markedCodesWindow = new MarkedCodesWindow(PermissionReturnMarkedCodes);
+            var markedCodesWindow = new MarkedCodesWindow(PermissionReturnMarkedCodes && IsEdoApiConnected);
 
             decimal idDoc = SelectedDocument.CurrentDocJournalId.Value;
 
@@ -1963,7 +2011,8 @@ namespace KonturEdoClient.Models
             else
                 markedCodesWindow.SetMarkedItems(_abt, SelectedDocument.DocJournal.Details, markedCodes);
 
-            markedCodesWindow.OnReturnCodesToStore += ReturnMarkedCodesToStore;
+            if(IsEdoApiConnected)
+                markedCodesWindow.OnReturnCodesToStore += ReturnMarkedCodesToStore;
 
             markedCodesWindow.Show();
         }
@@ -1981,6 +2030,13 @@ namespace KonturEdoClient.Models
             {
                 System.Windows.MessageBox.Show(
                     "Нет прав на работу с документами.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (!SelectedOrganization.IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
@@ -2097,6 +2153,13 @@ namespace KonturEdoClient.Models
             {
                 System.Windows.MessageBox.Show(
                     "Не определён сертификат пользователя.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (!SelectedOrganization.IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
@@ -3259,6 +3322,13 @@ namespace KonturEdoClient.Models
 
         private void ShowDocumentSendHistory()
         {
+            if (!IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
             if (SelectedDocument == null)
             {
                 System.Windows.MessageBox.Show(
@@ -3360,9 +3430,18 @@ namespace KonturEdoClient.Models
                                     on cust.Id equals refUser.IdCustomer
                                     where refUser.UserName == dataBaseUser
                                     select cust;
+                    var orgsWithEdoApi = from r in _abt.RefRefTags where r.IdTag == 215 && r.TagValue == "1" select r;
 
                     foreach (var org in Organizations)
-                        org.Kpp = customers?.FirstOrDefault(c => c.Inn == org.Inn)?.Kpp;
+                    {
+                        var customer = customers?.FirstOrDefault(c => c.Inn == org.Inn);
+
+                        if (customer != null)
+                        {
+                            org.Kpp = customer.Kpp;
+                            org.IsEdoApiConnected = orgsWithEdoApi?.Any(o => o.IdObject == customer.Id) ?? false;
+                        }
+                    }
 
                     SelectedOrganization = null;
                     OnAllPropertyChanged();
@@ -3403,10 +3482,13 @@ namespace KonturEdoClient.Models
 
             try
             {
-                bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
+                if (SelectedOrganization.IsEdoApiConnected)
+                {
+                    bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
 
-                if (!result)
-                    throw new Exception("Не удалось авторизоваться в системе по сертификату.");
+                    if (!result)
+                        throw new Exception("Не удалось авторизоваться в системе по сертификату.");
+                }
 
                 _loadContext = new LoadModel();
                 var loadWindow = new LoadWindow();

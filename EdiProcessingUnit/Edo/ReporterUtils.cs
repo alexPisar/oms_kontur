@@ -168,7 +168,7 @@ namespace EdiProcessingUnit.Edo
                 {
                     CountryCode = "643",
                     CountryName = "Россия",
-                    ForeignTextAddress = senderContractor?.Address
+                    ForeignTextAddress = sender?.CustomerAddressStr
                 };
             }
 
