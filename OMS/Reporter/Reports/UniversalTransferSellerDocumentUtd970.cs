@@ -547,7 +547,11 @@ namespace Reporter.Reports
                                 good.СтТовУчНалSpecified = true;
                             }
 
-                            if (p.VatRate == 10)
+                            if(p.VatRate == 5)
+                                good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item5;
+                            else if(p.VatRate == 7)
+                                good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item7;
+                            else if (p.VatRate == 10)
                                 good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item10;
                             else if (p.VatRate == 20)
                                 good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item20;
