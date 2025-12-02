@@ -44,6 +44,8 @@ namespace EdiProcessingUnit.Edo.Models
 
         public string CustomerAddressStr { get; set; }
 
+        public decimal? IdCustomer { get; set; }
+
         public X509Certificate2 Certificate { get; set; }
 
         public string OrgId { get; set; }

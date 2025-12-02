@@ -12,7 +12,7 @@
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="ЭДО Диадок" Height="800" Width="1450" Background="#FFD4D3D3" Closing="MainWindow_Closing">
+        Title="ЭДО Диадок" Height="800" Width="1480" Background="#FFD4D3D3" Closing="MainWindow_Closing">
     <Window.Resources>
         <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
         <BitmapImage x:Key="HonestMarkImage" UriSource="pack://siteoforigin:,,,/Resources/HonestMark.png" />
@@ -108,6 +108,11 @@
                                        IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                        LargeGlyph="{dx:DXImage SvgImages/Snap/SnapDeleteList.svg}"
                                        Command="{Binding AnnulmentDocumentCommand}" />
+                    <dxb:BarButtonItem Content="Подключить контрагента"
+                                       RibbonStyle="Large"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                       LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_Employee.svg}"
+                                       Command="{Binding ConnectCounteragentsCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Сопоставления">
                     <dxb:BarButtonItem Content="Сопоставление товаров" 

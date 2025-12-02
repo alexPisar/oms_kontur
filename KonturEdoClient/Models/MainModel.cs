@@ -37,6 +37,7 @@ namespace KonturEdoClient.Models
         public RelayCommand LoadUnsentDocumentCommand => new RelayCommand((o) => { LoadUnsentDocument(); });
         public RelayCommand ShowCorrectionDocumentsCommand => new RelayCommand((o) => { ShowCorrectionDocuments(); });
         public RelayCommand UploadProductsAndCodesToEdoLiteCommand => new RelayCommand((o) => { UploadProductsAndCodesToEdoLite(); });
+        public RelayCommand ConnectCounteragentsCommand => new RelayCommand((o) => { ConnectCounteragents(); });
         public List<Kontragent> Organizations { get; set; }
         public Kontragent SelectedOrganization { get; set; }
 
@@ -1318,7 +1319,8 @@ namespace KonturEdoClient.Models
                     return new Kontragent(c.Name, c.Inn, c.Kpp)
                     {
                         IsEdoApiConnected = isEdoApiConnected,
-                        CustomerAddressStr = c.Address
+                        CustomerAddressStr = c.Address,
+                        IdCustomer = c.Id
                     };
 
                 return new Kontragent(c.Name, c.Inn, c.Kpp)
@@ -1332,7 +1334,8 @@ namespace KonturEdoClient.Models
                     EmchdPersonPatronymicSurname = authoritySignDocument?.PatronymicSurname,
                     EmchdPersonPosition = authoritySignDocument?.Position,
                     IsEdoApiConnected = isEdoApiConnected,
-                    CustomerAddressStr = c.Address
+                    CustomerAddressStr = c.Address,
+                    IdCustomer = c.Id
                 };
             }).ToList();
 
@@ -1660,11 +1663,30 @@ namespace KonturEdoClient.Models
                     var buyerInn = buyerInns.FirstOrDefault();
                     var buyerKpp = buyerInfos.Select(b => b.Kpp).FirstOrDefault();
 
-                    if ((!string.IsNullOrEmpty(buyerInn)) && (!string.IsNullOrEmpty(buyerKpp)))
-                        sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.Inn == buyerInn && o.Kpp == buyerKpp);
+                    if (!string.IsNullOrEmpty(buyerInn))
+                    {
+                        RefEdoCounteragent refEdoCounteragent = null;
 
-                    if (sendModel.SelectedOrganization == null && !string.IsNullOrEmpty(buyerInn))
-                        sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.Inn == buyerInn);
+                        if (SelectedOrganization.IdCustomer != null)
+                        {
+                            var idCustomerSeller = SelectedOrganization.IdCustomer.Value;
+                            refEdoCounteragent = (from r in _abt.RefEdoCounteragents
+                                                 where r.IsConnected == 1 && r.IdCustomerSeller == idCustomerSeller
+                                                 join buyer in _abt.RefCustomers
+                                                 on r.IdCustomerBuyer equals buyer.Id
+                                                 where buyer.Inn == buyerInn
+                                                 select r)?.FirstOrDefault();
+                        }
+
+                        if(refEdoCounteragent != null)
+                            sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.FnsParticipantId?.ToUpper() == refEdoCounteragent.IdFnsBuyer.ToUpper());
+
+                        if (sendModel.SelectedOrganization == null && !string.IsNullOrEmpty(buyerKpp))
+                            sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.Inn == buyerInn && o.Kpp == buyerKpp);
+
+                        if (sendModel.SelectedOrganization == null)
+                            sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.Inn == buyerInn);
+                    }
                 }
 
                 if (_owner != null)
@@ -2542,14 +2564,6 @@ namespace KonturEdoClient.Models
                 System.Windows.MessageBox.Show(
                     "Не выбран документ.", 
                     "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-
-            if (SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && SelectedDocument?.EdoProcessing == null)
-            {
-                System.Windows.MessageBox.Show(
-                    "Документ с данными кодами маркировки не был ранее отправлен.\n" +
-                    "Поэтому по ним невозможно осуществить возврат.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
 
@@ -3650,6 +3664,89 @@ namespace KonturEdoClient.Models
 
                 var errorWindow = new ErrorWindow(
                             "Произошла ошибка выгрузки товаров с кодами.",
+                            new List<string>(
+                                new string[]
+                                {
+                                    ex.Message,
+                                    ex.StackTrace
+                                }
+                                ));
+
+                errorWindow.ShowDialog();
+            }
+        }
+
+        private async void ConnectCounteragents()
+        {
+            if (SelectedOrganization == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Не выбрана организация.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (!SelectedOrganization.IsEdoApiConnected)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для данной организации не подключен Диадок API.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            if (SelectedOrganization.IdCustomer == null)
+            {
+                System.Windows.MessageBox.Show(
+                    "Для организации не указан параметр ID_CUSTOMER.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                bool result = Edo.GetInstance().Authenticate(false, SelectedOrganization.Certificate, SelectedOrganization.Inn);
+
+                if (!result)
+                    throw new Exception("Не удалось авторизоваться в системе по сертификату.");
+
+                var employee = Edo.GetInstance().GetMyEmployee();
+
+                if (!(employee?.Permissions?.Actions?.Any(a => a.Name == "ManageCounteragents" && a.IsAllowed) ?? false))
+                {
+                    System.Windows.MessageBox.Show(
+                    "У пользователя в Диадоке не хватает прав для работы со списком контрагентов.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                ConnectCounteragentModel connectCounteragentModel = null;
+
+                var loadWindow = new LoadWindow();
+                loadWindow.DataContext = new LoadModel();
+                
+                loadWindow.Show();
+
+                try
+                {
+                    await Task.Run(() => connectCounteragentModel = new ConnectCounteragentModel(_config, _abt));
+                }
+                finally
+                {
+                    loadWindow.Close();
+                }
+
+                connectCounteragentModel.IdSellerCustomer = SelectedOrganization.IdCustomer.Value;
+
+                if (connectCounteragentModel.IsMainFilial)
+                    connectCounteragentModel.Filials = this.Filials;
+
+                var connectCounteragentWindow = new ConnectCounteragentWindow(connectCounteragentModel.IsMainFilial && connectCounteragentModel.Filials != null);
+                connectCounteragentWindow.DataContext = connectCounteragentModel;
+
+                connectCounteragentWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                _log.Log($"ConnectCounteragents Exception: {_log.GetRecursiveInnerException(ex)}");
+
+                var errorWindow = new ErrorWindow(
+                            "Произошла ошибка работы с подключением контрагентов.",
                             new List<string>(
                                 new string[]
                                 {

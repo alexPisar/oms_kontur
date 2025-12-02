@@ -132,6 +132,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
             modelBuilder.Configurations.Add(new Mapping.RefAuthoritySignDocumentsConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefSubdivisionConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefRefTagConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefEdoCounteragentConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -165,5 +166,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual DbSet<RefAuthoritySignDocuments> RefAuthoritySignDocuments { get; set; }
         public virtual DbSet<RefSubdivision> RefSubdivisions { get; set; }
         public virtual DbSet<RefRefTag> RefRefTags { get; set; }
+        public virtual DbSet<RefEdoCounteragent> RefEdoCounteragents { get; set; }
     }
 }

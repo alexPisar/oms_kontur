@@ -1142,7 +1142,7 @@ namespace EdiTest
                         doc
                     });
 
-                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\MarkedCodes_31_07_2025.xlsx", docs);
+                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\ReturnsFromMp.xlsx", docs);
 
                 worker.ImportData<DocGoodsDetailsLabelsForLoad>();
                 var nonBarCodes = new List<string>();
@@ -1152,11 +1152,17 @@ namespace EdiTest
                 foreach (var d in doc.Data)
                 {
                     var docGoodsDetailsLabelsForLoad = (DocGoodsDetailsLabelsForLoad)d;
+                    docGoodsDetailsLabelsForLoad.DmLabel = docGoodsDetailsLabelsForLoad.DmLabel.TrimStart((char)29);
 
+                    if (string.IsNullOrEmpty(docGoodsDetailsLabelsForLoad.Gtin))
+                        docGoodsDetailsLabelsForLoad.Gtin = docGoodsDetailsLabelsForLoad.DmLabel.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+
+                    if (docGoodsDetailsLabelsForLoad.DmLabel.Length > 31)
+                        docGoodsDetailsLabelsForLoad.DmLabel = docGoodsDetailsLabelsForLoad.DmLabel.Substring(0, docGoodsDetailsLabelsForLoad.DmLabel.IndexOf((char)29));
                     //var res = abt.SelectSingleValue($"select 1 from doc_goods_details_labels where dm_label = '{docGoodsDetailsLabelsForLoad.DmLabel}'");
 
-                    //if (res == "1")
-                    //    continue;
+                        //if (res == "1")
+                        //    continue;
 
                     string barCodeStr = docGoodsDetailsLabelsForLoad.Gtin.TrimStart('0');
 
@@ -1187,7 +1193,7 @@ namespace EdiTest
 
                 File.WriteAllText("C:\\Users\\developer3\\Desktop\\BarCodesList.txt", string.Join("\n", nonBarCodes));
 
-                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel));
+                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel)).ToList();
                 abt.DocGoodsDetailsLabels.AddRange(labels);
                 abt.SaveChanges();
             }
@@ -1206,6 +1212,38 @@ namespace EdiTest
                 var processor = new EdiProcessingUnit.ProcessorUnits.DespatchAdviceProcessor(new List<DocOrder>(new[] { docOrder }));
                 processorFactory.RunProcessor(processor);
             }
+        }
+
+        [TestMethod]
+        public void SendInviteToCounteragent()
+        {
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            var crypto = new WinApiCryptWrapper();
+            var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+            edo.Authenticate(false, cert, "2538150215");
+
+            var counteragentFnsId = "2BM-251801525231-20250319124251621011600000000";
+
+            var counteragents = edo.GetKontragents(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxIdGuid, null, null);
+
+            if (!counteragents.Exists(c => c?.Organization?.FnsParticipantId == counteragentFnsId))
+            {
+                var orgObj = edo.GetOrganizationByFnsIdAsync(counteragentFnsId).Result;
+
+                var counteragentBoxId = orgObj.Key;
+                var organization = orgObj.Value;
+
+                var res = edo.AcquireCounteragentAsync(counteragentBoxId, organization.OrgId, organization.Inn, "Приглашаем вас к обмену документами.").Result;
+            }
+            else
+            {
+                var counteragent = counteragents.FirstOrDefault(c => c?.Organization?.FnsParticipantId == counteragentFnsId);
+                var status = counteragent.CurrentStatus;
+            }
+
+            //var counteragents = edo.GetKontragents(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxIdGuid, null, null);
+
+                //if(counteragents.Exists(c => c.CurrentStatus == Diadoc.Api.Proto.CounteragentStatus.InvitesMe))
         }
 
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)

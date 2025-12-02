@@ -618,6 +618,12 @@ namespace EdiProcessingUnit.Edo
             return await CallApiSafeAsync(new Func<Task<Message>>(async () => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
         }
 
+        public Diadoc.Api.Proto.Employees.Employee GetMyEmployee()
+        {
+            var result = CallApiSafe(new Func<Diadoc.Api.Proto.Employees.Employee>(() => _api.GetMyEmployee(_authToken, _actualBoxId)));
+            return result;
+        }
+
         public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV3 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
         {
             var request = new Diadoc.Api.Proto.Docflow.GetDocflowBatchRequest
@@ -640,7 +646,21 @@ namespace EdiProcessingUnit.Edo
             return docs?.Documents?.FirstOrDefault();
         }
 
-        public List<Counteragent> GetKontragents(string boxId = null, OrganizationList MyOrganizations = null)
+        public async Task<string> AcquireCounteragentAsync(string counteragentBoxId, string counteragentOrgId, string counteragentInn, string inviteText = null)
+        {
+            var request = new AcquireCounteragentRequest
+            {
+                BoxId = counteragentBoxId,
+                OrgId = counteragentOrgId,
+                Inn = counteragentInn,
+                MessageToCounteragent = inviteText
+            };
+
+            var result = await CallApiSafeAsync(new Func<Task<AsyncMethodResult>>(async () => await _api.AcquireCounteragentV3Async(_authToken, _actualBoxIdGuid, request)));
+            return result.TaskId;
+        }
+
+        public List<Counteragent> GetKontragents(string boxId = null, OrganizationList MyOrganizations = null, string counteragentStatus = "IsMyCounteragent")
         {
             CounteragentList list;
             List<Counteragent> result = new List<Counteragent>();
@@ -663,14 +683,13 @@ namespace EdiProcessingUnit.Edo
 
             do
             {
-                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragentsV3(_authToken, boxId, "IsMyCounteragent", currentIndexKey); }));
+                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragentsV3(_authToken, boxId, counteragentStatus, currentIndexKey); }));
 
                 currentIndexKey = null;
 
                 if (list?.Counteragents != null)
                 {
-                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
-                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null));
 
                     if(list.Counteragents.Count >= 100)
                         currentIndexKey = list.Counteragents.Last().IndexKey;
@@ -681,7 +700,7 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
-        public async Task<List<Counteragent>> GetKontragentsAsync(string boxId = null, OrganizationList MyOrganizations = null)
+        public async Task<List<Counteragent>> GetKontragentsAsync(string boxId = null, OrganizationList MyOrganizations = null, string counteragentStatus = "IsMyCounteragent")
         {
             List<Counteragent> result = new List<Counteragent>();
 
@@ -703,14 +722,13 @@ namespace EdiProcessingUnit.Edo
 
             do
             {
-                var list = await CallApiSafeAsync(new Func<Task<CounteragentList>>(async () => { return await _api.GetCounteragentsV3Async(_authToken, boxId, "IsMyCounteragent", currentIndexKey); }));
+                var list = await CallApiSafeAsync(new Func<Task<CounteragentList>>(async () => { return await _api.GetCounteragentsV3Async(_authToken, boxId, counteragentStatus, currentIndexKey); }));
 
                 currentIndexKey = null;
 
                 if (list?.Counteragents != null)
                 {
-                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
-                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null));
 
                     if (list.Counteragents.Count >= 100)
                         currentIndexKey = list.Counteragents.Last().IndexKey;
@@ -719,6 +737,19 @@ namespace EdiProcessingUnit.Edo
             while (!string.IsNullOrEmpty(currentIndexKey));
 
             return result;
+        }
+
+        public async Task<KeyValuePair<string, Models.Kontragent>> GetOrganizationByFnsIdAsync(string fnsId)
+        {
+            var org = await CallApiSafeAsync(new Func<Task<Organization>>(async () => { return await _api.GetOrganizationByFnsParticipantIdAsync(_authToken, fnsId); }));
+
+            var organization = new Models.Kontragent(org?.FullName ?? "", org?.Inn, org?.Kpp);
+            organization.OrgId = org?.OrgId ?? "";
+            organization.Address = org?.Address;
+            organization.FnsParticipantId = org?.FnsParticipantId;
+            var counteragentBoxId = org?.Boxes?.FirstOrDefault()?.BoxIdGuid ?? string.Empty;
+
+            return new KeyValuePair<string, Models.Kontragent>(counteragentBoxId, organization);
         }
 
         public List<Models.Kontragent> GetOrganizations(string boxIdGuid = null)
@@ -766,6 +797,23 @@ namespace EdiProcessingUnit.Edo
                 OrgId = organization?.OrgId,
                 Address = organization?.Address
             };
+        }
+
+        public List<Models.Kontragent> GetKontragentsByInnKpp(string inn, string kpp = null)
+        {
+            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, kpp)));
+
+            if (organizations?.Organizations == null || organizations.Organizations?.Count == 0)
+                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, null)));
+
+            var result = organizations.Organizations.Select(o => new Models.Kontragent(o?.FullName, o?.Inn, o?.Kpp)
+            {
+                OrgId = o?.OrgId,
+                Address = o?.Address,
+                FnsParticipantId = o?.FnsParticipantId
+            }).ToList();
+
+            return result;
         }
 
         public Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType documentTitleType)

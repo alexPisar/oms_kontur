@@ -248,6 +248,39 @@ namespace EdiProcessingUnit.ProcessorUnits
             }
         }
 
+        private void ChecksCounteragents(RefCustomer company)
+        {
+            var dateTimeFrom = DateTime.Now.AddMonths(-6);
+
+            var refEdoCounteragents = from a in _abtDbContext.RefEdoCounteragents
+                                      where a.IsConnected == 0 && a.InsertDatetime > dateTimeFrom
+                                      join r in _abtDbContext.RefCustomers
+                                      on a.IdCustomerSeller equals r.Id
+                                      where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                      select a;
+
+            if((refEdoCounteragents?.Count() ?? 0) != 0)
+            {
+                foreach(var refEdoCounteragent in refEdoCounteragents)
+                {
+                    var counteragents = _edo.GetKontragents(_edo.ActualBoxIdGuid);
+
+                    if (counteragents == null || counteragents.Count == 0 || string.IsNullOrEmpty(refEdoCounteragent?.IdFnsBuyer))
+                        continue;
+
+                    var counteragent = counteragents.Where(c => c?.Organization?.FnsParticipantId?.ToUpper() == refEdoCounteragent.IdFnsBuyer.ToUpper());
+
+                    if(counteragent != null)
+                    {
+                        _abtDbContext.Entry(refEdoCounteragent)?.Reload();
+                        refEdoCounteragent.ConnectStatus = (int)Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent;
+                        refEdoCounteragent.IsConnected = 1;
+                        _abtDbContext.SaveChanges();
+                    }
+                }
+            }
+        }
+
         public override void Run()
         {
             List<string> connectionStringList = new UsersConfig().GetAllConnectionStrings();
@@ -265,7 +298,17 @@ namespace EdiProcessingUnit.ProcessorUnits
                         {
                             OrgInn = myOrg.Inn;
                             Auth();
-                            ExecuteChecks(myOrg);
+
+                            try
+                            {
+                                ExecuteChecks(myOrg);
+                            }
+                            catch(Exception exception)
+                            {
+                                MailReporter.Add($"DiadocEdoProcessorException \r\nProcessing exception for organization with Inn = {myOrg.Inn}\r\n" + _log.GetRecursiveInnerException(exception));
+                            }
+
+                            ChecksCounteragents(myOrg);
                         }
                     }
                 }

@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8CED658932C59DCD5CD108F1083D3D20770DD1C1</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>EdiProcessingUnit_TemporaryKey.pfx</ManifestKeyFile>

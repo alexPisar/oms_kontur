@@ -44,7 +44,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8CED658932C59DCD5CD108F1083D3D20770DD1C1</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>KonturEdoClient_TemporaryKey.pfx</ManifestKeyFile>
@@ -204,6 +204,12 @@
     <Compile Include="ConfirmAnnulmentWindow.xaml.cs">
       <DependentUpon>ConfirmAnnulmentWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ConnectCounteragentWindow.xaml.cs">
+      <DependentUpon>ConnectCounteragentWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CounteragentsWindow.xaml.cs">
+      <DependentUpon>CounteragentsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ErrorSendHonestMarkWindow.xaml.cs">
       <DependentUpon>ErrorSendHonestMarkWindow.xaml</DependentUpon>
     </Compile>
@@ -216,6 +222,7 @@
     <Compile Include="Models\Base\ListViewModel.cs" />
     <Compile Include="Models\ChannelSettingsModel.cs" />
     <Compile Include="Models\ChannelsListModel.cs" />
+    <Compile Include="Models\ConnectCounteragentModel.cs" />
     <Compile Include="Models\CorrectionDocumentsModel.cs" />
     <Compile Include="Models\DocEdoProcessingForLoading.cs" />
     <Compile Include="Models\GoodsMatchingModel.cs" />
@@ -267,6 +274,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ConfirmAnnulmentWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ConnectCounteragentWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
