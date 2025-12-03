@@ -17,7 +17,7 @@
                 <Label Margin="5 0" Width="120" Content="Юр. лицо" />
                 <dxg:LookUpEdit Width="350" ItemsSource="{Binding RefCustomers}" PopupWidth="1200" PopupHeight="600"
                                 SelectedItem="{Binding SelectedCustomer, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                DisplayMember="Name" ImmediatePopup="True" AutoPopulateColumns="False">
+                                DisplayMember="Name" ImmediatePopup="True" AutoPopulateColumns="False" SelectedIndexChanged="LookUpEdit_SelectedIndexChanged">
                     <dxg:LookUpEdit.PopupContentTemplate>
                         <ControlTemplate TargetType="{x:Type ContentControl}">
                             <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False" >

@@ -89,7 +89,14 @@ namespace KonturEdoClient.Models
             else
             {
                 var counteragent = counteragents.FirstOrDefault(c => c?.Organization?.FnsParticipantId?.ToUpper() == FnsId.Trim().ToUpper());
-                currentStatus = counteragent?.CurrentStatus;
+
+                if(SelectedCustomer.Inn != counteragent?.Organization?.Inn)
+                {
+                    System.Windows.MessageBox.Show("Ошибка! ИНН контрагента не соответствует ИНН юр. лица.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return null;
+                }
+                else
+                    currentStatus = counteragent?.CurrentStatus;
             }
 
             if (refEdoCounteragent != null)

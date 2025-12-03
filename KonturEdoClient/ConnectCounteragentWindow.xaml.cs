@@ -37,5 +37,14 @@ namespace KonturEdoClient
         {
             Close();
         }
+
+        private void LookUpEdit_SelectedIndexChanged(object sender, RoutedEventArgs e)
+        {
+            if(DataContext as Models.ConnectCounteragentModel != null)
+            {
+                (DataContext as Models.ConnectCounteragentModel).FnsId = string.Empty;
+                (DataContext as Models.ConnectCounteragentModel).OnPropertyChanged("FnsId");
+            }
+        }
     }
 }
