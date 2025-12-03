@@ -173,7 +173,14 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 var tasks = docsFromBlock.Select((doc) =>
                 {
-                    var receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
+                    Kontragent receiver = null;
+
+                    if(!string.IsNullOrEmpty(doc.BuyerFnsParticipantId))
+                        receiver = counteragents.FirstOrDefault(r => r.FnsParticipantId?.ToUpper() == doc.BuyerFnsParticipantId.ToUpper() && r.Inn == doc.BuyerInn);
+
+                    if(receiver == null)
+                        receiver = counteragents.FirstOrDefault(r => r.Inn == doc.BuyerInn);
+
                     var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc, signerDetails);
                     return task;
                 });

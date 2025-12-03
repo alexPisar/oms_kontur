@@ -120,6 +120,9 @@ namespace EdiProcessingUnit.Edo.Models
         public virtual string ContractDate { get; set; }
 
         [NotMapped]
+        public string BuyerFnsParticipantId { get; set; } = null;
+
+        [NotMapped]
         public List<UniversalTransferDocumentDetail> Details { get; set; }
 
         [NotMapped]
@@ -156,6 +159,20 @@ namespace EdiProcessingUnit.Edo.Models
                        }).ToList();
 
             Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
+
+            var refEdoCounteragent = (from r in abt.RefEdoCounteragents
+                                      where r.IsConnected == 1
+                                      join seller in abt.RefCustomers
+                                      on r.IdCustomerSeller equals (seller.Id)
+                                      where seller.Inn == this.SellerInn && seller.Kpp == this.SellerKpp
+                                      join buyer in abt.RefCustomers
+                                      on r.IdCustomerBuyer equals (buyer.Id)
+                                      where buyer.Inn == this.BuyerInn
+                                      select r)?.FirstOrDefault();
+
+            if (refEdoCounteragent != null)
+                if (refEdoCounteragent.IsConnected == 1)
+                    BuyerFnsParticipantId = refEdoCounteragent.IdFnsBuyer;
 
             if(this.IsMarked)
                 _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings
