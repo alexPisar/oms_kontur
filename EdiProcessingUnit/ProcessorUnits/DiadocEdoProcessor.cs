@@ -268,9 +268,9 @@ namespace EdiProcessingUnit.ProcessorUnits
                     if (counteragents == null || counteragents.Count == 0 || string.IsNullOrEmpty(refEdoCounteragent?.IdFnsBuyer))
                         continue;
 
-                    var counteragent = counteragents.Where(c => c?.Organization?.FnsParticipantId?.ToUpper() == refEdoCounteragent.IdFnsBuyer.ToUpper());
+                    var counteragent = counteragents.Where(c => c?.Organization?.FnsParticipantId?.ToUpper() == refEdoCounteragent.IdFnsBuyer.ToUpper())?.FirstOrDefault();
 
-                    if(counteragent != null)
+                    if(counteragent != null && counteragent?.CurrentStatus == Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent)
                     {
                         _abtDbContext.Entry(refEdoCounteragent)?.Reload();
                         refEdoCounteragent.ConnectStatus = (int)Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent;
