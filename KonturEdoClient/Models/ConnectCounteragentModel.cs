@@ -334,31 +334,43 @@ namespace KonturEdoClient.Models
 
                             using(var abtDbContext = new AbtDbContext(_config.GetConnectionStringByUser(filial), true))
                             {
-                                var filialEdoCounteragent = abtDbContext.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
+                                RefCustomer filialBuyerCustomer = null;
+                                var selectedCustomerId = SelectedCustomer.Id;
+                                var selectedCustomerInn = SelectedCustomer.Inn;
 
-                                if(filialEdoCounteragent != null)
+                                filialBuyerCustomer = abtDbContext.RefCustomers?.FirstOrDefault(r => r.Id == selectedCustomerId && r.Inn == selectedCustomerInn);
+
+                                if(filialBuyerCustomer == null)
+                                    filialBuyerCustomer = abtDbContext.RefCustomers?.FirstOrDefault(r => r.Inn == selectedCustomerInn);
+
+                                if (filialBuyerCustomer != null)
                                 {
-                                    filialEdoCounteragent.ConnectStatus = refEdoCounteragent.ConnectStatus;
-                                    filialEdoCounteragent.IsConnected = refEdoCounteragent.IsConnected;
-                                    filialEdoCounteragent.IdFnsBuyer = refEdoCounteragent.IdFnsBuyer;
-                                    filialEdoCounteragent.IdFilial = refEdoCounteragent.IdFilial;
-                                }
-                                else
-                                {
-                                    abtDbContext.RefEdoCounteragents.Add(new RefEdoCounteragent
+                                    var filialEdoCounteragent = abtDbContext.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == filialBuyerCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
+
+                                    if(filialEdoCounteragent != null)
                                     {
-                                        IdCustomerSeller = refEdoCounteragent.IdCustomerSeller,
-                                        IdCustomerBuyer = refEdoCounteragent.IdCustomerBuyer,
-                                        IdFnsBuyer = refEdoCounteragent.IdFnsBuyer,
-                                        ConnectStatus = refEdoCounteragent.ConnectStatus,
-                                        InsertDatetime = refEdoCounteragent.InsertDatetime,
-                                        InsertUser = refEdoCounteragent.InsertUser,
-                                        IdFilial = refEdoCounteragent.IdFilial,
-                                        IsConnected = refEdoCounteragent.IsConnected
-                                    });
-                                }
+                                        filialEdoCounteragent.ConnectStatus = refEdoCounteragent.ConnectStatus;
+                                        filialEdoCounteragent.IsConnected = refEdoCounteragent.IsConnected;
+                                        filialEdoCounteragent.IdFnsBuyer = refEdoCounteragent.IdFnsBuyer;
+                                        filialEdoCounteragent.IdFilial = refEdoCounteragent.IdFilial;
+                                    }
+                                    else
+                                    {
+                                        abtDbContext.RefEdoCounteragents.Add(new RefEdoCounteragent
+                                        {
+                                            IdCustomerSeller = refEdoCounteragent.IdCustomerSeller,
+                                            IdCustomerBuyer = filialBuyerCustomer.Id,
+                                            IdFnsBuyer = refEdoCounteragent.IdFnsBuyer,
+                                            ConnectStatus = refEdoCounteragent.ConnectStatus,
+                                            InsertDatetime = refEdoCounteragent.InsertDatetime,
+                                            InsertUser = refEdoCounteragent.InsertUser,
+                                            IdFilial = refEdoCounteragent.IdFilial,
+                                            IsConnected = refEdoCounteragent.IsConnected
+                                        });
+                                    }
 
-                                abtDbContext.SaveChanges();
+                                    abtDbContext.SaveChanges();
+                                }
                             }
                         }
                     }
