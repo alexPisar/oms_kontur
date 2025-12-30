@@ -670,6 +670,9 @@ namespace KonturEdoClient.Models
                         case 20:
                             detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyPercent;
                             break;
+                        case 22:
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyTwoPercent;
+                            break;
                         default:
                             detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.NoVat;
                             break;
@@ -3109,6 +3112,9 @@ namespace KonturEdoClient.Models
                         //    break;
                         case 20:
                             detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyPercent;
+                            break;
+                        case 22:
+                            detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.TwentyTwoPercent;
                             break;
                         default:
                             detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateWithTwentyTwoPercent.NoVat;

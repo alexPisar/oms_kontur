@@ -501,11 +501,7 @@ namespace KonturEdoClient.Models
                                     CorrectedValue = baseDetail.Quantity - detail.Quantity,
                                     CorrectedValueSpecified = true
                                 },
-                                TaxRate = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemTaxRate
-                                {
-                                    OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736AndUtd820.Item20,
-                                    CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736AndUtd820.Item20
-                                },
+                                TaxRate = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemTaxRate(),
                                 Price = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemPrice
                                 {
                                     OriginalValue = oldPrice,
@@ -541,6 +537,33 @@ namespace KonturEdoClient.Models
                                     ItemElementName = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemChoiceType1.AmountsDec
                                 }
                             };
+
+                            switch (baseDetail.TaxRate)
+                            {
+                                case 0:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item0;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item0;
+                                    break;
+                                case 10:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item10;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item10;
+                                    break;
+                                //case 18:
+                                //    detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.;
+                                //    break;
+                                case 20:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item20;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item20;
+                                    break;
+                                case 22:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item22;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item22;
+                                    break;
+                                default:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.безНДС;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.безНДС;
+                                    break;
+                            }
 
                             var country = _abt.RefCountries.FirstOrDefault(c => c.Id == detail.Good.IdCountry);
 
@@ -724,11 +747,7 @@ namespace KonturEdoClient.Models
                                     CorrectedValue = detail.Quantity,
                                     CorrectedValueSpecified = true
                                 },
-                                TaxRate = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemTaxRate
-                                {
-                                    OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736AndUtd820.Item20,
-                                    CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736AndUtd820.Item20
-                                },
+                                TaxRate = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemTaxRate(),
                                 Price = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemPrice
                                 {
                                     OriginalValue = oldPrice,
@@ -764,6 +783,33 @@ namespace KonturEdoClient.Models
                                     ItemElementName = oldSubtotal - oldVat - newSubtotal + newVat > 0 ? Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemChoiceType1.AmountsDec : Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemChoiceType1.AmountsInc
                                 }
                             };
+
+                            switch (baseDetail.TaxRate)
+                            {
+                                case 0:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item0;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item0;
+                                    break;
+                                case 10:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item10;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item10;
+                                    break;
+                                //case 18:
+                                //    detail.TaxRate = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TaxRateUtd970.;
+                                //    break;
+                                case 20:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item20;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item20;
+                                    break;
+                                case 22:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item22;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.Item22;
+                                    break;
+                                default:
+                                    item.TaxRate.OriginalValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.безНДС;
+                                    item.TaxRate.CorrectedValue = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.TaxRateUcd736WithTwentyTwoPercent.безНДС;
+                                    break;
+                            }
 
                             if (oldVat == newVat)
                                 throw new Exception($"Сумма НДС до и после изменения не должны совпадать. ID товара {detail.IdGood}");

@@ -158,10 +158,14 @@
     <Compile Include="Reports\UniversalTransferSellerDocumentUtd970.cs" />
     <Compile Include="XmlUtils.cs" />
     <Compile Include="XsdClasses\ON_NSCHFDOPPR_1_997_01_05_03_01.cs" />
+    <Compile Include="XsdClasses\ON_NSCHFDOPPR_1_997_01_05_03_05.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <None Include="XSD\ON_NSCHFDOPPR_1_997_01_05_03_01.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="XSD\ON_NSCHFDOPPR_1_997_01_05_03_05.xsd">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>

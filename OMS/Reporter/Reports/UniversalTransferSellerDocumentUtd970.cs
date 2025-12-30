@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Reporter.Entities;
 using Reporter.Enums;
-using Reporter.XsdClasses.OnNschfdopprUtd970;
+using Reporter.XsdClasses.OnNschfdopprUtd970_05_03_05;
 
 namespace Reporter.Reports
 {
@@ -555,6 +555,8 @@ namespace Reporter.Reports
                                 good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item10;
                             else if (p.VatRate == 20)
                                 good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item20;
+                            else if (p.VatRate == 22)
+                                good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.Item22;
                             else
                                 good.НалСт = ФайлДокументТаблСчФактСведТовНалСт.НДСисчисляетсяналоговымагентом;
 
