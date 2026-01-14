@@ -1673,12 +1673,18 @@ namespace KonturEdoClient.Models
                         if (SelectedOrganization.IdCustomer != null)
                         {
                             var idCustomerSeller = SelectedOrganization.IdCustomer.Value;
-                            refEdoCounteragent = (from r in _abt.RefEdoCounteragents
-                                                 where r.IsConnected == 1 && r.IdCustomerSeller == idCustomerSeller
-                                                 join buyer in _abt.RefCustomers
-                                                 on r.IdCustomerBuyer equals buyer.Id
-                                                 where buyer.Inn == buyerInn
-                                                 select r)?.FirstOrDefault();
+
+                            var refEdoCounteragents = from r in _abt.RefEdoCounteragents
+                                                      where r.IsConnected == 1 && r.IdCustomerSeller == idCustomerSeller
+                                                      join buyer in _abt.RefCustomers
+                                                      on r.IdCustomerBuyer equals buyer.Id
+                                                      where buyer.Inn == buyerInn
+                                                      select r;
+
+                            refEdoCounteragent = refEdoCounteragents?.FirstOrDefault(r => r.IsDefault == 1);
+
+                            if(refEdoCounteragent == null)
+                                refEdoCounteragent = refEdoCounteragents?.FirstOrDefault();
                         }
 
                         if(refEdoCounteragent != null)

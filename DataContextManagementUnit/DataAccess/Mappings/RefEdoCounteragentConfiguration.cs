@@ -7,7 +7,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
         public RefEdoCounteragentConfiguration()
         {
             this
-                .HasKey(c => new { c.IdCustomerSeller, c.IdCustomerBuyer })
+                .HasKey(c => new { c.IdCustomerSeller, c.IdCustomerBuyer, c.IdFnsBuyer })
                 .ToTable("REF_EDO_COUNTERAGENTS", "EDI");
 
             this
@@ -45,6 +45,10 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
             this
                 .Property(c => c.IsConnected)
                 .HasColumnName(@"IS_CONNECTED");
+
+            this
+                .Property(c => c.IsDefault)
+                .HasColumnName(@"IS_DEFAULT");
 
             OnCreated();
         }

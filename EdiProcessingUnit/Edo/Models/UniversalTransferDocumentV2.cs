@@ -160,7 +160,7 @@ namespace EdiProcessingUnit.Edo.Models
 
             Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
 
-            var refEdoCounteragent = (from r in abt.RefEdoCounteragents
+            var refEdoCounteragents = from r in abt.RefEdoCounteragents
                                       where r.IsConnected == 1
                                       join seller in abt.RefCustomers
                                       on r.IdCustomerSeller equals (seller.Id)
@@ -168,7 +168,12 @@ namespace EdiProcessingUnit.Edo.Models
                                       join buyer in abt.RefCustomers
                                       on r.IdCustomerBuyer equals (buyer.Id)
                                       where buyer.Inn == this.BuyerInn
-                                      select r)?.FirstOrDefault();
+                                      select r;
+
+            var refEdoCounteragent = refEdoCounteragents?.FirstOrDefault(r => r.IsDefault == 1);
+
+            if(refEdoCounteragent == null)
+                refEdoCounteragent = refEdoCounteragents?.FirstOrDefault();
 
             if (refEdoCounteragent != null)
                 if (refEdoCounteragent.IsConnected == 1)

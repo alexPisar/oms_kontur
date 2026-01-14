@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d" ResizeMode="NoResize"
-        Title="Подключение контрагента" Height="160" Width="550">
+        Title="Подключение контрагента" Height="200" Width="550">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -49,6 +49,9 @@
                 <Label Margin="5 0" Width="120" Content="Идентификатор ЭДО" />
                 <TextBox Text="{Binding FnsId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="350"/>
                 <Button x:Name="ChangeCounteragentButton" Margin="5 0" Content="..." Width="35" Command="{Binding ChangeCounteragentCommand}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10 5">
+                <CheckBox Content="Выбрать по умолчанию" IsChecked="{Binding Path=IsDefault, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
             </StackPanel>
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="1">

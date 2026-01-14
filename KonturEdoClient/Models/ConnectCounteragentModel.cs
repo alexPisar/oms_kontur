@@ -33,9 +33,11 @@ namespace KonturEdoClient.Models
             }
 
             Filials = null;
+            IsDefault = true;
         }
 
         public bool IsMainFilial => _idFilial == 1;
+        public bool IsDefault { get; set; }
 
         public RelayCommand CheckConnectCommand => new RelayCommand((o) => { CheckConnect(); });
         public RelayCommand ConnectCommand => new RelayCommand((o) => { Connect(); });
@@ -59,7 +61,13 @@ namespace KonturEdoClient.Models
                 return null;
             }
 
-            var refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
+            RefEdoCounteragent refEdoCounteragent = null;
+
+            if(string.IsNullOrEmpty(FnsId))
+                refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer && c.IsDefault == 1);
+            else
+                refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer
+                && c.IdFnsBuyer.ToUpper() == FnsId.Trim().ToUpper());
 
             if(refEdoCounteragent?.IdFilial == 1 && _idFilial != 1)
             {
@@ -144,18 +152,19 @@ namespace KonturEdoClient.Models
                     System.Windows.MessageBox.Show(message, "Подключение", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
 
-                var refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
-
-                if(refEdoCounteragent != null)
+                if (IsDefault)
                 {
-                    if (refEdoCounteragent.IdFnsBuyer.ToUpper() != FnsId.Trim().ToUpper())
-                    {
-                        refEdoCounteragent.IdFnsBuyer = FnsId.Trim();
-                        refEdoCounteragent.InsertDatetime = DateTime.Now;
-                        refEdoCounteragent.InsertUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
-                    }
+                    var otherEdoIdsForOrganization = _abt.RefEdoCounteragents.Where(r => r.IdCustomerBuyer == SelectedCustomer.Id && r.IdCustomerSeller == this.IdSellerCustomer &&
+                    r.IdFnsBuyer.ToUpper() != FnsId.Trim().ToUpper())?.ToList() ?? new List<RefEdoCounteragent>();
+
+                    foreach (var otherEdoIdForOrganization in otherEdoIdsForOrganization)
+                        otherEdoIdForOrganization.IsDefault = 0;
                 }
-                else
+
+                var refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer &&
+                c.IdFnsBuyer.ToUpper() == FnsId.Trim().ToUpper());
+
+                if(refEdoCounteragent == null)
                 {
                     refEdoCounteragent = new RefEdoCounteragent
                     {
@@ -166,11 +175,17 @@ namespace KonturEdoClient.Models
                         InsertDatetime = DateTime.Now,
                         InsertUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                         IdFilial = _idFilial,
-                        IsConnected = checkConnect == Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent ? 1 : 0
+                        IsConnected = checkConnect == Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent ? 1 : 0,
+                        IsDefault = this.IsDefault ? 1 : 0
                     };
 
                     _abt.RefEdoCounteragents.Add(refEdoCounteragent);
                 }
+                else
+                {
+                    refEdoCounteragent.IsDefault = this.IsDefault ? 1 : 0;
+                }
+
                 _abt.SaveChanges();
 
                 loadWindow.SetSuccessFullLoad(loadModel, "Данные контрагента занесены.");
@@ -295,7 +310,13 @@ namespace KonturEdoClient.Models
                 var loadModel = new LoadModel();
                 loadWindow.DataContext = loadModel;
 
-                var refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
+                RefEdoCounteragent refEdoCounteragent = null;
+
+                if(string.IsNullOrEmpty(FnsId))
+                    refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer && c.IsDefault == 1);
+                else
+                    refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer
+                    && c.IdFnsBuyer.ToUpper() == FnsId.Trim().ToUpper());
 
                 if (refEdoCounteragent == null)
                 {
@@ -345,7 +366,15 @@ namespace KonturEdoClient.Models
 
                                 if (filialBuyerCustomer != null)
                                 {
-                                    var filialEdoCounteragent = abtDbContext.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == filialBuyerCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer);
+                                    var filialEdoCounteragents = abtDbContext.RefEdoCounteragents.Where(c => c.IdCustomerBuyer == filialBuyerCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer).ToList();
+
+                                    if (refEdoCounteragent.IsDefault == 1)
+                                    {
+                                        foreach (var f in filialEdoCounteragents)
+                                            f.IsDefault = 0;
+                                    }
+
+                                    var filialEdoCounteragent = filialEdoCounteragents.FirstOrDefault(c => c.IdFnsBuyer.ToUpper() == FnsId.Trim().ToUpper());
 
                                     if(filialEdoCounteragent != null)
                                     {
@@ -353,6 +382,7 @@ namespace KonturEdoClient.Models
                                         filialEdoCounteragent.IsConnected = refEdoCounteragent.IsConnected;
                                         filialEdoCounteragent.IdFnsBuyer = refEdoCounteragent.IdFnsBuyer;
                                         filialEdoCounteragent.IdFilial = refEdoCounteragent.IdFilial;
+                                        filialEdoCounteragent.IsDefault = refEdoCounteragent.IsDefault == 1 ? 1 : 0;
                                     }
                                     else
                                     {
@@ -365,7 +395,8 @@ namespace KonturEdoClient.Models
                                             InsertDatetime = refEdoCounteragent.InsertDatetime,
                                             InsertUser = refEdoCounteragent.InsertUser,
                                             IdFilial = refEdoCounteragent.IdFilial,
-                                            IsConnected = refEdoCounteragent.IsConnected
+                                            IsConnected = refEdoCounteragent.IsConnected,
+                                            IsDefault = refEdoCounteragent.IsDefault == 1 ? 1 : 0
                                         });
                                     }
 

@@ -21,6 +21,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual string InsertUser { get; set; }
         public virtual decimal? IdFilial { get; set; }
         public virtual int IsConnected { get; set; }
+        public virtual int IsDefault { get; set; }
 
         #region Extensibility Method Definitions
 
