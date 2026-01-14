@@ -41,7 +41,12 @@ namespace EdiProcessingUnit.Edo.Models
             get 
                 {
                 if (DocDetailI != null && _vat == null)
-                    _vat = (decimal)Math.Round(DocDetailI.TaxSumm * DocDetailI.Quantity, 2);
+                {
+                    if (Subtotal == null)
+                        _vat = (decimal)Math.Round(DocDetailI.TaxSumm * DocDetailI.Quantity, 2);
+                    else
+                        _vat = (decimal)Math.Round(Subtotal.Value * DocDetailI.TaxRate / (DocDetailI.TaxRate + 100), 2);
+                }
 
                 return _vat;
             }
@@ -52,7 +57,7 @@ namespace EdiProcessingUnit.Edo.Models
             get 
                 {
                 if (DocDetailI != null && _subtotal == null)
-                    _subtotal = Math.Round(DocDetailI.Quantity * (decimal)DocDetailI.Price, 2);
+                    _subtotal = Math.Round(DocDetailI.Quantity * ((decimal)DocDetailI.Price - (decimal)DocDetailI.DiscountSumm), 2);
                 else if (DocDetail != null && _subtotal == null)
                     _subtotal = Math.Round(DocDetail.Quantity * (decimal)DocDetail.Price, 2);
 
@@ -65,7 +70,12 @@ namespace EdiProcessingUnit.Edo.Models
             get 
                 {
                 if(DocDetailI != null && _price == null)
-                    _price = (decimal)Math.Round(DocDetailI.Price - DocDetailI.TaxSumm, 2);
+                {
+                    if (Subtotal == null || Quantity == null)
+                        _price = (decimal)Math.Round(DocDetailI.Price - DocDetailI.TaxSumm, 2);
+                    else
+                        _price = (decimal)Math.Round(Subtotal.Value * 100 / (DocDetailI.TaxRate + 100) / Quantity.Value, 2);
+                }
                 else if (DocDetail != null && _price == null)
                     _price = (decimal)Math.Round(DocDetail.Price, 2);
 
