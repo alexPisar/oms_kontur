@@ -281,6 +281,43 @@ namespace EdiProcessingUnit.ProcessorUnits
             }
         }
 
+        private void AddCounteragentsToTrader(RefCustomer company)
+        {
+            var dateTimeFrom = DateTime.Now.AddMonths(-6);
+
+            var refEdoCounteragents = from a in _abtDbContext.RefEdoCounteragents
+                                      where a.IsConnected == 1 && a.IsDefault == 1 && a.InsertDatetime > dateTimeFrom
+                                      && !_abtDbContext.RefRefTags.Any(r => r.IdTag == 223 && r.IdObject == a.IdCustomerBuyer && r.TagValue == a.IdFnsBuyer)
+                                      join r in _abtDbContext.RefCustomers
+                                      on a.IdCustomerSeller equals r.Id
+                                      where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                      select a;
+
+            if ((refEdoCounteragents?.Count() ?? 0) != 0)
+            {
+                foreach (var refEdoCounteragent in refEdoCounteragents)
+                {
+                    var refRefTag = _abtDbContext.RefRefTags.FirstOrDefault(r => r.IdTag == 223 && r.IdObject == refEdoCounteragent.IdCustomerBuyer);
+
+                    if(refRefTag != null)
+                    {
+                        refRefTag.TagValue = refEdoCounteragent.IdFnsBuyer;
+                    }
+                    else
+                    {
+                        _abtDbContext.RefRefTags.Add(new RefRefTag
+                        {
+                            IdObject = refEdoCounteragent.IdCustomerBuyer,
+                            IdTag = 223,
+                            TagValue = refEdoCounteragent.IdFnsBuyer
+                        });
+                    }
+
+                    _abtDbContext.SaveChanges();
+                }
+            }
+        }
+
         public override void Run()
         {
             List<string> connectionStringList = new UsersConfig().GetAllConnectionStrings();
@@ -309,6 +346,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                             }
 
                             ChecksCounteragents(myOrg);
+                            AddCounteragentsToTrader(myOrg);
                         }
                     }
                 }
