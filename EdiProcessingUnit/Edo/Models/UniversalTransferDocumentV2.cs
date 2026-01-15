@@ -160,24 +160,33 @@ namespace EdiProcessingUnit.Edo.Models
 
             Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
 
-            var refEdoCounteragents = from r in abt.RefEdoCounteragents
-                                      where r.IsConnected == 1
-                                      join seller in abt.RefCustomers
-                                      on r.IdCustomerSeller equals (seller.Id)
-                                      where seller.Inn == this.SellerInn && seller.Kpp == this.SellerKpp
-                                      join buyer in abt.RefCustomers
-                                      on r.IdCustomerBuyer equals (buyer.Id)
-                                      where buyer.Inn == this.BuyerInn
-                                      select r;
+            BuyerFnsParticipantId = (from refTag in abt.RefRefTags
+                                    where refTag.IdTag == 223
+                                    join buyer in abt.RefCustomers
+                                    on refTag.IdObject equals buyer.Id
+                                    where buyer.Inn == this.BuyerInn
+                                    select refTag)?.FirstOrDefault()?.TagValue;
 
-            var refEdoCounteragent = refEdoCounteragents?.FirstOrDefault(r => r.IsDefault == 1);
+            if (string.IsNullOrEmpty(BuyerFnsParticipantId))
+            {
+                var refEdoCounteragents = from r in abt.RefEdoCounteragents
+                                          where r.IsConnected == 1
+                                          join seller in abt.RefCustomers
+                                          on r.IdCustomerSeller equals (seller.Id)
+                                          where seller.Inn == this.SellerInn && seller.Kpp == this.SellerKpp
+                                          join buyer in abt.RefCustomers
+                                          on r.IdCustomerBuyer equals (buyer.Id)
+                                          where buyer.Inn == this.BuyerInn
+                                          select r;
 
-            if(refEdoCounteragent == null)
-                refEdoCounteragent = refEdoCounteragents?.FirstOrDefault();
+                var refEdoCounteragent = refEdoCounteragents?.FirstOrDefault(r => r.IsDefault == 1);
 
-            if (refEdoCounteragent != null)
-                if (refEdoCounteragent.IsConnected == 1)
+                if(refEdoCounteragent == null)
+                    refEdoCounteragent = refEdoCounteragents?.FirstOrDefault();
+
+                if (refEdoCounteragent != null)
                     BuyerFnsParticipantId = refEdoCounteragent.IdFnsBuyer;
+            }
 
             if(this.IsMarked)
                 _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings
