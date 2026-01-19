@@ -316,6 +316,43 @@ namespace EdiProcessingUnit.ProcessorUnits
                     _abtDbContext.SaveChanges();
                 }
             }
+
+            var refEdoCounteragentConsignees = from a in _abtDbContext.RefEdoCounteragentConsignees
+                                               where a.InsertDatetime > dateTimeFrom &&
+                                               !_abtDbContext.RefRefTags.Any(r => r.IdTag == 224 && r.IdObject == a.IdContractorConsignee && r.TagValue == a.IdFnsBuyer)
+                                               join r in _abtDbContext.RefCustomers on a.IdCustomerSeller equals r.Id
+                                               where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                               let edoCounteragents = (from refEdo in _abtDbContext.RefEdoCounteragents
+                                                                       where refEdo.IdCustomerSeller == a.IdCustomerSeller
+                                                                       && refEdo.IdCustomerBuyer == a.IdCustomerBuyer
+                                                                       && refEdo.IdFnsBuyer == a.IdFnsBuyer && refEdo.IsConnected == 1
+                                                                       select refEdo)
+                                               where edoCounteragents.Count() > 0
+                                               select a;
+
+            if((refEdoCounteragentConsignees?.Count() ?? 0) != 0)
+            {
+                foreach (var refEdoCounteragentConsignee in refEdoCounteragentConsignees)
+                {
+                    var refRefTag = _abtDbContext.RefRefTags.FirstOrDefault(r => r.IdTag == 224 && r.IdObject == refEdoCounteragentConsignee.IdContractorConsignee);
+
+                    if(refRefTag != null)
+                    {
+                        refRefTag.TagValue = refEdoCounteragentConsignee.IdFnsBuyer;
+                    }
+                    else
+                    {
+                        _abtDbContext.RefRefTags.Add(new RefRefTag
+                        {
+                            IdObject = refEdoCounteragentConsignee.IdContractorConsignee,
+                            IdTag = 224,
+                            TagValue = refEdoCounteragentConsignee.IdFnsBuyer
+                        });
+                    }
+
+                    _abtDbContext.SaveChanges();
+                }
+            }
         }
 
         public override void Run()
