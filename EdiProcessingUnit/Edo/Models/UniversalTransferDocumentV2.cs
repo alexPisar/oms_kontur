@@ -119,6 +119,9 @@ namespace EdiProcessingUnit.Edo.Models
         [Column("CONTRACT_DATE")]
         public virtual string ContractDate { get; set; }
 
+        [Column("ID_CONSIGNEE")]
+        public virtual decimal IdConsignee { get; set; }
+
         [NotMapped]
         public string BuyerFnsParticipantId { get; set; } = null;
 
@@ -161,11 +164,33 @@ namespace EdiProcessingUnit.Edo.Models
             Details = Details?.Select(u => u.Init(abt, refEdoGoodChannel)?.SetBarCodeFromDataBase(abt))?.Where(u => u != null)?.ToList();
 
             BuyerFnsParticipantId = (from refTag in abt.RefRefTags
-                                    where refTag.IdTag == 223
-                                    join buyer in abt.RefCustomers
-                                    on refTag.IdObject equals buyer.Id
-                                    where buyer.Inn == this.BuyerInn
-                                    select refTag)?.FirstOrDefault()?.TagValue;
+                                     where refTag.IdTag == 224 && refTag.IdObject == this.IdConsignee
+                                     select refTag)?.FirstOrDefault()?.TagValue;
+
+            if (string.IsNullOrEmpty(BuyerFnsParticipantId))
+            {
+                var refEdoCounteragentConsignees = from r in abt.RefEdoCounteragentConsignees
+                                                   where r.IdContractorConsignee == this.IdConsignee
+                                                   join seller in abt.RefCustomers on r.IdCustomerSeller equals (seller.Id)
+                                                   where seller.Inn == this.SellerInn && seller.Kpp == this.SellerKpp
+                                                   let refEdoCounteragents = (from refEdo in abt.RefEdoCounteragents
+                                                                              where refEdo.IdCustomerSeller == r.IdCustomerSeller
+                                                                              && refEdo.IdCustomerBuyer == r.IdCustomerBuyer
+                                                                              && refEdo.IdFnsBuyer == r.IdFnsBuyer && refEdo.IsConnected == 1
+                                                                              select refEdo)
+                                                   where refEdoCounteragents.Count() > 0
+                                                   select r;
+
+                BuyerFnsParticipantId = refEdoCounteragentConsignees?.FirstOrDefault()?.IdFnsBuyer;
+            }
+
+            if(string.IsNullOrEmpty(BuyerFnsParticipantId))
+                BuyerFnsParticipantId = (from refTag in abt.RefRefTags
+                                         where refTag.IdTag == 223
+                                         join buyer in abt.RefCustomers
+                                         on refTag.IdObject equals buyer.Id
+                                         where buyer.Inn == this.BuyerInn
+                                         select refTag)?.FirstOrDefault()?.TagValue;
 
             if (string.IsNullOrEmpty(BuyerFnsParticipantId))
             {
