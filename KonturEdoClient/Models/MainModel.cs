@@ -1663,10 +1663,40 @@ namespace KonturEdoClient.Models
                         return;
                     }
 
+                    var idConsignee = SelectedDocument?.DocJournal?.DocMaster?.DocGoods?.IdCustomer;
+
+                    if(idConsignee != null)
+                    {
+                        var idFnsByConsignee = _abt.RefRefTags?.FirstOrDefault(r => r.IdTag == 224 && r.IdObject == idConsignee)?.TagValue;
+
+                        if (string.IsNullOrEmpty(idFnsByConsignee) && SelectedOrganization?.IdCustomer != null)
+                        {
+                            var idCustomerSeller = SelectedOrganization.IdCustomer.Value;
+                            idFnsByConsignee = _abt.RefEdoCounteragentConsignees
+                                .FirstOrDefault(c => c.IdCustomerSeller == idCustomerSeller && c.IdContractorConsignee == idConsignee)?.IdFnsBuyer;
+                        }
+
+                        if(!string.IsNullOrEmpty(idFnsByConsignee))
+                            sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.FnsParticipantId?.ToUpper() == idFnsByConsignee);
+                    }
+
                     var buyerInn = buyerInns.FirstOrDefault();
                     var buyerKpp = buyerInfos.Select(b => b.Kpp).FirstOrDefault();
 
-                    if (!string.IsNullOrEmpty(buyerInn))
+                    if (sendModel.SelectedOrganization == null && !string.IsNullOrEmpty(buyerInn))
+                    {
+                        var idFnsByCustomer = (from r in _abt.RefRefTags
+                                               where r.IdTag == 223
+                                               join buyer in _abt.RefCustomers
+                                               on r.IdObject equals buyer.Id
+                                               where buyer.Inn == buyerInn
+                                               select r)?.FirstOrDefault()?.TagValue;
+
+                        if (!string.IsNullOrEmpty(idFnsByCustomer))
+                            sendModel.SelectedOrganization = sendModel.Organizations?.FirstOrDefault(o => o.FnsParticipantId?.ToUpper() == idFnsByCustomer);
+                    }
+
+                    if (sendModel.SelectedOrganization == null && !string.IsNullOrEmpty(buyerInn))
                     {
                         RefEdoCounteragent refEdoCounteragent = null;
 

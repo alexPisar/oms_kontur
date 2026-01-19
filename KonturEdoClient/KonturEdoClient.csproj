@@ -207,6 +207,12 @@
     <Compile Include="ConnectCounteragentWindow.xaml.cs">
       <DependentUpon>ConnectCounteragentWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CounteragentConsigneeEditWindow.xaml.cs">
+      <DependentUpon>CounteragentConsigneeEditWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CounteragentConsigneesWindow.xaml.cs">
+      <DependentUpon>CounteragentConsigneesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CounteragentsWindow.xaml.cs">
       <DependentUpon>CounteragentsWindow.xaml</DependentUpon>
     </Compile>
@@ -224,8 +230,10 @@
     <Compile Include="Models\ChannelsListModel.cs" />
     <Compile Include="Models\ConnectCounteragentModel.cs" />
     <Compile Include="Models\CorrectionDocumentsModel.cs" />
+    <Compile Include="Models\CounteragentConsigneesModel.cs" />
     <Compile Include="Models\DocEdoProcessingForLoading.cs" />
     <Compile Include="Models\GoodsMatchingModel.cs" />
+    <Compile Include="Models\RefEdoCounteragentConsigneeForLoading.cs" />
     <Compile Include="Models\TreeListGoodInfo.cs" />
     <Compile Include="Models\Implementations\RelayCommand.cs" />
     <Compile Include="Models\SendModel.cs" />
@@ -278,6 +286,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ConnectCounteragentWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentConsigneeEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentConsigneesWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

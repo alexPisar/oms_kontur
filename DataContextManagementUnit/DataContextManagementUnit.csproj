@@ -117,6 +117,7 @@
     <Compile Include="DataAccess\Entities\RefCustomer.cs" />
     <Compile Include="DataAccess\Entities\RefDistrict.cs" />
     <Compile Include="DataAccess\Entities\RefEdoCounteragent.cs" />
+    <Compile Include="DataAccess\Entities\RefEdoCounteragentConsignee.cs" />
     <Compile Include="DataAccess\Entities\RefEdoGoodChannel.cs" />
     <Compile Include="DataAccess\Entities\RefEdoUcdValues.cs" />
     <Compile Include="DataAccess\Entities\RefEdoUpdValues.cs" />
@@ -168,6 +169,7 @@
     <Compile Include="DataAccess\Mappings\RefCustomerConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefDistrictConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefEdoCounteragentConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefEdoCounteragentConsigneeConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefEdoGoodChannelConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefEdoUcdValuesConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefEdoUpdValuesConfiguration.cs" />

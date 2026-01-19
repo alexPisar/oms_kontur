@@ -133,6 +133,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
             modelBuilder.Configurations.Add(new Mapping.RefSubdivisionConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefRefTagConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefEdoCounteragentConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefEdoCounteragentConsigneeConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -167,5 +168,6 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual DbSet<RefSubdivision> RefSubdivisions { get; set; }
         public virtual DbSet<RefRefTag> RefRefTags { get; set; }
         public virtual DbSet<RefEdoCounteragent> RefEdoCounteragents { get; set; }
+        public virtual DbSet<RefEdoCounteragentConsignee> RefEdoCounteragentConsignees { get; set; }
     }
 }

@@ -43,6 +43,7 @@ namespace KonturEdoClient.Models
         public RelayCommand ConnectCommand => new RelayCommand((o) => { Connect(); });
         public RelayCommand ChangeCounteragentCommand => new RelayCommand((o) => { ChangeCounteragent(); });
         public RelayCommand TransferToFilialsCommand => new RelayCommand((o) => { TransferToFilials(); });
+        public RelayCommand ChangeConsigneeCommand => new RelayCommand((o) => { ChangeConsignee(); });
 
         public ObservableCollection<RefCustomer> RefCustomers { get; set; }
         public RefCustomer SelectedCustomer { get; set; }
@@ -425,6 +426,61 @@ namespace KonturEdoClient.Models
 
                 var errorWindow = new ErrorWindow(
                             "Произошла ошибка переноса на филиалы.",
+                            new List<string>(
+                                new string[]
+                                {
+                                    ex.Message,
+                                    ex.StackTrace
+                                }
+                                ));
+
+                errorWindow.ShowDialog();
+            }
+        }
+
+        public void ChangeConsignee()
+        {
+            if (SelectedCustomer == null)
+            {
+                System.Windows.MessageBox.Show("Ошибка! Не выбрано юр. лицо.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                RefEdoCounteragent refEdoCounteragent = null;
+
+                if (string.IsNullOrEmpty(FnsId))
+                    refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer && c.IsDefault == 1);
+                else
+                    refEdoCounteragent = _abt.RefEdoCounteragents.FirstOrDefault(c => c.IdCustomerBuyer == SelectedCustomer.Id && c.IdCustomerSeller == this.IdSellerCustomer
+                    && c.IdFnsBuyer.ToUpper() == FnsId.Trim().ToUpper());
+
+                if (refEdoCounteragent == null)
+                {
+                    System.Windows.MessageBox.Show("Ошибка! Данный контрагент не был ранее занесён для подключения.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(FnsId))
+                {
+                    FnsId = refEdoCounteragent.IdFnsBuyer;
+                    OnPropertyChanged("FnsId");
+                }
+
+                var counteragentConsigneesModel = new CounteragentConsigneesModel(refEdoCounteragent, _abt);
+                counteragentConsigneesModel.Refresh();
+
+                var counteragentConsigneesWindow = new CounteragentConsigneesWindow();
+                counteragentConsigneesWindow.DataContext = counteragentConsigneesModel;
+                counteragentConsigneesWindow.ShowDialog();
+            }
+            catch(Exception ex)
+            {
+                _log.Log($"ConnectCounteragentModel.ChangeConsignee Exception: {_log.GetRecursiveInnerException(ex)}");
+
+                var errorWindow = new ErrorWindow(
+                            "Произошла ошибка выбора точек доставки.",
                             new List<string>(
                                 new string[]
                                 {
