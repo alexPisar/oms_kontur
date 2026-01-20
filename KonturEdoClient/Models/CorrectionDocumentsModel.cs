@@ -262,6 +262,7 @@ namespace KonturEdoClient.Models
 
             loadWindow.Show();
             Exception exception = null;
+            var idChannel = SelectedDocument?.InvoiceDocJournal?.DocMaster?.DocGoods?.Customer?.IdChannel;
 
             await Task.Run(() =>
             {
@@ -437,8 +438,6 @@ namespace KonturEdoClient.Models
                     correctionDocument.Signers = signer;
 
                     correctionDocument.DocumentCreator = $"{signer.First().LastName} {signer.First().FirstName} {signer.First().MiddleName}";
-
-                    var idChannel = SelectedDocument?.InvoiceDocJournal?.DocMaster?.DocGoods?.Customer?.IdChannel;
 
                     RefEdoGoodChannel refEdoGoodChannel = null;
                     if (idChannel != null && idChannel != 99001)
