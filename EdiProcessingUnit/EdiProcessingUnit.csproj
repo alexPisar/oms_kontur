@@ -185,6 +185,8 @@
     <Compile Include="HonestMark\Models\DocumentInfo.cs" />
     <Compile Include="HonestMark\Models\EdoProcessingError.cs" />
     <Compile Include="HonestMark\Models\EdoProcessingErrorDescription.cs" />
+    <Compile Include="HonestMark\Models\IntroduceRemainsDocument.cs" />
+    <Compile Include="HonestMark\Models\IntroduceRemainsProduct.cs" />
     <Compile Include="HonestMark\Models\MarkCodeInfo.cs" />
     <Compile Include="HonestMark\Models\MarkInfo.cs" />
     <Compile Include="HonestMark\Models\OrgRegistrationResponse.cs" />

@@ -1246,6 +1246,153 @@ namespace EdiTest
                 //if(counteragents.Exists(c => c.CurrentStatus == Diadoc.Api.Proto.CounteragentStatus.InvitesMe))
         }
 
+        [TestMethod]
+        public void ParseCodesToDataBase()
+        {
+            var path = "C:\\Users\\developer3\\Downloads\\40f259ca-6e16-4168-9598-02d47231d5b3.json";
+            EdiProcessingUnit.HonestMark.Models.IntroduceRemainsDocument introduceRemainsDocument;
+
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    introduceRemainsDocument = JsonConvert.DeserializeObject<EdiProcessingUnit.HonestMark.Models.IntroduceRemainsDocument>(sr.ReadToEnd());
+                }
+            }
+
+            var crypto = new WinApiCryptWrapper();
+            var orgCertificate = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+
+            var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+            {
+                Name = "ООО \"Вирэй-Восточный\"",
+                Inn = "2538150215",
+                Kpp = "253801001",
+                EmchdId = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                EmchdPersonInn = "253605132573",
+                EmchdPersonSurname = "Бельтюкова",
+                EmchdPersonName = "Ирина",
+                EmchdPersonPatronymicSurname = "Васильевна",
+                EmchdPersonPosition = "Директор по продажам"
+            };
+
+            EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(orgCertificate, organization);
+            var markedCodesInfo = GetMarkCodesInfo(introduceRemainsDocument.Products.Select(l => l.Ki).ToArray());
+
+            markedCodesInfo = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn == "2538150215" && l?.CisInfo?.Status == "INTRODUCED").ToList();
+
+            var nonBarCodes = new List<string>();
+            Dictionary<string, RefBarCode> idGoodsByBarCodes = new Dictionary<string, RefBarCode>();
+
+            using (var abt = new AbtDbContext())
+            {
+                IEnumerable<DocGoodsDetailsLabels> labels = new List<DocGoodsDetailsLabels>();
+
+                foreach(var product in markedCodesInfo)
+                {
+                    if (string.IsNullOrEmpty(product?.CisInfo?.Cis))
+                        continue;
+
+                    var barCode = product.CisInfo.Cis.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+                    RefBarCode refBarCode;
+
+                    if (idGoodsByBarCodes.ContainsKey(barCode))
+                    {
+                        refBarCode = idGoodsByBarCodes[barCode];
+                    }
+                    else
+                    {
+                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == false);
+
+                        if (refBarCode?.IdGood == null)
+                            refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode);
+
+                        if (refBarCode?.IdGood != null)
+                            idGoodsByBarCodes.Add(barCode, refBarCode);
+                    }
+
+                    if (refBarCode?.IdGood == null)
+                    {
+                        if (!nonBarCodes.Exists(n => n == barCode))
+                            nonBarCodes.Add(barCode);
+
+                        continue;
+                    }
+
+                    var label = new DocGoodsDetailsLabels
+                    {
+                        IdDoc = 0,
+                        IdGood = refBarCode.IdGood.Value,
+                        DmLabel = product.CisInfo.Cis,
+                        InsertDateTime = DateTime.Now,
+                        //LabelStatus = 2
+                    };
+
+                    (labels as List<DocGoodsDetailsLabels>).Add(label);
+                }
+
+                File.WriteAllText("C:\\Users\\developer3\\Desktop\\BarCodesList.txt", string.Join("\n", nonBarCodes));
+
+                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel)).ToList();
+                abt.DocGoodsDetailsLabels.AddRange(labels);
+                abt.SaveChanges();
+            }
+        }
+
+        [TestMethod]
+        public void CheckCodes()
+        {
+            using (var abt = new AbtDbContext())
+            {
+                DateTime dateTimeFrom = DateTime.Now.Date;
+                var codes = abt.DocGoodsDetailsLabels.Where(r => r.InsertDateTime > dateTimeFrom).Select(s => s.DmLabel).ToArray();
+
+                var crypto = new WinApiCryptWrapper();
+                var orgCertificate = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+
+                var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+                {
+                    Name = "ООО \"Вирэй-Восточный\"",
+                    Inn = "2538150215",
+                    Kpp = "253801001",
+                    EmchdId = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                    EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdPersonInn = "253605132573",
+                    EmchdPersonSurname = "Бельтюкова",
+                    EmchdPersonName = "Ирина",
+                    EmchdPersonPatronymicSurname = "Васильевна",
+                    EmchdPersonPosition = "Директор по продажам"
+                };
+
+                EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(orgCertificate, organization);
+                var markedCodesInfo = GetMarkCodesInfo(codes);
+
+                var incorrectMarkedCodes = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn != "2538150215" || l?.CisInfo?.Status != "INTRODUCED").ToList();
+                var correctMarkedCodes = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn == "2538150215" && l?.CisInfo?.Status == "INTRODUCED" && l?.CisInfo?.StatusEx == "EMPTY").ToList();
+            }
+        }
+
+        private List<EdiProcessingUnit.HonestMark.Models.MarkCodeInfo> GetMarkCodesInfo(string[] codes)
+        {
+            var result = new List<EdiProcessingUnit.HonestMark.Models.MarkCodeInfo>();
+            var positionInArray = 0;
+
+            while (positionInArray < codes.Count())
+            {
+                int length = codes.Count() - positionInArray > 500 ? 500 : codes.Count() - positionInArray;
+                var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetMarkCodesInfo(
+                    EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, codes.Skip(positionInArray).Take(length).ToArray());
+
+                result.AddRange(markedCodesInfo);
+
+                positionInArray += 500;
+            }
+            return result;
+        }
+
         private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
         {
             using (var abt = new AbtDbContext())
