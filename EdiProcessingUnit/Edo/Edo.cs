@@ -772,6 +772,7 @@ namespace EdiProcessingUnit.Edo
                 organization.OrgId = counteragent?.Organization?.OrgId ?? "";
                 organization.Address = counteragent?.Organization?.Address;
                 organization.FnsParticipantId = counteragent?.Organization?.FnsParticipantId;
+                organization.Boxes = counteragent?.Organization?.Boxes;
                 organizations.Add(organization);
             }
 

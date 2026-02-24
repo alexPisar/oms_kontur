@@ -239,8 +239,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 var tasks = corrDocsFromBlock.Select(doc => 
                 {
-                    var receiver = counteragents.FirstOrDefault(c => c.Inn == doc.BuyerInn);
-                    var task = GetDocEdoProcessingAfterSending(myOrganization, receiver, doc);
+                    var receivers = counteragents.Where(c => c.Inn == doc.BuyerInn);
+                    var task = GetDocEdoProcessingAfterSending(myOrganization, receivers, doc);
                     return task;
                 });
 
@@ -415,7 +415,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return operationEntityResult;
         }
 
-        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, Kontragent receiver, UniversalCorrectionDocumentV2 doc)
+        private async Task<Utils.AsyncOperationEntity<DocEdoProcessing>> GetDocEdoProcessingAfterSending(Kontragent myOrganization, IEnumerable<Kontragent> receivers, UniversalCorrectionDocumentV2 doc)
         {
             var operationEntityResult = new Utils.AsyncOperationEntity<DocEdoProcessing>();
             var typeNamedId = "UniversalCorrectionDocument";
@@ -431,6 +431,14 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 if (baseDocument == null)
                     throw new Exception("Не найден базовый документ.");
+
+                Kontragent receiver = null;
+
+                if(!string.IsNullOrEmpty(baseDocument.CounteragentBoxId))
+                    receiver = receivers.FirstOrDefault(r => r.Boxes != null && r.Boxes.Any(b => b.BoxId == baseDocument.CounteragentBoxId));
+
+                if(receiver == null)
+                    receiver = receivers.FirstOrDefault();
 
                 var universalCorrectionDocument = await GetUniversalCorrectionDocumentAsync(doc, myOrganization, receiver, baseDocument);
 

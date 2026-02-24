@@ -54,6 +54,8 @@ namespace EdiProcessingUnit.Edo.Models
 
         public bool IsEdoApiConnected { get; set; }
 
+        public List<Diadoc.Api.Proto.Box> Boxes { get; set; }
+
         public void SetNullEmchdValues()
         {
             this.EmchdId = null;
