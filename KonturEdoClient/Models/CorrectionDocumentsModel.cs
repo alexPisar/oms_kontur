@@ -251,6 +251,11 @@ namespace KonturEdoClient.Models
             if(buyerContractor?.DefaultCustomer != null)
                 buyerCustomer = _abt.RefCustomers.FirstOrDefault(r => r.Id == buyerContractor.DefaultCustomer);
 
+            string buyerKpp = null;
+
+            if(buyerContractor != null)
+                buyerKpp = _abt.RefRefTags?.FirstOrDefault(c => c.IdTag == 203 && c.IdObject == buyerContractor.Id)?.TagValue;
+
             _log.Log($"CorrectionDocumentsModel : начало отправки в методе SendDocument");
 
             var loadContext = new LoadModel();
@@ -339,6 +344,9 @@ namespace KonturEdoClient.Models
                         if(counteragent == null)
                             counteragent = counteragents?.FirstOrDefault(c => c?.Organization?.Inn == buyerCustomer.Inn);
 
+                        if (string.IsNullOrEmpty(buyerKpp))
+                            buyerKpp = buyerCustomer.Kpp;
+
                         correctionDocument.Buyer = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationInfo_ForeignAddress1000
                         {
                             Item = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedOrganizationDetails_ForeignAddress1000
@@ -346,7 +354,7 @@ namespace KonturEdoClient.Models
                                 OrgName = buyerCustomer.Name,
                                 OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item2 : Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.OrganizationType.Item1,
                                 Inn = buyerCustomer.Inn,
-                                Kpp = buyerCustomer.Kpp,
+                                Kpp = buyerKpp,
                                 Address = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.Address_ForeignAddress1000
                                 {
                                     Item = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ForeignAddress1000

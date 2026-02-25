@@ -2866,12 +2866,16 @@ namespace KonturEdoClient.Models
 
                 if (buyerContractor != null)
                 {
+                    string buyerKpp = _abt.RefRefTags?.FirstOrDefault(c => c.IdTag == 203 && c.IdObject == buyerContractor.Id)?.TagValue;
 
                     if (buyerContractor.DefaultCustomer != null)
                     {
                         var buyerCustomer = _abt.RefCustomers?
                         .Where(r => r.Id == buyerContractor.DefaultCustomer)?
                         .FirstOrDefault();
+
+                        if (string.IsNullOrEmpty(buyerKpp))
+                            buyerKpp = buyerCustomer.Kpp;
 
                         if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
@@ -2882,7 +2886,7 @@ namespace KonturEdoClient.Models
                                             Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                             {
                                                 Inn = buyerCustomer.Inn,
-                                                Kpp = buyerCustomer.Kpp,
+                                                Kpp = buyerKpp,
                                                 OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                                 Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                                 {
@@ -2905,7 +2909,7 @@ namespace KonturEdoClient.Models
                                         Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                         {
                                             Inn = buyerCustomer.Inn,
-                                            Kpp = buyerCustomer.Kpp,
+                                            Kpp = buyerKpp,
                                             OrgType = buyerCustomer.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                             OrgName = buyerCustomer.Name,
                                             Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
