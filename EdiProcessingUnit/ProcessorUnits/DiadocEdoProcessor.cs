@@ -18,10 +18,11 @@ namespace EdiProcessingUnit.ProcessorUnits
             return _edo?.Authenticate(true, null, OrgInn) ?? false;
         }
 
-        private void SetEdoStatus(DocEdoProcessing docEdoProcessing, int newStatus, string textMessage = null)
+        private void SetEdoStatus(DocEdoProcessing docEdoProcessing, int newStatus, string textMessage = null, string rejectionReason = null)
         {
             _abtDbContext.Entry(docEdoProcessing)?.Reload();
             docEdoProcessing.DocStatus = newStatus;
+            docEdoProcessing.RejectionReason = rejectionReason;
             _abtDbContext?.SaveChanges();
 
             if (!string.IsNullOrEmpty(textMessage))
@@ -33,6 +34,88 @@ namespace EdiProcessingUnit.ProcessorUnits
             var updDocType = (int)Enums.DocEdoType.Upd;
             var ucdDocType = (int)Enums.DocEdoType.Ucd;
             var dateTimeFrom = DateTime.Now.AddMonths(-6);
+
+            var markedDocEdoProcessings = (from markedDocEdoProcessing in _abtDbContext.DocEdoProcessings
+                                           where markedDocEdoProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && 
+                                           (markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Signed || markedDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.PartialSigned) && 
+                                           markedDocEdoProcessing.DocDate > dateTimeFrom
+                                           join docJournal in _abtDbContext.DocJournals on markedDocEdoProcessing.IdDoc equals docJournal.Id
+                                           join docGoods in _abtDbContext.DocGoods on markedDocEdoProcessing.IdDoc equals docGoods.IdDoc
+                                           let sellers = (from cust in _abtDbContext.RefCustomers
+                                                          where cust.IdContractor == docGoods.IdSeller && cust.Inn == company.Inn && cust.Kpp == company.Kpp
+                                                          select cust)
+                                           let customers = (from cust in _abtDbContext.RefCustomers
+                                                            where docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && 
+                                                            cust.IdContractor == docGoods.IdCustomer && cust.Inn == company.Inn && cust.Kpp == company.Kpp
+                                                            select cust)
+                                           where docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && customers.Count() > 0 || 
+                                           docJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer && sellers.Count() > 0
+                                           select markedDocEdoProcessing);
+
+            foreach (var markedDocEdoProcessing in markedDocEdoProcessings)
+            {
+                var doc = _edo.GetDocument(markedDocEdoProcessing.MessageId, markedDocEdoProcessing.EntityId);
+
+                if (doc == null)
+                    throw new Exception($"Не удалось найти маркированный документ в Диадоке. ID {markedDocEdoProcessing.Id}");
+
+                var lastDocFlow = doc.LastOuterDocflows?.FirstOrDefault(l => l?.OuterDocflow?.DocflowNamedId == "TtGis" && l.OuterDocflow?.Status?.Type != null);
+                Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
+
+                if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
+                {
+                    markedDocEdoProcessing.HonestMarkStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+
+                    if(markedDocEdoProcessing.DocType == (int)Enums.DocEdoType.Ucd && !string.IsNullOrEmpty(markedDocEdoProcessing.IdParent))
+                    {
+                        var parent = markedDocEdoProcessing.Parent;
+
+                        if (parent == null)
+                            parent = _abtDbContext.DocEdoProcessings.FirstOrDefault(p => p.Id == markedDocEdoProcessing.IdParent);
+                        else
+                            _abtDbContext.Entry(parent)?.Reload();
+
+                        if (parent.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Processed)
+                        {
+                            IEnumerable<DocGoodsDetailsLabels> returnedLabels = (from label in _abtDbContext.DocGoodsDetailsLabels
+                                                                                 where label.IdDocReturn == markedDocEdoProcessing.IdDoc && label.IdDocSale == parent.IdDoc
+                                                                                 select label);
+
+                            if (returnedLabels == null)
+                                returnedLabels = new List<DocGoodsDetailsLabels>();
+
+                            foreach (var label in returnedLabels)
+                            {
+                                label.IdDocSale = null;
+                                label.SaleDmLabel = null;
+                                label.SaleDateTime = null;
+                            }
+                        }
+                    }
+
+                    _abtDbContext?.SaveChanges();
+                    MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} успешно обработан.");
+                }
+                else if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
+                {
+                    markedDocEdoProcessing.HonestMarkStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+
+                    var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
+
+                    var errorsListStr = new List<string>();
+                    foreach (var error in errors)
+                        errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
+
+                    var honestMarkErrorMessage = string.Join("\n\n", errorsListStr);
+
+                    if (honestMarkErrorMessage.Length > 500)
+                        honestMarkErrorMessage = honestMarkErrorMessage.Substring(0, 500);
+
+                    markedDocEdoProcessing.HonestMarkErrorMessage = honestMarkErrorMessage;
+                    _abtDbContext?.SaveChanges();
+                    MailReporter.Add($"Маркированный документ {markedDocEdoProcessing.IdDoc} обработан с ошибками.");
+                }
+            }
 
             var sentStatusDocEdoProcessings = (from docEdoProcessing in _abtDbContext.DocEdoProcessings
             where docEdoProcessing.DocType == updDocType && docEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Sent && docEdoProcessing.AnnulmentStatus <= 0 && docEdoProcessing.DocDate > dateTimeFrom
@@ -51,7 +134,18 @@ namespace EdiProcessingUnit.ProcessorUnits
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
                 {
-                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.");
+                    string rejectionReason = null;
+                    var docflow = _edo.GetDocFlow(docEdoProcessing.MessageId, docEdoProcessing.EntityId, true);
+                    var signatureRejection = docflow?.Docflow?.RecipientResponse?.Rejection;
+
+                    if(signatureRejection != null)
+                        rejectionReason = signatureRejection.PlainText;
+
+                    if (!string.IsNullOrEmpty(rejectionReason))
+                        if (rejectionReason.Length > 2000)
+                            rejectionReason = rejectionReason.Substring(0, 2000);
+
+                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.", rejectionReason);
                 }
                 else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
                 {
@@ -87,6 +181,178 @@ namespace EdiProcessingUnit.ProcessorUnits
                     SetEdoStatus(docProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Корректировка {docProcessing.IdDoc} подписана с расхождениями.");
                 }
             }
+
+            var comissionDocEdoProcessings = (from comissionDocEdoProcessing in _abtDbContext.DocComissionEdoProcessings
+                                              where comissionDocEdoProcessing.EntityId != null && comissionDocEdoProcessing.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent && comissionDocEdoProcessing.DocDate > dateTimeFrom
+                                              join docGoods in _abtDbContext.DocGoods on comissionDocEdoProcessing.IdDoc equals docGoods.IdDoc
+                                              join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                              where customer.Inn == company.Inn && customer.Kpp == company.Kpp
+                                              select comissionDocEdoProcessing);
+
+            foreach (var comissionDocEdoProcessing in comissionDocEdoProcessings)
+            {
+                var doc = _edo.GetDocument(comissionDocEdoProcessing.MessageId, comissionDocEdoProcessing.EntityId);
+
+                if (doc == null)
+                    throw new Exception($"Не удалось найти комиссионный документ в Диадоке. ID {comissionDocEdoProcessing.Id}");
+
+                var lastDocFlow = doc.LastOuterDocflows?.FirstOrDefault(l => l?.OuterDocflow?.DocflowNamedId == "TtGis" && l.OuterDocflow?.Status?.Type != null);
+                Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
+
+                if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
+                    comissionDocEdoProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                else if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
+                {
+                    comissionDocEdoProcessing.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+
+                    var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
+
+                    var errorsListStr = new List<string>();
+                    foreach (var error in errors)
+                        errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
+
+                    comissionDocEdoProcessing.ErrorMessage = string.Join("\n\n", errorsListStr);
+                }
+            }
+
+            var docsForAnnulmentProcessing = from docForAnnulmentProcessing in _abtDbContext.DocEdoProcessings
+                                             where docForAnnulmentProcessing.AnnulmentStatus == (int)HonestMark.AnnulmentDocumentStatus.Requested && docForAnnulmentProcessing.DocDate > dateTimeFrom
+                                             join docGoods in _abtDbContext.DocGoods on docForAnnulmentProcessing.IdDoc equals docGoods.IdDoc
+                                             join customer in _abtDbContext.RefCustomers on docGoods.IdSeller equals customer.IdContractor
+                                             where customer.Inn == company.Inn && customer.Kpp == company.Kpp
+                                             select docForAnnulmentProcessing;
+
+            if ((docsForAnnulmentProcessing?.Count() ?? 0) != 0)
+            {
+                foreach (var docProcessing in docsForAnnulmentProcessing)
+                {
+                    var doc = _edo.GetDocument(docProcessing.MessageId, docProcessing.EntityId);
+
+                    if (doc.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationAccepted)
+                    {
+                        if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature
+                        && docProcessing.HonestMarkStatus == (int)HonestMark.DocEdoProcessingStatus.Processed)
+                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.RevokedWaitProcessing;
+                        else
+                            docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Revoked;
+
+                        MailReporter.Add($"Документ {docProcessing.IdDoc} успешно аннулирован.");
+                    }
+                    else if (doc.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationRejected)
+                    {
+                        docProcessing.AnnulmentStatus = (int)HonestMark.AnnulmentDocumentStatus.Rejected;
+                        MailReporter.Add($"Аннулирование документа {docProcessing.IdDoc} было отклонено.");
+                    }
+                }
+                _abtDbContext.SaveChanges();
+            }
+        }
+
+        private void ChecksCounteragents(RefCustomer company)
+        {
+            var dateTimeFrom = DateTime.Now.AddMonths(-6);
+
+            var refEdoCounteragents = from a in _abtDbContext.RefEdoCounteragents
+                                      where a.IsConnected == 0 && a.InsertDatetime > dateTimeFrom
+                                      join r in _abtDbContext.RefCustomers
+                                      on a.IdCustomerSeller equals r.Id
+                                      where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                      select a;
+
+            if((refEdoCounteragents?.Count() ?? 0) != 0)
+            {
+                foreach(var refEdoCounteragent in refEdoCounteragents)
+                {
+                    var counteragents = _edo.GetKontragents(_edo.ActualBoxIdGuid);
+
+                    if (counteragents == null || counteragents.Count == 0 || string.IsNullOrEmpty(refEdoCounteragent?.IdFnsBuyer))
+                        continue;
+
+                    var counteragent = counteragents.Where(c => c?.Organization?.FnsParticipantId?.ToUpper() == refEdoCounteragent.IdFnsBuyer.ToUpper())?.FirstOrDefault();
+
+                    if(counteragent != null && counteragent?.CurrentStatus == Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent)
+                    {
+                        _abtDbContext.Entry(refEdoCounteragent)?.Reload();
+                        refEdoCounteragent.ConnectStatus = (int)Diadoc.Api.Proto.CounteragentStatus.IsMyCounteragent;
+                        refEdoCounteragent.IsConnected = 1;
+                        _abtDbContext.SaveChanges();
+                    }
+                }
+            }
+        }
+
+        private void AddCounteragentsToTrader(RefCustomer company)
+        {
+            var dateTimeFrom = DateTime.Now.AddMonths(-6);
+
+            var refEdoCounteragents = from a in _abtDbContext.RefEdoCounteragents
+                                      where a.IsConnected == 1 && a.IsDefault == 1 && a.InsertDatetime > dateTimeFrom
+                                      && !_abtDbContext.RefRefTags.Any(r => r.IdTag == 223 && r.IdObject == a.IdCustomerBuyer && r.TagValue == a.IdFnsBuyer)
+                                      join r in _abtDbContext.RefCustomers
+                                      on a.IdCustomerSeller equals r.Id
+                                      where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                      select a;
+
+            if ((refEdoCounteragents?.Count() ?? 0) != 0)
+            {
+                foreach (var refEdoCounteragent in refEdoCounteragents)
+                {
+                    var refRefTag = _abtDbContext.RefRefTags.FirstOrDefault(r => r.IdTag == 223 && r.IdObject == refEdoCounteragent.IdCustomerBuyer);
+
+                    if(refRefTag != null)
+                    {
+                        refRefTag.TagValue = refEdoCounteragent.IdFnsBuyer;
+                    }
+                    else
+                    {
+                        _abtDbContext.RefRefTags.Add(new RefRefTag
+                        {
+                            IdObject = refEdoCounteragent.IdCustomerBuyer,
+                            IdTag = 223,
+                            TagValue = refEdoCounteragent.IdFnsBuyer
+                        });
+                    }
+
+                    _abtDbContext.SaveChanges();
+                }
+            }
+
+            var refEdoCounteragentConsignees = from a in _abtDbContext.RefEdoCounteragentConsignees
+                                               where a.InsertDatetime > dateTimeFrom &&
+                                               !_abtDbContext.RefRefTags.Any(r => r.IdTag == 224 && r.IdObject == a.IdContractorConsignee && r.TagValue == a.IdFnsBuyer)
+                                               join r in _abtDbContext.RefCustomers on a.IdCustomerSeller equals r.Id
+                                               where r.Inn == company.Inn && r.Kpp == company.Kpp
+                                               let edoCounteragents = (from refEdo in _abtDbContext.RefEdoCounteragents
+                                                                       where refEdo.IdCustomerSeller == a.IdCustomerSeller
+                                                                       && refEdo.IdCustomerBuyer == a.IdCustomerBuyer
+                                                                       && refEdo.IdFnsBuyer == a.IdFnsBuyer && refEdo.IsConnected == 1
+                                                                       select refEdo)
+                                               where edoCounteragents.Count() > 0
+                                               select a;
+
+            if((refEdoCounteragentConsignees?.Count() ?? 0) != 0)
+            {
+                foreach (var refEdoCounteragentConsignee in refEdoCounteragentConsignees)
+                {
+                    var refRefTag = _abtDbContext.RefRefTags.FirstOrDefault(r => r.IdTag == 224 && r.IdObject == refEdoCounteragentConsignee.IdContractorConsignee);
+
+                    if(refRefTag != null)
+                    {
+                        refRefTag.TagValue = refEdoCounteragentConsignee.IdFnsBuyer;
+                    }
+                    else
+                    {
+                        _abtDbContext.RefRefTags.Add(new RefRefTag
+                        {
+                            IdObject = refEdoCounteragentConsignee.IdContractorConsignee,
+                            IdTag = 224,
+                            TagValue = refEdoCounteragentConsignee.IdFnsBuyer
+                        });
+                    }
+
+                    _abtDbContext.SaveChanges();
+                }
+            }
         }
 
         public override void Run()
@@ -106,7 +372,18 @@ namespace EdiProcessingUnit.ProcessorUnits
                         {
                             OrgInn = myOrg.Inn;
                             Auth();
-                            ExecuteChecks(myOrg);
+
+                            try
+                            {
+                                ExecuteChecks(myOrg);
+                            }
+                            catch(Exception exception)
+                            {
+                                MailReporter.Add($"DiadocEdoProcessorException \r\nProcessing exception for organization with Inn = {myOrg.Inn}\r\n" + _log.GetRecursiveInnerException(exception));
+                            }
+
+                            ChecksCounteragents(myOrg);
+                            AddCounteragentsToTrader(myOrg);
                         }
                     }
                 }

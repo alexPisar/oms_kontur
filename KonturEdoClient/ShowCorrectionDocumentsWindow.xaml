@@ -62,6 +62,7 @@
             </dxg:GridColumn>
             <dxg:GridColumn Header="Тип" Width="120" FieldName="DocType" />
             <dxg:GridColumn Header="Номер документа" Width="80" FieldName="CorrectionDocJournalNumber" />
+            <dxg:GridColumn Header="Статус документа" Width="80" FieldName="ActStatusStr" />
             <dxg:GridColumn Header="Номер корректировки" Width="80" FieldName="DocumentNumber" />
             <dxg:GridColumn Header="Номер счёта-фактуры" Width="80" FieldName="InvoiceNumber" />
             <dxg:GridColumn Header="Статус в ЭДО" Width="80" FieldName="DocEdoSendStatus" />
@@ -89,7 +90,7 @@
             <dxg:GridColumn Header="Стоимость" Width="80" FieldName="Price" />
         </dxg:GridControl>
         <StackPanel Orientation="Horizontal" Grid.Row="4" HorizontalAlignment="Right">
-            <Button x:Name="SendButton" Margin="5 5" Content="Отправить" Width="90" Click="SendButton_Click" />
+            <Button x:Name="SendButton" IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Margin="5 5" Content="Отправить" Width="90" Click="SendButton_Click" />
             <Button x:Name="CancelButton" Margin="5 5" Content="Отмена" Width="90" Click="CancelButton_Click" />
         </StackPanel>
     </Grid>

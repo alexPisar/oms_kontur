@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8CED658932C59DCD5CD108F1083D3D20770DD1C1</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>EdiProcessingUnit_TemporaryKey.pfx</ManifestKeyFile>
@@ -66,9 +66,8 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
+    <Reference Include="DiadocApi, Version=3.6.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
+      <HintPath>..\OMS\packages\DiadocSDK.3.6.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -165,10 +164,39 @@
     <Compile Include="Edo\EdoTokenCache.cs" />
     <Compile Include="Edo\Models\Kontragent.cs" />
     <Compile Include="Edo\Models\UniversalCorrectionDocument.cs" />
+    <Compile Include="Edo\Models\UniversalCorrectionDocumentDetail.cs" />
+    <Compile Include="Edo\Models\UniversalCorrectionDocumentV2.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentDetail.cs" />
+    <Compile Include="Edo\Models\UniversalTransferDocumentV2.cs" />
+    <Compile Include="Edo\ReporterUtils.cs" />
     <Compile Include="Enums\DocEdoSendStatus.cs" />
     <Compile Include="Enums\DocEdoType.cs" />
+    <Compile Include="HonestMark\Enums.cs" />
+    <Compile Include="HonestMark\HonestMarkClient.cs" />
+    <Compile Include="HonestMark\HonestMarkTokenCache.cs" />
+    <Compile Include="HonestMark\IDocument.cs" />
+    <Compile Include="HonestMark\Models\AuthData.cs" />
+    <Compile Include="HonestMark\Models\AuthRequest.cs" />
+    <Compile Include="HonestMark\Models\AuthResult.cs" />
+    <Compile Include="HonestMark\Models\DocumentCreateRequest.cs" />
+    <Compile Include="HonestMark\Models\DocumentCreateResponse.cs" />
+    <Compile Include="HonestMark\Models\DocumentEdoProcessResultInfo.cs" />
+    <Compile Include="HonestMark\Models\DocumentInfo.cs" />
+    <Compile Include="HonestMark\Models\EdoProcessingError.cs" />
+    <Compile Include="HonestMark\Models\EdoProcessingErrorDescription.cs" />
+    <Compile Include="HonestMark\Models\IntroduceRemainsDocument.cs" />
+    <Compile Include="HonestMark\Models\IntroduceRemainsProduct.cs" />
+    <Compile Include="HonestMark\Models\MarkCodeInfo.cs" />
+    <Compile Include="HonestMark\Models\MarkInfo.cs" />
+    <Compile Include="HonestMark\Models\OrgRegistrationResponse.cs" />
+    <Compile Include="HonestMark\Models\ProcessEdoOperation.cs" />
+    <Compile Include="HonestMark\Models\ProcessEdoOperationDetail.cs" />
+    <Compile Include="HonestMark\Models\ReceiveDocument.cs" />
+    <Compile Include="HonestMark\Models\ReceiveProduct.cs" />
+    <Compile Include="HonestMark\Models\ReprocessDocumentResponse.cs" />
+    <Compile Include="HonestMark\Models\ShipmentDocument.cs" />
+    <Compile Include="HonestMark\Models\ShipmentProduct.cs" />
     <Compile Include="Infrastructure\EdiProcessor.cs" />
     <Compile Include="Infrastructure\EdoProcessor.cs" />
     <Compile Include="Infrastructure\MailReporter.cs" />
@@ -204,6 +232,18 @@
     <ProjectReference Include="..\DataContextManagementUnit\DataContextManagementUnit.csproj">
       <Project>{05620572-ab35-4f90-99e7-5504bb4b7d57}</Project>
       <Name>DataContextManagementUnit</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OMS\Cryptography\Cryptography.csproj">
+      <Project>{a588206c-c730-4867-990e-6396c75b758f}</Project>
+      <Name>Cryptography</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OMS\Reporter\Reporter.csproj">
+      <Project>{503e3c25-6312-4928-8c3f-2909c7e429a2}</Project>
+      <Name>Reporter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OMS\WebService\WebService.csproj">
+      <Project>{ce9f432a-bbc8-45b1-8a7f-3a533c4fb47e}</Project>
+      <Name>WebService</Name>
     </ProjectReference>
     <ProjectReference Include="..\UtilitesLibrary\UtilitesLibrary.csproj">
       <Project>{1772810A-892E-45CD-B91C-21F020628DC1}</Project>

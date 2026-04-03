@@ -15,9 +15,9 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
 
         #region Properties
 
-        public decimal IdTag { get; set; }
-        public decimal IdObject { get; set; }
-        public string TagValue { get; set; }
+        public virtual decimal IdTag { get; set; }
+        public virtual decimal IdObject { get; set; }
+        public virtual string TagValue { get; set; }
 
         #endregion
 

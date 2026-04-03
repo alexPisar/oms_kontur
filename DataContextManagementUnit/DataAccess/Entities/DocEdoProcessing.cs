@@ -11,6 +11,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public DocEdoProcessing()
         {
             Children = new List<DocEdoProcessing>();
+            HonestMarkStatus = 0;
             OnCreated();
         }
 
@@ -31,6 +32,9 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual int DocStatus { get; set; }
         public virtual int DocType { get; set; }
         public virtual string IdParent { get; set; }
+        public virtual int HonestMarkStatus { get; set; }
+        public virtual string HonestMarkErrorMessage { get; set; }
+        public virtual string RejectionReason { get; set; }
         #endregion
 
         #region Navigation Properties

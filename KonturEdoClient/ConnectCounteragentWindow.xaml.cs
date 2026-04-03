@@ -1,0 +1,50 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace KonturEdoClient
+{
+    /// <summary>
+    /// Interaction logic for ConnectCounteragentWindow.xaml
+    /// </summary>
+    public partial class ConnectCounteragentWindow : Window
+    {
+        public ConnectCounteragentWindow(bool isMainFilial)
+        {
+            InitializeComponent();
+
+            if (isMainFilial)
+            {
+                TransferToFilialsButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TransferToFilialsButton.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void LookUpEdit_SelectedIndexChanged(object sender, RoutedEventArgs e)
+        {
+            if(DataContext as Models.ConnectCounteragentModel != null)
+            {
+                (DataContext as Models.ConnectCounteragentModel).FnsId = string.Empty;
+                (DataContext as Models.ConnectCounteragentModel).OnPropertyChanged("FnsId");
+            }
+        }
+    }
+}

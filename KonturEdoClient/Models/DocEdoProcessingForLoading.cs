@@ -1,6 +1,6 @@
 ﻿using System;
 using EdiProcessingUnit.Enums;
-using KonturEdoClient.HonestMark;
+using EdiProcessingUnit.HonestMark;
 using DataContextManagementUnit.DataAccess.Contexts.Abt;
 
 namespace KonturEdoClient.Models
@@ -17,6 +17,7 @@ namespace KonturEdoClient.Models
         public DateTime DocDate => _docEdoProcessing.DocDate;
         public string ReceiverName => _docEdoProcessing.ReceiverName;
         public string ReceiverInn => _docEdoProcessing.ReceiverInn;
+        public string RejectionReason => _docEdoProcessing.RejectionReason;
         public string SignStatus
         {
             get {

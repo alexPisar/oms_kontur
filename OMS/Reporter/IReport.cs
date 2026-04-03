@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 
 namespace Reporter
 {
-    public abstract class IReport
+    public interface IReport
     {
-        [NonSerialized]
-        internal string documentId;
+        void Parse(string content);
 
-        public string GetDocumentId()
-        {
-            return documentId;
-        }
+        void Parse(byte[] content);
+
+        string GetXmlContent();
     }
 }

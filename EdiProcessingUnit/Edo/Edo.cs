@@ -30,233 +30,25 @@ namespace EdiProcessingUnit.Edo
 		private string _partyId => _cache.PartyId ?? "";
         private string _orgInn;
         private string _actualBoxId;
+        private string _actualBoxIdGuid;
 		private DiadocHttpApi _api;
-		private X509Certificate2 _certificate;
-
-		public void SendUtd820Kontur(UniversalTransferDocumentWithHyphens doc)
-		{
-			//GeneratedFile f = CallApiSafe( new Func<GeneratedFile>( () 
-			//	=> _api.GenerateUniversalTransferDocumentXmlForBuyer( _authToken ) ) );
-			/*
-			User user = CallApiSafe( new Func<User>( () => _api.GetMyUser( _authToken ) ) );
-			OrganizationList userPerm = CallApiSafe( new Func<OrganizationList>( () => _api.GetMyOrganizations( _authToken, false ) ) );
-			*/
-		}
-
-        
-		public UniversalTransferDocumentWithHyphens GenerateUtd820Kontur(ViewInvoicHead doc , AbtDbContext AbtDbContext, EdiDbContext EdiDbContext)
-		{
-			var canSend = _api.CanSendInvoice( _authToken, _actualBoxId, _certificate.RawData );
-			//var docTypes = _api.GetDocumentTypes( _authToken, _actualBoxId );
-			/*
-			var si = _api.GenerateSenderTitleXml(
-				_authToken,
-				_actualBoxId,
-				docTypes.DocumentTypes.First().Name,
-				docTypes.DocumentTypes.First().Functions.First().Name,
-				docTypes.DocumentTypes.First().Functions.First().Versions.First().Version,
-				);
-				*/
-			var org = _api.GetOrganizationByInnKpp( doc.CustomerInn, doc.CustomerKpp );
-
-            
-            var utd = GetUniversalTransferDocumentWithHyphens(
-                new ExtendedOrganizationDetails_ManualFilling()
-                {
-                    BankName = doc.SellerBankName,
-                    Phone = doc.SellerPhone,
-                    Okpo = doc.SellerOkpo,
-                    ShortOrgName = doc.SellerName,
-                    CorrespondentAccount = doc.SellerCorAccount,
-                },
-                new ExtendedOrganizationDetails_ManualFilling()
-                {
-                    BankName = doc.CustomerBankName,
-                    Phone = doc.CustomerPhone,
-                    Okpo = doc.CustomerOkpo,
-                    ShortOrgName = doc.CustomerName,
-                    CorrespondentAccount = doc.CustomerCorAccount,
-                },
-                doc.DocDatetime.Value.ToShortDateString(),
-                doc.Code,
-                UniversalTransferDocumentWithHyphensFunction.СЧФДОП,
-                new TransferInfo()
-                {
-                    Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee() { Position = doc.StorekeeperProf, EmployeeInfo = doc.Storekeeper }
-                }, null, null, 1, "643", null);
+        private X509Certificate2 _certificate;
 
 
-
-			/*
-			List<ViewInvoicDetail> docGoodsDetails = new List<ViewInvoicDetail>();
-			docGoodsDetails = EdiDbContext.ViewInvoicDetails
-				.Where( x => x.IdDocMaster.Value == Doc.Id ).ToList();
-
-			var sellerContractor = AbtDbContext.RefContractors.Where( x => x.Id == Doc.SellerId ).ToList();
-			var customerContractor = AbtDbContext.RefContractors.Where( x => x.Id == Doc.CustomerId ).ToList();
-
-			var seller = GetOrganization( sellerContractor.FirstOrDefault() );
-			var customer = GetOrganization( customerContractor.FirstOrDefault() );
-			
-			_utdObject = new Файл() {
-				ВерсПрог = "Diadoc 1.0", // const
-				Ид = Guid.NewGuid().ToString(),
-				ВерсФорм = 5.02M,
-
-				Документ = new Документ() {
-					КНД = "1115125", // const
-					Функция = "СЧФДОП", // const
-					ДатаИнфПр = DateTime.Now.ToShortDateString(),
-					ВремИнфПр = DateTime.Now.ToShortTimeString(),
-
-					СвСчФакт = new СвСчФакт() {
-						НомерСчФ = Doc.Code,
-						ДатаСчФ = DateTime.Now.ToShortDateString(),
-						КодОКВ = "643",// const
-						СвПрод = new СвОрг[] { seller },
-
-						СвПокуп = new СвОрг[] { customer },
-						ДопСвФХЖ1 = new ДопСвФХЖ1() {
-							КурсВал = "1", // const
-							НаимОКВ = "Российский рубль" // const
-						},
-
-					},
-					ТаблСчФакт = new ТаблСчФакт() {
-						СведТов = GetLineItems( docGoodsDetails ),
-						ВсегоОпл = new ВсегоОпл() {
-							СтТовБезНДСВсего = Doc.TotalSumm.ToString(),
-							СтТовУчНалВсего = (Doc.TotalSumm + Doc.TaxSumm).ToString(),
-							СумНалВсего = new СумНалич() {
-								СумНал = Doc.TaxSumm.ToString()
-							}
-						}
-					},
-					Пер = new Пер() {
-						СвПер = new ПерСвПер() {
-							СодОпер = "Перадача товаров/услуг", // const
-							ДатаПер = Doc.DeliveryDate.Value.ToShortDateString(),
-							ОснПер = new ОснПер[]
-							{
-								new ОснПер
-								{
-									НаимОсн = Doc.Dogovor,
-									ДатаОсн=Doc.DocDatetime.Value.ToShortDateString(),
-									НомОсн=Doc.ZCode,
-								}
-							},
-							СвЛицПер = new СвЛицПер() {
-								РабОргПрод = new РабОргПрод() {
-									Должность = Doc.StorekeeperProf,
-									ФИО = new ФИО() {
-										//Фамилия = "Иванова",
-										Имя = Doc.Storekeeper,
-										//Отчество = "Ивановна"
-									}
-								}
-							}
-						}
-					},
-
-					Подписант = new Подписант[]
-					{
-						new Подписант
-						{
-							ОснПолн = $@"{Doc.Dogovor} {Doc.ZCode} {Doc.DocDatetime.Value.ToShortDateString()}",
-							ОблПолн = "6", // const
-							Статус = "2", // const
-							ЮЛ = new ЮЛ() {
-								ИННЮЛ = Doc.SellerInn,
-								Должн = Doc.StorekeeperProf,
-								НаимОрг = Doc.SellerFullName,
-								ФИО = new ФИО() {
-									Имя = Doc.Storekeeper,
-								}
-							}
-						}
-
-					}
-
-				},
-
-				СвУчДокОбор = new СвУчДокОбор() {
-					ИдОтпр = "Тестовый документ",
-					ИдПол = "Тестовый документ",
-
-					СвОЭДОтпр = new СвОЭДОтпр() {
-						ИдЭДО = "2BM",
-						ИННЮЛ = Doc.SellerInn,
-						НаимОрг = Doc.SellerFullName
-					}
-
-				},
-
-			};
-
-*/
-
-			return utd;
-		}
-
-        /*
-        public UniversalTransferDocument GetUniversalTransferDocument(ExtendedOrganizationDetails_ManualFilling seller,
-            ExtendedOrganizationDetails_ManualFilling buyer,
+        public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalTransferDocument(
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetails_ManualFilling_Utd970 seller,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetails_ManualFilling_Utd970 buyer,
             string documentDate,
             string documentNumber,
-            UniversalTransferDocumentFunction documentFunction,
-            TransferInfo transferInfo,
-            InvoiceTable invoiceTable,
-            ExtendedSignerDetails_SellerTitle[] signers,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction documentFunction,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo transferInfo,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable invoiceTable,
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers signers,
             decimal currencyRate,
             string currency,
             string documentCreator)
         {
-            UniversalTransferDocument utd = new UniversalTransferDocument();
-
-            utd.Sellers = new ExtendedOrganizationInfo[]
-                {
-                    new ExtendedOrganizationInfo()
-                    {
-                        Item = seller
-                    }
-                };
-            utd.Buyers = new ExtendedOrganizationInfo[]
-                {
-                    new ExtendedOrganizationInfo()
-                    {
-                        Item = buyer
-                    }
-                };
-
-            utd.DocumentDate = documentDate;
-            utd.DocumentNumber = documentNumber;
-            utd.DocumentCreator = documentCreator;
-            utd.Function = documentFunction;
-            utd.TransferInfo = transferInfo;
-            utd.CurrencyRate = currencyRate;
-            utd.Currency = currency;
-            utd.Table = invoiceTable;
-
-            utd.UseSignerDetails(signers);
-
-            return utd;
-        }
-        */
-
-        public UniversalTransferDocumentWithHyphens GetUniversalTransferDocumentWithHyphens(
-            ExtendedOrganizationDetails_ManualFilling seller,
-            ExtendedOrganizationDetails_ManualFilling buyer,
-            string documentDate,
-            string documentNumber,
-            UniversalTransferDocumentWithHyphensFunction documentFunction,
-            TransferInfo transferInfo,
-            InvoiceTable invoiceTable,
-            ExtendedSignerDetails_SellerTitle[] signers,
-            decimal currencyRate,
-            string currency,
-            string documentCreator)
-        {
-            var universalTransferDocumentWithHyphens = new UniversalTransferDocumentWithHyphens
+            var universalTransferDocument = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument
             {
                 Function = documentFunction,
                 DocumentDate = documentDate,
@@ -265,26 +57,30 @@ namespace EdiProcessingUnit.Edo
                 DocumentCreator = documentCreator,
                 Sellers = new[]
                 {
-                    new ExtendedOrganizationInfoWithHyphens
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                     {
                         Item = seller
                     }
                 },
                 Buyers = new[]
                 {
-                    new ExtendedOrganizationInfoWithHyphens
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                     {
                         Item = buyer
                     }
                 },
                 TransferInfo = transferInfo,
-                Table=invoiceTable
+                Table = invoiceTable
             };
 
-            universalTransferDocumentWithHyphens.UseSignerDetails(signers);
+            universalTransferDocument.Signers = signers;
 
-            return universalTransferDocumentWithHyphens;
+            return universalTransferDocument;
         }
+
+        public string ActualBoxId => _actualBoxId;
+
+        public string ActualBoxIdGuid => _actualBoxIdGuid ?? _actualBoxId?.Substring(0, _actualBoxId.IndexOf('@'));
 
         public GeneratedFile GenerateTitleXml(string typeNameId,
             string function,
@@ -301,8 +97,48 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
-            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
-                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)?.Signers;
+
+                if(signersInfo != null)
+                {
+                    if(!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
+            }
+            else if(userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)?.Signers;
+
+                if (signersInfo != null)
+                {
+                    if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            }
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -330,8 +166,47 @@ namespace EdiProcessingUnit.Edo
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocument)userDocument).SerializeToXml();
             else if (userDocument as Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle != null)
                 userDataContract = ((Diadoc.Api.DataXml.Utd820.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
-            else if (userDocument as Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument != null)
-                userDataContract = ((Diadoc.Api.DataXml.Ucd736.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)?.Signers;
+
+                if (signersInfo != null)
+                {
+                    if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument)userDocument).SerializeToXml();
+            }
+            else if (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle != null)
+            {
+                var signersInfo = (userDocument as Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)?.Signers;
+
+                if (signersInfo != null)
+                {
+                    if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                        signersInfo.BoxId = _actualBoxIdGuid;
+
+                    var signerInfo = signersInfo?.Signer?.FirstOrDefault();
+
+                    if (signerInfo != null && _certificate != null)
+                        signerInfo.Certificate = new Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.Certificate
+                        {
+                            CertificateThumbprint = _certificate.Thumbprint
+                        };
+                }
+
+                userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
+            }
             else throw new Exception("Неопределённый тип документа");
 
             return await _api.GenerateTitleXmlAsync(_authToken,
@@ -374,7 +249,9 @@ namespace EdiProcessingUnit.Edo
             }
             else
             {
-                var counteragents = GetKontragents(senderOrgId);
+                var senderBoxIdGuid = senderOrganization?.Boxes?.FirstOrDefault()?.BoxIdGuid;
+
+                var counteragents = GetKontragents(senderBoxIdGuid, myOrganizations);
 
                 counteragents = counteragents.Where(c => c.Organization?.OrgId == recipientOrgId)?
                     .ToList() ?? new List<Counteragent>();
@@ -390,7 +267,7 @@ namespace EdiProcessingUnit.Edo
                 recipientOrganization = counteragent.Organization;
             }
 
-            return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd820_05_01_01_hyphen",
+            return SendDocumentAttachment(senderOrganization.Boxes.First().BoxId, recipientOrganization.Boxes.First().BoxId, "UniversalTransferDocument", function, "utd970_05_03_01",
                 contents, comment, customDocumentId, powerOfAttorneyToPost);
         }
 
@@ -409,10 +286,15 @@ namespace EdiProcessingUnit.Edo
             {
                 powerOfAttorneyStatus = CallApiSafe(new Func<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>(() =>
                 {
-                    return _api.PrevalidatePowerOfAttorney(_authToken, ourBoxId ?? _actualBoxId,
-                        powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
-                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                    return _api.PrevalidatePowerOfAttorneyV2(_authToken, ourBoxId ?? _actualBoxId,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
                         {
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                            },
                             ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
                             {
                                 Content = new Content_v3
@@ -426,34 +308,41 @@ namespace EdiProcessingUnit.Edo
                 if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                 {
                     if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
                     {
                         var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                        if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
                         {
                             errorText = errorText + "Список ошибок:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                            foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status != 
+                            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
                             {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                if (!string.IsNullOrEmpty(res?.Name))
+                                    errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                if (res.Error != null)
+                                {
+                                    errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                }
+
+                                if(res?.Status != null)
+                                    errorText = errorText + $"Статус: {(int)res.Status}\r\n";
                             }
                         }
 
                         throw new Exception(errorText);
                     }
-                    else
+                    else if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                     {
-                        if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                        {
-                            var errorText = "Список ошибок:\r\n";
+                        var errorText = "Произошла ошибка проверки:\r\n";
 
-                            foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                            {
-                                errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                            }
-                            throw new Exception(errorText);
-                        }
+                        if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                            errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+                        
+                        throw new Exception(errorText);
                     }
                 }
             }
@@ -481,6 +370,107 @@ namespace EdiProcessingUnit.Edo
                 messageToPost.DocumentAttachments.Add(documentAttachment);
             }
             return CallApiSafe(new Func<Message>(()=> { return _api.PostMessage(_authToken, messageToPost); }));
+        }
+
+        public async Task<Message> SendDocumentAttachmentAsync(string ourBoxId, string counteragentBoxId, string typeNameId, string function, string version,
+            List<SignedContent> contents, string comment = null, string customDocumentId = null, PowerOfAttorneyToPost powerOfAttorneyToPost = null,
+            DocumentId initialDocumentId = null)
+        {
+            var messageToPost = new MessageToPost
+            {
+                FromBoxId = ourBoxId ?? _actualBoxId,
+                ToBoxId = counteragentBoxId
+            };
+
+            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
+            if (powerOfAttorneyToPost != null)
+            {
+                powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async() =>
+                {
+                    return await _api.PrevalidatePowerOfAttorneyV2Async(_authToken, ourBoxId ?? _actualBoxId,
+                        new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
+                        {
+                            FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                            {
+                                RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                            },
+                            ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
+                            {
+                                Content = new Content_v3
+                                {
+                                    Content = _certificate.RawData
+                                }
+                            }
+                        });
+                }));
+
+                if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                {
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
+                    {
+                        var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
+
+                        if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
+                        {
+                            errorText = errorText + "Список ошибок:\r\n";
+
+                            foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status !=
+                            Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
+                            {
+                                if (!string.IsNullOrEmpty(res?.Name))
+                                    errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                if (res.Error != null)
+                                {
+                                    errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                }
+
+                                if (res?.Status != null)
+                                    errorText = errorText + $"Статус: {(int)res.Status}\r\n";
+                            }
+                        }
+
+                        throw new Exception(errorText);
+                    }
+                    else if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                    {
+                        var errorText = "Произошла ошибка проверки:\r\n";
+
+                        if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                            errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+
+                        throw new Exception(errorText);
+                    }
+                }
+            }
+
+            foreach (var content in contents)
+            {
+                var documentAttachment = new DocumentAttachment
+                {
+                    TypeNamedId = typeNameId,
+                    Function = function,
+                    Version = version,
+                    SignedContent = content
+                };
+
+                if (powerOfAttorneyStatus != null && powerOfAttorneyToPost != null)
+                    if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
+                        documentAttachment.SignedContent.PowerOfAttorney = powerOfAttorneyToPost;
+
+                documentAttachment.Comment = comment;
+                documentAttachment.CustomDocumentId = customDocumentId;
+
+                if (initialDocumentId != null)
+                    documentAttachment.InitialDocumentIds.Add(initialDocumentId);
+
+                messageToPost.DocumentAttachments.Add(documentAttachment);
+            }
+            return await CallApiSafeAsync(new Func<Task<Message>>(async() => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
         }
 
         public async Task<Message> SendXmlDocumentAsync(string senderOrgId,
@@ -542,17 +532,22 @@ namespace EdiProcessingUnit.Edo
                 };
 
                 string typeNameId = "UniversalTransferDocument";
-                string version = "utd820_05_01_01_hyphen";
+                string version = "utd970_05_03_01";
 
                 Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult powerOfAttorneyStatus = null;
                 if (powerOfAttorneyToPost != null)
                 {
                     powerOfAttorneyStatus = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateResult>>(async () =>
                     {
-                        return await _api.PrevalidatePowerOfAttorneyAsync(_authToken, messageToPost.FromBoxId,
-                            powerOfAttorneyToPost.FullId.RegistrationNumber, powerOfAttorneyToPost.FullId.IssuerInn,
-                            new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequest
+                        return await _api.PrevalidatePowerOfAttorneyV2Async(_authToken, messageToPost.FromBoxId,
+                            new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyPrevalidateRequestV2
                             {
+                                FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
+                                {
+                                    RegistrationNumber = powerOfAttorneyToPost.FullId.RegistrationNumber,
+                                    IssuerInn = powerOfAttorneyToPost.FullId.IssuerInn,
+                                    RepresentativeInn = powerOfAttorneyToPost.FullId?.RepresentativeInn
+                                },
                                 ConfidantCertificate = new Diadoc.Api.Proto.PowersOfAttorney.ConfidantCertificateToPrevalidate
                                 {
                                     Content = new Content_v3
@@ -566,34 +561,41 @@ namespace EdiProcessingUnit.Edo
                     if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId != Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsValid)
                     {
                         if (powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.IsNotValid ||
-                            powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.HasWarnings)
                         {
                             var errorText = $"Статус доверенности некорректный: {powerOfAttorneyStatus.PrevalidateStatus.StatusText} \r\n";
 
-                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
+                            if (powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol != null)
                             {
                                 errorText = errorText + "Список ошибок:\r\n";
 
-                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
+                                foreach (var res in powerOfAttorneyStatus.PrevalidateStatus.ValidationProtocol.CheckResults?.Where(c => c.Status !=
+                                Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationCheckStatus.Ok))
                                 {
-                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
+                                    if (!string.IsNullOrEmpty(res?.Name))
+                                        errorText = errorText + $"ID проверки: {res?.Name}\r\n";
+
+                                    if (res.Error != null)
+                                    {
+                                        errorText = errorText + $"Описание:{res.Error.Text}, код ошибки:{res.Error.Code}\r\n";
+                                    }
+
+                                    if (res?.Status != null)
+                                        errorText = errorText + $"Статус: {(int)res.Status}\r\n";
                                 }
                             }
 
                             throw new Exception(errorText);
                         }
-                        else
+                        else if(powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.CanNotBeValidated ||
+                        powerOfAttorneyStatus.PrevalidateStatus.StatusNamedId == Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyValidationStatusNamedId.ValidationError)
                         {
-                            if ((powerOfAttorneyStatus.PrevalidateStatus.Errors?.Count ?? 0) > 0)
-                            {
-                                var errorText = "Список ошибок:\r\n";
+                            var errorText = "Произошла ошибка проверки:\r\n";
 
-                                foreach (var error in powerOfAttorneyStatus.PrevalidateStatus.Errors)
-                                {
-                                    errorText = errorText + $"Описание:{error.Text}, код:{error.Code}\r\n";
-                                }
-                                throw new Exception(errorText);
-                            }
+                            if (powerOfAttorneyStatus.PrevalidateStatus?.OperationError != null)
+                                errorText = errorText + $"Описание:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Text}, код:{powerOfAttorneyStatus.PrevalidateStatus.OperationError.Code}\r\n";
+
+                            throw new Exception(errorText);
                         }
                     }
                 }
@@ -616,33 +618,78 @@ namespace EdiProcessingUnit.Edo
             return await CallApiSafeAsync(new Func<Task<Message>>(async () => { return await _api.PostMessageAsync(_authToken, messageToPost); }));
         }
 
-        public List<Counteragent> GetKontragents(string orgId = null)
+        public Diadoc.Api.Proto.Employees.Employee GetMyEmployee()
+        {
+            var result = CallApiSafe(new Func<Diadoc.Api.Proto.Employees.Employee>(() => _api.GetMyEmployee(_authToken, _actualBoxId)));
+            return result;
+        }
+
+        public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV3 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
+        {
+            var request = new Diadoc.Api.Proto.Docflow.GetDocflowBatchRequest
+            {
+                Requests =
+                {
+                    new Diadoc.Api.Proto.Docflow.GetDocflowRequest
+                    {
+                        DocumentId = new DocumentId
+                        {
+                            MessageId = messageId,
+                            EntityId = entityId
+                        },
+                        InjectEntityContent = injectEntityContent
+                    }
+                }
+            };
+            
+            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV3>(() => _api.Docflow.GetDocflows(_authToken, _actualBoxId, request)));
+            return docs?.Documents?.FirstOrDefault();
+        }
+
+        public async Task<string> AcquireCounteragentAsync(string counteragentBoxId, string counteragentOrgId, string counteragentInn, string inviteText = null)
+        {
+            var request = new AcquireCounteragentRequest
+            {
+                BoxId = counteragentBoxId,
+                OrgId = counteragentOrgId,
+                Inn = counteragentInn,
+                MessageToCounteragent = inviteText
+            };
+
+            var result = await CallApiSafeAsync(new Func<Task<AsyncMethodResult>>(async () => await _api.AcquireCounteragentV3Async(_authToken, _actualBoxIdGuid, request)));
+            return result.TaskId;
+        }
+
+        public List<Counteragent> GetKontragents(string boxId = null, OrganizationList MyOrganizations = null, string counteragentStatus = "IsMyCounteragent")
         {
             CounteragentList list;
             List<Counteragent> result = new List<Counteragent>();
 
             string currentIndexKey = null;
 
-            do
+            if (string.IsNullOrEmpty(boxId))
             {
-                if (string.IsNullOrEmpty(orgId))
-                {
-                    OrganizationList MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
-                    Organization myOrganization = MyOrganizations.Organizations.First();
-
-                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, myOrganization.OrgId, "IsMyCounteragent", currentIndexKey); }));
-                }
+                if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                    boxId = _actualBoxIdGuid;
                 else
                 {
-                    list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragents(_authToken, orgId, "IsMyCounteragent", currentIndexKey); }));
+                    if (MyOrganizations == null)
+                        MyOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
+
+                    Organization myOrganization = MyOrganizations.Organizations.First();
+                    boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
                 }
+            }
+
+            do
+            {
+                list = CallApiSafe(new Func<CounteragentList>(() => { return _api.GetCounteragentsV3(_authToken, boxId, counteragentStatus, currentIndexKey); }));
 
                 currentIndexKey = null;
 
                 if (list?.Counteragents != null)
                 {
-                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
-                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null));
 
                     if(list.Counteragents.Count >= 100)
                         currentIndexKey = list.Counteragents.Last().IndexKey;
@@ -653,7 +700,7 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
-        public async Task<List<Counteragent>> GetKontragentsAsync(string boxId = null, OrganizationList MyOrganizations = null)
+        public async Task<List<Counteragent>> GetKontragentsAsync(string boxId = null, OrganizationList MyOrganizations = null, string counteragentStatus = "IsMyCounteragent")
         {
             List<Counteragent> result = new List<Counteragent>();
 
@@ -661,23 +708,27 @@ namespace EdiProcessingUnit.Edo
 
             if (string.IsNullOrEmpty(boxId))
             {
-                if (MyOrganizations == null)
-                    MyOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
+                if (!string.IsNullOrEmpty(_actualBoxIdGuid))
+                    boxId = _actualBoxIdGuid;
+                else
+                {
+                    if (MyOrganizations == null)
+                        MyOrganizations = await CallApiSafeAsync(new Func<Task<OrganizationList>>(async () => await _api.GetMyOrganizationsAsync(_authToken, false)));
 
-                Organization myOrganization = MyOrganizations.Organizations.First();
-                boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+                    Organization myOrganization = MyOrganizations.Organizations.First();
+                    boxId = myOrganization?.Boxes?.First().BoxIdGuid ?? _actualBoxId.Substring(0, _actualBoxId.IndexOf('@'));
+                }
             }
 
             do
             {
-                var list = await CallApiSafeAsync(new Func<Task<CounteragentList>>(async () => { return await _api.GetCounteragentsV3Async(_authToken, boxId, "IsMyCounteragent", currentIndexKey); }));
+                var list = await CallApiSafeAsync(new Func<Task<CounteragentList>>(async () => { return await _api.GetCounteragentsV3Async(_authToken, boxId, counteragentStatus, currentIndexKey); }));
 
                 currentIndexKey = null;
 
                 if (list?.Counteragents != null)
                 {
-                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null && !result
-                    .Exists(r => r.Organization.Inn == l.Organization.Inn && r.Organization.Kpp == l.Organization.Kpp)));
+                    result.AddRange(list.Counteragents.Where(l => l.Organization?.Inn != null));
 
                     if (list.Counteragents.Count >= 100)
                         currentIndexKey = list.Counteragents.Last().IndexKey;
@@ -688,14 +739,27 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
-        public List<Models.Kontragent> GetOrganizations(string orgId = null)
+        public async Task<KeyValuePair<string, Models.Kontragent>> GetOrganizationByFnsIdAsync(string fnsId)
+        {
+            var org = await CallApiSafeAsync(new Func<Task<Organization>>(async () => { return await _api.GetOrganizationByFnsParticipantIdAsync(_authToken, fnsId); }));
+
+            var organization = new Models.Kontragent(org?.FullName ?? "", org?.Inn, org?.Kpp);
+            organization.OrgId = org?.OrgId ?? "";
+            organization.Address = org?.Address;
+            organization.FnsParticipantId = org?.FnsParticipantId;
+            var counteragentBoxId = org?.Boxes?.FirstOrDefault()?.BoxIdGuid ?? string.Empty;
+
+            return new KeyValuePair<string, Models.Kontragent>(counteragentBoxId, organization);
+        }
+
+        public List<Models.Kontragent> GetOrganizations(string boxIdGuid = null)
         {
             var counterAgents = new List<Counteragent>();
 
-            if (string.IsNullOrEmpty(orgId))
+            if (string.IsNullOrEmpty(boxIdGuid))
                 counterAgents = GetKontragents();
             else
-                counterAgents = GetKontragents(orgId);
+                counterAgents = GetKontragents(boxIdGuid);
 
             List<Models.Kontragent> organizations = new List<Models.Kontragent>();
 
@@ -708,6 +772,7 @@ namespace EdiProcessingUnit.Edo
                 organization.OrgId = counteragent?.Organization?.OrgId ?? "";
                 organization.Address = counteragent?.Organization?.Address;
                 organization.FnsParticipantId = counteragent?.Organization?.FnsParticipantId;
+                organization.Boxes = counteragent?.Organization?.Boxes;
                 organizations.Add(organization);
             }
 
@@ -716,7 +781,10 @@ namespace EdiProcessingUnit.Edo
 
         public Models.Kontragent GetKontragentByInnKpp(string inn, string kpp = null, bool isNotRoaming = true)
         {
-            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(inn, kpp)));
+            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, kpp)));
+
+            if(organizations?.Organizations == null || organizations.Organizations?.Count == 0)
+                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, null)));
 
             Organization organization = null;
 
@@ -730,6 +798,23 @@ namespace EdiProcessingUnit.Edo
                 OrgId = organization?.OrgId,
                 Address = organization?.Address
             };
+        }
+
+        public List<Models.Kontragent> GetKontragentsByInnKpp(string inn, string kpp = null)
+        {
+            var organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, kpp)));
+
+            if (organizations?.Organizations == null || organizations.Organizations?.Count == 0)
+                organizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetOrganizationsByInnKpp(_authToken, inn, null)));
+
+            var result = organizations.Organizations.Select(o => new Models.Kontragent(o?.FullName, o?.Inn, o?.Kpp)
+            {
+                OrgId = o?.OrgId,
+                Address = o?.Address,
+                FnsParticipantId = o?.FnsParticipantId
+            }).ToList();
+
+            return result;
         }
 
         public Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType documentTitleType)
@@ -747,6 +832,12 @@ namespace EdiProcessingUnit.Edo
         public Diadoc.Api.Proto.Documents.Document GetDocument(string messageId, string entityId)
         {
             var document = CallApiSafe(new Func<Diadoc.Api.Proto.Documents.Document>(() => _api.GetDocument(_authToken, _actualBoxId, messageId, entityId)));
+            return document;
+        }
+
+        public async Task<Diadoc.Api.Proto.Documents.Document> GetDocumentAsync(string messageId, string entityId)
+        {
+            var document = await CallApiSafeAsync(new Func<Task<Diadoc.Api.Proto.Documents.Document>>(async () => await _api.GetDocumentAsync(_authToken, _actualBoxId, messageId, entityId)));
             return document;
         }
 
@@ -901,15 +992,18 @@ namespace EdiProcessingUnit.Edo
             return CallApiSafe(new Func<MessagePatch>(() => { return _api.PostMessagePatch(_authToken, messageToPost); }));
         }
 
-        public GeneratedFile GenerateSignatureRejectionXml(string messageId, string entityId, string text, Diadoc.Api.Proto.Invoicing.Signer signer)
+        public GeneratedFile GenerateSignatureRejectionXml(string messageId, string entityId, string text, 
+            Diadoc.Api.DataXml.TechnologicalSigner133UserContract.TechnologicalDocumentSigner133 signer)
         {
-            var xmlRejectionInfo = new Diadoc.Api.Proto.Invoicing.SignatureRejectionInfo
+            var signatureRejectionGenerationRequest = new Diadoc.Api.Proto.Invoicing.SignatureRejectionGenerationRequestV2
             {
+                MessageId = messageId,
                 ErrorMessage = text,
-                Signer = signer
+                AttachmentId = entityId,
+                SignerContent = signer.SerializeToXml()
             };
 
-            return _api.GenerateSignatureRejectionXml(_authToken, _actualBoxId, messageId, entityId, xmlRejectionInfo);
+            return _api.GenerateSignatureRejectionXmlV2(_authToken, _actualBoxId, signatureRejectionGenerationRequest);
         }
 
         public void SendRejectionDocument(string messageId, string entityId, byte[] fileBytes, byte[] signature, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
@@ -941,14 +1035,15 @@ namespace EdiProcessingUnit.Edo
         /// <summary>
         /// Отправка запроса на регистрацию машиночитаемой доверенности (МЧД)
         /// </summary>
-        public string RegisterPowerOfAttorneyByRegNumber(string registrationNumber, string issuerInn)
+        public string RegisterPowerOfAttorneyByRegNumber(string registrationNumber, string issuerInn, string representativeInn = null)
         {
             var powerOfAttorneyToRegister = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyToRegister
             {
                 FullId = new Diadoc.Api.Proto.PowersOfAttorney.PowerOfAttorneyFullId
                 {
                     RegistrationNumber = registrationNumber,
-                    IssuerInn = issuerInn
+                    IssuerInn = issuerInn,
+                    RepresentativeInn = representativeInn
                 }
             };
 
@@ -1019,6 +1114,11 @@ namespace EdiProcessingUnit.Edo
                     .Boxes?
                     .FirstOrDefault()?
                     .BoxId;
+
+                _actualBoxIdGuid = organization?
+                    .Boxes?
+                    .FirstOrDefault()?
+                    .BoxIdGuid;
             }
 		}
 

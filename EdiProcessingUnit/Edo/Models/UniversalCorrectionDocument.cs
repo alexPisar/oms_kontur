@@ -11,6 +11,7 @@ namespace EdiProcessingUnit.Edo.Models
     {
         private DocEdoProcessing _edoProcessing;
         private string _docNumber;
+        private string _actStatusStr;
 
         public DocJournal CorrectionDocJournal { get; set; }
         public DocJournal InvoiceDocJournal { get; set; }
@@ -110,6 +111,13 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string ActStatusStr
+        {
+            get {
+                return _actStatusStr;
+            }
+        }
+
         public UniversalCorrectionDocument Init(AbtDbContext abtContext)
         {
             var collection = (from docEdo in abtContext.DocEdoProcessings
@@ -132,8 +140,12 @@ namespace EdiProcessingUnit.Edo.Models
                     EdoProcessing = collection.FirstOrDefault();
             }
 
-            IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocReturn == CorrectionDocJournal.Id select label).Count() > 0;
+            if(CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
+                IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocSale == InvoiceDocJournal.IdDocMaster select label).Count() > 0;
+            else
+                IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocReturn == CorrectionDocJournal.Id select label).Count() > 0;
 
+            _actStatusStr = abtContext.SelectSingleValue($"select name from ref_actions where id = {CorrectionDocJournal.ActStatus}");
             return this;
         }
     }

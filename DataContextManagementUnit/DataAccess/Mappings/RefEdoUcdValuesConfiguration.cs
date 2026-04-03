@@ -7,7 +7,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
         public RefEdoUcdValuesConfiguration()
         {
             this
-                .HasKey(r => new { r.IdEdoGoodChannel, r.Key })
+                .HasKey(r => new { r.IdEdoGoodChannel, r.Key, r.IdDocType })
                 .ToTable("REF_EDO_UCD_VALUES", "EDI");
 
             this
@@ -26,6 +26,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .Property(r => r.Value)
                 .HasColumnName(@"VALUE")
                 .HasMaxLength(2000);
+
+            this
+                .Property(r => r.IdDocType)
+                .HasColumnName(@"ID_DOC_TYPE")
+                .IsRequired();
 
             OnCreated();
         }

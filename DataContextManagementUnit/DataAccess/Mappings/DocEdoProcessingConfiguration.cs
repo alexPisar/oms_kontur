@@ -87,6 +87,20 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasColumnName("ID_PARENT");
 
             this
+                .Property(d => d.HonestMarkStatus)
+                .HasColumnName("HONEST_MARK_STATUS");
+
+            this
+                .Property(d => d.HonestMarkErrorMessage)
+                .HasColumnName("HONEST_MARK_ERROR_MESSAGE")
+                .HasMaxLength(1000);
+
+            this
+                .Property(d => d.RejectionReason)
+                .HasColumnName("REJECTION_REASON")
+                .HasMaxLength(4000);
+
+            this
                 .HasMany(d => d.Children)
                 .WithOptional(c => c.Parent)
                 .HasForeignKey(d => d.IdParent)

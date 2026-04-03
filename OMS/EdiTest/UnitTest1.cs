@@ -149,30 +149,30 @@ namespace EdiTest
         public void EdoGenerateXmlTest()
         {
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
-            edo.Authenticate(true);
-            var userDocCreator = edo.GetUniversalTransferDocumentWithHyphens(new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+            edo.Authenticate(true, null, "2504000010");
+            var userDocCreator = edo.GetUniversalTransferDocument(new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
             {
-                Inn = "7750370238",
-                Kpp = "770100101",
-                OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
-                OrgName = "ЗАО Очень Древний Папирус",
-                Address = new Diadoc.Api.DataXml.Address
+                Inn = "2504000010",
+                Kpp = "253901001",
+                OrgType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                OrgName = "ООО \"Вирэй\"",
+                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                 {
-                    Item = new Diadoc.Api.DataXml.RussianAddress
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                     {
-                        Region = "66"
+                        Region = "25"
                     }
                 }
             },
-            new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
             {
                 Inn = "9500000005",
                 Kpp = "667301001",
-                OrgType = Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                OrgType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                 OrgName = "ООО Тестовое Юрлицо обычное",
-                Address = new Diadoc.Api.DataXml.Address
+                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                 {
-                    Item = new Diadoc.Api.DataXml.RussianAddress
+                    Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                     {
                         Region = "66"
                     }
@@ -180,27 +180,36 @@ namespace EdiTest
             },
             "01.01.2020",
             "134",
-            Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensFunction.СЧФ,
-            null,
-            new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTable
+            Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentFunction.СЧФДОП,
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
+            {
+                OperationInfo = "Товары переданы",
+                TransferDate = DateTime.Now.ToString("dd.MM.yyyy")
+            },
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTable
             {
                 Item = new[]
                     {
-                        new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItem
+                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItem
                         {
                             Product = "товар",
                             Unit = "796",
                             Quantity = 10,
                             QuantitySpecified = true,
-                            WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
                             SubtotalSpecified = true,
-                            Subtotal = 0,
-                            ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights,
-                            ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[]
+                            Subtotal = 1560,
+                            VatSpecified = true,
+                            Vat = 260,
+                            SubtotalWithVatExcludedSpecified = true,
+                            SubtotalWithVatExcluded = 1300,
+                            PriceSpecified = true,
+                            Price = 130,
+                            ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4,
+                            ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[]
                             {
-                                new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
                                 {
-                                    ItemsElementName = new []{ Diadoc.Api.DataXml.ItemsChoiceType.Unit },
+                                    ItemsElementName = new []{ Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ItemsChoiceType.Unit },
                                     Items = new string[]{"4564385435465"},
                                     TransPackageId = "6352386234233"
                                 }
@@ -208,21 +217,51 @@ namespace EdiTest
                         }
                     },
 
-                WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True,
-                TotalSpecified=true,
-                Total=7960
+                TotalSpecified = true,
+                Total = 1560,
+                VatSpecified = true,
+                Vat = 260,
+                TotalWithVatExcludedSpecified = true,
+                TotalWithVatExcluded = 1300
             },
-            new[]
+            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signers()
             {
-                new Diadoc.Api.DataXml.ExtendedSignerDetails_SellerTitle
+                Signer = new[]
                 {
-                    SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.LegalEntity,
-                    FirstName = "Иван",
-                    MiddleName = "Иванович",
-                    LastName = "Иванов",
-                    SignerOrganizationName = "ЗАО Очень Древний Папирус",
-                    Inn = "7750370238",
-                    Position = "директор"
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Signer
+                    {
+                        Fio = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Fio
+                        {
+                            FirstName = "Ирина",
+                            MiddleName = "Васильевна",
+                            LastName = "Бельтюкова"
+                        },
+                        Position = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPosition
+                        {
+                            PositionSource = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerPositionPositionSource.Manual,
+                            Value = "Директор по продажам"
+                        },
+                        SignatureTypeSpecified = true,
+                        SignatureType = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignatureType.Item1,
+                        SigningDate = DateTime.Now.ToString("dd.MM.yyyy"),
+                        SignerPowersConfirmationMethodSpecified = true,
+                        SignerPowersConfirmationMethod = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.SignerSignerPowersConfirmationMethod.Item3,
+                        PowerOfAttorney = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.PowerOfAttorney
+                        {
+                            Electronic = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Electronic
+                            {
+                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.Storage
+                                {
+                                    UseDefault = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageUseDefault.@false,
+                                    FullId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.StorageFullId
+                                    {
+                                        RegistrationNumber = "b591a89f-ffe1-439c-9f04-e02444839231",
+                                        IssuerInn = "2504000010"
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             0, "643", "Писаренко А.Н.");
@@ -230,18 +269,22 @@ namespace EdiTest
             try
             {
                 var docFile = edo.GenerateTitleXml("UniversalTransferDocument",
-                    "СЧФ", "utd820_05_01_01_hyphen", 0, userDocCreator);
+                    "СЧФДОП", "utd970_05_03_01", 0, userDocCreator);
 
                 var xmlString = Encoding.GetEncoding(1251).GetString(docFile.Content);
 
-                docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\{docFile.FileName}");
+                docFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\Files\\{docFile.FileName}");
 
                 var universalTransferDocumentString = Encoding.UTF8.GetString(userDocCreator.SerializeToXml());
-                var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
-                universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
-                reporter.LoadFromXml(universalTransferDocumentString);
+                //var reporter = new Reporter.Reporters.UniversalTransferDocumentReporter();
+                //universalTransferDocumentString = string.Join("\n", universalTransferDocumentString.Split('\n').Skip(1).ToArray());
+                //reporter.LoadFromXml(universalTransferDocumentString);
             }
-            catch(WebException webEx)
+            catch (WebException webEx)
+            {
+
+            }
+            catch (Exception ex)
             {
 
             }
@@ -330,7 +373,7 @@ namespace EdiTest
                     },
                     TransferInfo = new Diadoc.Api.DataXml.Utd820.Hyphens.TransferInfo
                     {
-                        Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                        Employee = new Diadoc.Api.DataXml.Employee
                         {
                             Position = "Зав. складом",
                             EmployeeInfo = employee,
@@ -430,7 +473,7 @@ namespace EdiTest
                 else
                     signer.First().SignerType = Diadoc.Api.DataXml.ExtendedSignerDetailsBaseSignerType.IndividualEntity;
 
-                document.UseSignerDetails(signer);
+                document.Signers = signer;
 
                 document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
                 {
@@ -492,19 +535,19 @@ namespace EdiTest
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -516,7 +559,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -552,10 +595,16 @@ namespace EdiTest
         {
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
             var crypto = new WinApiCryptWrapper();
-            var cert = crypto.GetCertificateWithPrivateKey("DEEBCA5A51641044D042AEFA0E9569EEA57CE716", false);
-            edo.Authenticate(false, cert, "2538150215");
+            var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+            edo.Authenticate(false, cert, "2504000010");
 
-            var document = edo.GetDocument("c28f297c-e379-494f-8972-6768c648f279", "555d0768-0f41-436d-b6e4-6f04dab14ea3");
+            var document = edo.GetDocument("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a");
+            //var message = edo.GetMessage("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a", true);
+            //var entity = message.Entities.FirstOrDefault(ent => ent.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.XmlSignatureRejection);
+            //var docFlow = edo.GetDocFlow("2f22e342-f40f-46f8-a5b1-d396f5380bcd", "0816c243-3f8f-457b-9f7e-603f3c64cf7a", true);
+            //var signerRejectionDocFlow = docFlow?.Docflow?.RecipientResponse?.Rejection;
+
+            //var text = signerRejectionDocFlow?.PlainText;
         }
 
         [TestMethod]
@@ -709,6 +758,684 @@ namespace EdiTest
             edo.Authenticate(false, cert, "2504000010");
             var docType = edo.GetDocumentTypes().DocumentTypes.FirstOrDefault(d => d.Name == "Torg2");
             var document = edo.GetDocument("13d9568b-5e35-4084-9e9e-2435ca788554", "e527de5d-c092-43a4-98b8-6117d64c54d2");
+        }
+
+        [TestMethod]
+        public void GetEdoDocumentsForSendingTest()
+        {
+            try
+            {
+                var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+                var crypto = new WinApiCryptWrapper();
+                var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+                edo.Authenticate(false, cert, "2504000010");
+
+                var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+                {
+                    Name = "ООО \"ВИРЭЙ\"",
+                    Inn = "2504000010",
+                    Kpp = "253901001",
+                    EmchdId = "b591a89f-ffe1-439c-9f04-e02444839231",
+                    EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdPersonInn = "253605132573",
+                    EmchdPersonSurname = "Бельтюкова",
+                    EmchdPersonName = "Ирина",
+                    EmchdPersonPatronymicSurname = "Васильевна",
+                    EmchdPersonPosition = "Директор по продажам"
+                };
+
+                edo.SetOrganizationParameters(organization);
+                var documents = GetDocumentsForEdoAutomaticSend(organization);
+                var document = documents.FirstOrDefault(d => d.GlnShipTo == "4610018015192");
+                //var edoValuesPairs = document?.RefEdoGoodChannel?.EdoValuesPairs?.ToList();
+
+                var clientEdoProcessor = new SendEdoDocumentsProcessingUnit.Processors.ClientEdoProcessor();
+                var universalDocument = clientEdoProcessor.GetUniversalDocument(document, organization, document.Details, document.RefEdoGoodChannel);
+                var generatedFile = edo.GenerateTitleXml("UniversalTransferDocument", "СЧФДОП", "utd970_05_03_01", 0, universalDocument);
+                var xml = Encoding.GetEncoding(1251).GetString(generatedFile.Content);
+                generatedFile.SaveContentToFile($"C:\\Users\\systech\\Desktop\\Files\\{generatedFile.FileName}");
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void TestPayEngineMethod()
+        {
+            var sector = "";
+            var reference = "459";
+            var password = "";
+
+            try
+            {
+                var str = sector + reference + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+                
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Order");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&reference={reference}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void OperationPayEngineMethod()
+        {
+            var sector = "";
+            var id = "";
+            var operation = "";
+            var password = "";
+
+            try
+            {
+                var str = sector + id + operation + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Operation");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&id={id}&operation={operation}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void RegisterOrderTest()
+        {
+            var sector = "";
+            var amount = "100";
+            var currency = "643";
+            var description = "Test Order";
+            var reference = "TEST1";
+            var password = ""; 
+
+            try
+            {
+                var str = sector + amount + currency + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/Register");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&amount={amount}&currency={currency}&description={description}&reference={reference}";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void GetOrdersListTest()
+        {
+            var sector = "";
+            var reference = "448,458,459";
+            var password = "";
+            var fromDate = "10.04.2025";
+            //var orderState = "0";
+
+            try
+            {
+                var str = sector + reference /*+ orderState*/  + fromDate + password;
+                var strSha256 = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(str));
+                var strHex = BitConverter.ToString(strSha256).Replace("-", string.Empty).ToLower();
+                var signature = Convert.ToBase64String(Encoding.UTF8.GetBytes(strHex));
+                
+
+                var webProxy = new WebProxy();
+
+                webProxy.Address = new Uri("http://192.168.2.29:3128");
+                webProxy.Credentials = new NetworkCredential("developer3", "nabeg123");
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://test.paygine.com/webapi/OrderList");
+
+                request.Method = "POST";
+                request.ContentType = "application/x-www-form-urlencoded";
+
+                request.Proxy = webProxy;
+
+                var requestStream = request.GetRequestStream();
+                string contentData = $"signature={signature}&sector={sector}&from_date={fromDate}&reference_list={reference}&mode=1";
+
+                var contentDataBytes = Encoding.UTF8.GetBytes(contentData);
+
+                requestStream.Write(contentDataBytes, 0, contentDataBytes.Length);
+
+                var response = request.GetResponse();
+
+                string result;
+
+                //if (encoding == null)
+                //{
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    result = sr.ReadToEnd();
+                }
+                //}
+                //else
+                //{
+                //    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                //    {
+                //        result = sr.ReadToEnd();
+                //    }
+                //}
+
+                //_statusCode = ((int?)((HttpWebResponse)response)?.StatusCode)?.ToString();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        [TestMethod]
+        public void TestMethod()
+        {
+            using (var abt = new AbtDbContext())
+            {
+                var newDocEdoProcessings = new List<DocEdoProcessing>();
+
+                {
+                    var docJournal = abt.DocJournals.FirstOrDefault(d => d.Id == 1158091600);
+                    var docComissionEdoProcessing = abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158091600);
+
+                    var oldDocEdoProcessing = abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158091600);
+
+                    var newDocEdoProcessing = new DocEdoProcessing
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageId = "dd17317a-ab2f-4761-ad01-730d3f8c71e7",
+                        EntityId = "dd579f4a-a772-462e-aa0e-70ade6df8d3f",
+                        FileName = "ON_NSCHFDOPPR_2AE9F7B7221-16F7-4835-8CB0-9A117BF18394_2BM-2504000010-2012052808301120662630000000000_20250707_9409a655-7d02-4672-bbc3-552364ba067c_0_1_0_0_0_00",
+                        IsReprocessingStatus = 0,
+                        IdDoc = 1158091600,
+                        DocDate = DateTime.Now,
+                        UserName = "edi",
+                        ReceiverName = oldDocEdoProcessing.ReceiverName,
+                        ReceiverInn = oldDocEdoProcessing.ReceiverInn,
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                        HonestMarkStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent
+                    };
+
+                    docComissionEdoProcessing.MainDocuments.Add(newDocEdoProcessing);
+                    newDocEdoProcessing.IdComissionDocument = docComissionEdoProcessing.Id;
+                    newDocEdoProcessing.ComissionDocument = docComissionEdoProcessing;
+
+                    newDocEdoProcessings.Add(newDocEdoProcessing);
+                }
+
+                {
+                    var docJournal = abt.DocJournals.FirstOrDefault(d => d.Id == 1158089300);
+                    var docComissionEdoProcessing = abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158089300);
+
+                    var oldDocEdoProcessing = abt.DocEdoProcessings.FirstOrDefault(d => d.IdDoc == 1158089300);
+                    var newDocEdoProcessing = new DocEdoProcessing
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageId = "328ec4b1-5220-4888-b3eb-923389cf80a8",
+                        EntityId = "93b295c3-eacf-4d54-ae95-c4cdad0ccc78",
+                        FileName = "ON_NSCHFDOPPR_2AEC3E004A1-71B8-42F1-872C-C3FAE7DF7D4E_2BM-2504000010-2012052808301120662630000000000_20250707_a6c93451-13ce-4b7f-9691-e8a443a9003c_0_1_0_0_0_00",
+                        IsReprocessingStatus = 0,
+                        IdDoc = 1158089300,
+                        DocDate = DateTime.Now,
+                        UserName = "edi",
+                        ReceiverName = oldDocEdoProcessing.ReceiverName,
+                        ReceiverInn = oldDocEdoProcessing.ReceiverInn,
+                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                        HonestMarkStatus = (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent
+                    };
+
+                    docComissionEdoProcessing.MainDocuments.Add(newDocEdoProcessing);
+                    newDocEdoProcessing.IdComissionDocument = docComissionEdoProcessing.Id;
+                    newDocEdoProcessing.ComissionDocument = docComissionEdoProcessing;
+
+                    newDocEdoProcessings.Add(newDocEdoProcessing);
+                }
+
+                foreach (var newDocEdoProcessing in newDocEdoProcessings)
+                {
+                    if (newDocEdoProcessing.ComissionDocument != null && !abt.DocEdoProcessings.Any(d => d.Id == newDocEdoProcessing.Id))
+                        abt.DocEdoProcessings.Add(newDocEdoProcessing);
+                    else if(newDocEdoProcessing.ComissionDocument == null)
+                        abt.DocEdoProcessings.Add(newDocEdoProcessing);
+                }
+
+                abt.SaveChanges();
+            }
+        }
+
+        [TestMethod]
+        public void ReplaceMarkedCodesTest()
+        {
+            using(var abt = new AbtDbContext())
+            {
+                ExcelColumnCollection columnCollection = new ExcelColumnCollection();
+
+                columnCollection.AddColumn("DmLabel", "Код");
+                columnCollection.AddColumn("Gtin", "GTIN");
+
+                var doc = new ExcelDocumentData(columnCollection);
+
+                List<ExcelDocumentData> docs = new List<ExcelDocumentData>(new ExcelDocumentData[] {
+                        doc
+                    });
+
+                ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\ReturnsFromMp.xlsx", docs);
+
+                worker.ImportData<DocGoodsDetailsLabelsForLoad>();
+                var nonBarCodes = new List<string>();
+
+                IEnumerable<DocGoodsDetailsLabels> labels = new List<DocGoodsDetailsLabels>();
+
+                foreach (var d in doc.Data)
+                {
+                    var docGoodsDetailsLabelsForLoad = (DocGoodsDetailsLabelsForLoad)d;
+                    docGoodsDetailsLabelsForLoad.DmLabel = docGoodsDetailsLabelsForLoad.DmLabel.TrimStart((char)29);
+
+                    if (string.IsNullOrEmpty(docGoodsDetailsLabelsForLoad.Gtin))
+                        docGoodsDetailsLabelsForLoad.Gtin = docGoodsDetailsLabelsForLoad.DmLabel.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+
+                    if (docGoodsDetailsLabelsForLoad.DmLabel.Length > 31)
+                        docGoodsDetailsLabelsForLoad.DmLabel = docGoodsDetailsLabelsForLoad.DmLabel.Substring(0, docGoodsDetailsLabelsForLoad.DmLabel.IndexOf((char)29));
+                    //var res = abt.SelectSingleValue($"select 1 from doc_goods_details_labels where dm_label = '{docGoodsDetailsLabelsForLoad.DmLabel}'");
+
+                        //if (res == "1")
+                        //    continue;
+
+                    string barCodeStr = docGoodsDetailsLabelsForLoad.Gtin.TrimStart('0');
+
+                    var refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr && r.IsPrimary == false);
+
+                    if (refBarCode?.IdGood == null)
+                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr);
+
+                    if (refBarCode?.IdGood == null)
+                    {
+                        if (!nonBarCodes.Exists(n => n == barCodeStr))
+                            nonBarCodes.Add(barCodeStr);
+
+                        continue;
+                    }
+
+                    var label = new DocGoodsDetailsLabels
+                    {
+                        IdDoc = 0,
+                        IdGood = refBarCode.IdGood.Value,
+                        DmLabel = docGoodsDetailsLabelsForLoad.DmLabel,
+                        InsertDateTime = DateTime.Now
+                        //LabelStatus = 2
+                    };
+
+                    (labels as List<DocGoodsDetailsLabels>).Add(label);
+                }
+
+                File.WriteAllText("C:\\Users\\developer3\\Desktop\\BarCodesList.txt", string.Join("\n", nonBarCodes));
+
+                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel)).ToList();
+                abt.DocGoodsDetailsLabels.AddRange(labels);
+                abt.SaveChanges();
+            }
+        }
+
+        [TestMethod]
+        public void SendDesadvForOrdersTest()
+        {
+            using (var ediDbContext = new EdiDbContext())
+            {
+                EdiProcessingUnit.EdiProcessorFactory processorFactory = new EdiProcessingUnit.EdiProcessorFactory();
+                processorFactory.OrganizationGln = "4607196304521";
+
+                var docOrder = ediDbContext.DocOrders.First(d => d.Number == "00-00179851");
+
+                var processor = new EdiProcessingUnit.ProcessorUnits.DespatchAdviceProcessor(new List<DocOrder>(new[] { docOrder }));
+                processorFactory.RunProcessor(processor);
+            }
+        }
+
+        [TestMethod]
+        public void SendInviteToCounteragent()
+        {
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            var crypto = new WinApiCryptWrapper();
+            var cert = crypto.GetCertificateWithPrivateKey("439C9C0937713DEEA5334DB7228585A55B11498C", false);
+            edo.Authenticate(false, cert, "2538150215");
+
+            var counteragentFnsId = "2BM-251801525231-20250319124251621011600000000";
+
+            var counteragents = edo.GetKontragents(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxIdGuid, null, null);
+
+            if (!counteragents.Exists(c => c?.Organization?.FnsParticipantId == counteragentFnsId))
+            {
+                var orgObj = edo.GetOrganizationByFnsIdAsync(counteragentFnsId).Result;
+
+                var counteragentBoxId = orgObj.Key;
+                var organization = orgObj.Value;
+
+                var res = edo.AcquireCounteragentAsync(counteragentBoxId, organization.OrgId, organization.Inn, "Приглашаем вас к обмену документами.").Result;
+            }
+            else
+            {
+                var counteragent = counteragents.FirstOrDefault(c => c?.Organization?.FnsParticipantId == counteragentFnsId);
+                var status = counteragent.CurrentStatus;
+            }
+
+            //var counteragents = edo.GetKontragents(EdiProcessingUnit.Edo.Edo.GetInstance().ActualBoxIdGuid, null, null);
+
+                //if(counteragents.Exists(c => c.CurrentStatus == Diadoc.Api.Proto.CounteragentStatus.InvitesMe))
+        }
+
+        [TestMethod]
+        public void ParseCodesToDataBase()
+        {
+            var path = "C:\\Users\\developer3\\Downloads\\40f259ca-6e16-4168-9598-02d47231d5b3.json";
+            EdiProcessingUnit.HonestMark.Models.IntroduceRemainsDocument introduceRemainsDocument;
+
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    introduceRemainsDocument = JsonConvert.DeserializeObject<EdiProcessingUnit.HonestMark.Models.IntroduceRemainsDocument>(sr.ReadToEnd());
+                }
+            }
+
+            var crypto = new WinApiCryptWrapper();
+            var orgCertificate = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+
+            var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+            {
+                Name = "ООО \"Вирэй-Восточный\"",
+                Inn = "2538150215",
+                Kpp = "253801001",
+                EmchdId = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                EmchdPersonInn = "253605132573",
+                EmchdPersonSurname = "Бельтюкова",
+                EmchdPersonName = "Ирина",
+                EmchdPersonPatronymicSurname = "Васильевна",
+                EmchdPersonPosition = "Директор по продажам"
+            };
+
+            EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(orgCertificate, organization);
+            var markedCodesInfo = GetMarkCodesInfo(introduceRemainsDocument.Products.Select(l => l.Ki).ToArray());
+
+            markedCodesInfo = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn == "2538150215" && l?.CisInfo?.Status == "INTRODUCED").ToList();
+
+            var nonBarCodes = new List<string>();
+            Dictionary<string, RefBarCode> idGoodsByBarCodes = new Dictionary<string, RefBarCode>();
+
+            using (var abt = new AbtDbContext())
+            {
+                IEnumerable<DocGoodsDetailsLabels> labels = new List<DocGoodsDetailsLabels>();
+
+                foreach(var product in markedCodesInfo)
+                {
+                    if (string.IsNullOrEmpty(product?.CisInfo?.Cis))
+                        continue;
+
+                    var barCode = product.CisInfo.Cis.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+                    RefBarCode refBarCode;
+
+                    if (idGoodsByBarCodes.ContainsKey(barCode))
+                    {
+                        refBarCode = idGoodsByBarCodes[barCode];
+                    }
+                    else
+                    {
+                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == false);
+
+                        if (refBarCode?.IdGood == null)
+                            refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode);
+
+                        if (refBarCode?.IdGood != null)
+                            idGoodsByBarCodes.Add(barCode, refBarCode);
+                    }
+
+                    if (refBarCode?.IdGood == null)
+                    {
+                        if (!nonBarCodes.Exists(n => n == barCode))
+                            nonBarCodes.Add(barCode);
+
+                        continue;
+                    }
+
+                    var label = new DocGoodsDetailsLabels
+                    {
+                        IdDoc = 0,
+                        IdGood = refBarCode.IdGood.Value,
+                        DmLabel = product.CisInfo.Cis,
+                        InsertDateTime = DateTime.Now,
+                        //LabelStatus = 2
+                    };
+
+                    (labels as List<DocGoodsDetailsLabels>).Add(label);
+                }
+
+                File.WriteAllText("C:\\Users\\developer3\\Desktop\\BarCodesList.txt", string.Join("\n", nonBarCodes));
+
+                labels = labels.Where(label => !abt.DocGoodsDetailsLabels.Any(l => l.DmLabel == label.DmLabel)).ToList();
+                abt.DocGoodsDetailsLabels.AddRange(labels);
+                abt.SaveChanges();
+            }
+        }
+
+        [TestMethod]
+        public void CheckCodes()
+        {
+            using (var abt = new AbtDbContext())
+            {
+                DateTime dateTimeFrom = DateTime.Now.Date;
+                var codes = abt.DocGoodsDetailsLabels.Where(r => r.InsertDateTime > dateTimeFrom).Select(s => s.DmLabel).ToArray();
+
+                var crypto = new WinApiCryptWrapper();
+                var orgCertificate = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+
+                var organization = new EdiProcessingUnit.Edo.Models.Kontragent
+                {
+                    Name = "ООО \"Вирэй-Восточный\"",
+                    Inn = "2538150215",
+                    Kpp = "253801001",
+                    EmchdId = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                    EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                    EmchdPersonInn = "253605132573",
+                    EmchdPersonSurname = "Бельтюкова",
+                    EmchdPersonName = "Ирина",
+                    EmchdPersonPatronymicSurname = "Васильевна",
+                    EmchdPersonPosition = "Директор по продажам"
+                };
+
+                EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(orgCertificate, organization);
+                var markedCodesInfo = GetMarkCodesInfo(codes);
+
+                var incorrectMarkedCodes = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn != "2538150215" || l?.CisInfo?.Status != "INTRODUCED").ToList();
+                var correctMarkedCodes = markedCodesInfo.Where(l => l?.CisInfo?.OwnerInn == "2538150215" && l?.CisInfo?.Status == "INTRODUCED" && l?.CisInfo?.StatusEx == "EMPTY").ToList();
+            }
+        }
+
+        private List<EdiProcessingUnit.HonestMark.Models.MarkCodeInfo> GetMarkCodesInfo(string[] codes)
+        {
+            var result = new List<EdiProcessingUnit.HonestMark.Models.MarkCodeInfo>();
+            var positionInArray = 0;
+
+            while (positionInArray < codes.Count())
+            {
+                int length = codes.Count() - positionInArray > 500 ? 500 : codes.Count() - positionInArray;
+                var markedCodesInfo = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetMarkCodesInfo(
+                    EdiProcessingUnit.HonestMark.ProductGroupsEnum.None, codes.Skip(positionInArray).Take(length).ToArray());
+
+                result.AddRange(markedCodesInfo);
+
+                positionInArray += 500;
+            }
+            return result;
+        }
+
+        private List<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2> GetDocumentsForEdoAutomaticSend(EdiProcessingUnit.Edo.Models.Kontragent organization)
+        {
+            using (var abt = new AbtDbContext())
+            {
+                var fileController = new WebService.Controllers.FileController();
+                var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+                var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+                fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
+
+                string sqlString = string.Empty;
+                var properties = typeof(EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2).GetProperties();
+
+                foreach (var property in properties)
+                {
+                    var colAttribute = property?.GetCustomAttributes(false)?
+                        .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                    if (colAttribute != null)
+                        sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+                }
+
+                sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_1 D where D.DOC_DATE >= :FromDate and D.ORDER_DATE >= :FromDate" +
+                    $" and SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}'" +
+                    " and exists(select * from log_actions where id_object = D.ID_DOC_MASTER and id_action = D.PERMISSION_STATUS and action_datetime > sysdate - 14)";
+                var docs = abt.Database.SqlQuery<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2>(sqlString, fromDateParam).ToList();
+
+                docs = docs.Select(u =>
+                {
+                    try
+                    {
+                        return u.Init(abt);
+                    }
+                    catch (Exception ex)
+                    {
+                        //_log.Log(ex);
+                        //MailReporter.Add(ex, $"Ошибка в документе {u.InvoiceNumber}: ");
+                        return null;
+                    }
+                }).Where(u => u != null).ToList();
+                var edoValuesPairs = docs?.FirstOrDefault(d => d.GlnShipTo == "4610018015192")?.RefEdoGoodChannel?.EdoValuesPairs?.ToList();
+                return docs;
+            }
         }
 
         private void SetFinDbConfiguration()
@@ -866,7 +1593,7 @@ namespace EdiTest
 
             if (!string.IsNullOrEmpty(employee))
             {
-                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Utd820.Hyphens.Employee
+                document.TransferInfo.Employee = new Diadoc.Api.DataXml.Employee
                 {
                     Position = "Зав. складом",
                     EmployeeInfo = employee,
@@ -974,7 +1701,7 @@ namespace EdiTest
             //        signer.First().SignerStatus = Diadoc.Api.DataXml.ExtendedSignerDetailsSignerStatus.AuthorizedPerson;
             //}
 
-            document.UseSignerDetails(signer);
+            document.Signers = signer;
 
             int docLineCount = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocGoodsDetailsIs.Count : d.Details.Count;
             document.DocumentShipments = new Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphensDocumentShipment[]
@@ -1051,19 +1778,19 @@ namespace EdiTest
                     switch (docJournalDetail.TaxRate)
                     {
                         case 0:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                         case 10:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item10;
                             break;
                         case 18:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.EighteenPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item18;
                             break;
                         case 20:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.TwentyPercent;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item20;
                             break;
                         default:
-                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateWithTwentyPercentAndTaxedByAgent.Zero;
+                            detail.TaxRate = Diadoc.Api.DataXml.Utd820.Hyphens.TaxRateUcd736AndUtd820.Item0;
                             break;
                     }
 
@@ -1071,7 +1798,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -1132,7 +1859,7 @@ namespace EdiTest
                         SubtotalSpecified = true,
                         Subtotal = subtotal,
                         SubtotalWithVatExcludedSpecified = true,
-                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.True,
+                        WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemWithoutVat.@true,
                         SubtotalWithVatExcluded = subtotal,
                         ItemVendorCode = barCode,
                         CustomsDeclarations = new Diadoc.Api.DataXml.Utd820.Hyphens.CustomsDeclarationWithHyphens[]
@@ -1149,7 +1876,7 @@ namespace EdiTest
 
                     if (docGoodDetailLabels.Count > 0)
                     {
-                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.PropertyRights;
+                        detail.ItemMark = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber[1];
                         detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableItemItemIdentificationNumber
                         {
@@ -1175,7 +1902,7 @@ namespace EdiTest
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                 document.Table.VatSpecified = true;
             else
-                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.True;
+                document.Table.WithoutVat = Diadoc.Api.DataXml.Utd820.Hyphens.InvoiceTableWithoutVat.@true;
 
             if (considerOnlyLabeledGoods)
             {

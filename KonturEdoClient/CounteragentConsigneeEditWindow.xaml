@@ -1,0 +1,34 @@
+﻿<Window x:Class="KonturEdoClient.CounteragentConsigneeEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KonturEdoClient"
+        mc:Ignorable="d"
+        Title="Выбор грузополучателя" Height="350" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <dxg:GridControl ItemsSource="{Binding ItemsList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     SelectedItem="{Binding SelectedItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0">
+            <dxg:GridControl.Columns>
+                <dxg:GridColumn FieldName="Id" Header="ID" Width="80"/>
+                <dxg:GridColumn FieldName="Name" Header="Наименование" Width="120"/>
+                <dxg:GridColumn FieldName="Address" Header="Адрес" Width="*"/>
+            </dxg:GridControl.Columns>
+            <dxg:GridControl.View>
+                <dxg:TableView AllowEditing="False" 
+                               NavigationStyle="Row"
+                               ShowSearchPanelMode="Always"
+                               ShowGroupPanel="False"/>
+            </dxg:GridControl.View>
+        </dxg:GridControl>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="AddButton" Content="Добавить" Margin="5" Width="80" Click="AddButton_Click" />
+            <Button x:Name="CancelButton" Content="Отмена" Margin="5" Width="80" Click="CancelButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

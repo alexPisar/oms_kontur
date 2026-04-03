@@ -28,6 +28,7 @@
                             <dxg:GridControl x:Name="PART_GridControl" ShowBorder="False">
                                 <dxg:GridControl.Columns>
                                     <dxg:GridColumn Header="Наименование" Width="*" FieldName="Name"/>
+                                    <dxg:GridColumn Header="Идентификатор ЭДО" Width="150" FieldName="FnsParticipantId"/>
                                     <dxg:GridColumn Header="ИНН" Width="100" FieldName="Inn"/>
                                     <dxg:GridColumn Header="КПП" Width="80" FieldName="Kpp"/>
                                 </dxg:GridControl.Columns>

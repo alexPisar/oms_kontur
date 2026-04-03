@@ -12,7 +12,7 @@
         xmlns:local="clr-namespace:KonturEdoClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="ЭДО Диадок" Height="800" Width="1350" Background="#FFD4D3D3" Closing="MainWindow_Closing">
+        Title="ЭДО Диадок" Height="800" Width="1480" Background="#FFD4D3D3" Closing="MainWindow_Closing">
     <Window.Resources>
         <BitmapImage x:Key="DiadocImage" UriSource="pack://siteoforigin:,,,/Resources/diadok.png" />
         <BitmapImage x:Key="HonestMarkImage" UriSource="pack://siteoforigin:,,,/Resources/HonestMark.png" />
@@ -76,6 +76,12 @@
                                        LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_List.svg}"
                                        IsEnabled="{Binding Path=IsSended}"
                                        Command="{Binding ShowDocumentSendHistoryCommand}"/>
+                    <dxb:BarButtonItem Content="Выгрузить товары и коды" 
+                                       RibbonStyle="Large"
+                                       LargeGlyph="{DynamicResource HonestMarkImage}"
+                                       IsEnabled="{Binding Path=IsDocumentMarked}"
+                                       ToolTip="Выгрузить товары и коды для системы ЭДО Lite"
+                                       Command="{Binding UploadProductsAndCodesToEdoLiteCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Действия" IsEnabled="{Binding WorkWithDocumentsPermission}">
                     <dxb:BarButtonItem Content="Отправить корректировку"
@@ -94,12 +100,19 @@
                     <dxb:BarButtonItem Content="Отправить"
                                        RibbonStyle="Large"
                                        ToolTip="Отправка в Диадок"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                        LargeGlyph="{DynamicResource DiadocImage}" 
                                        Command="{Binding SendCommand}"/>
                     <dxb:BarButtonItem Content="Аннулировать"
                                        RibbonStyle="Large"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                        LargeGlyph="{dx:DXImage SvgImages/Snap/SnapDeleteList.svg}"
                                        Command="{Binding AnnulmentDocumentCommand}" />
+                    <dxb:BarButtonItem Content="Подключить контрагента"
+                                       RibbonStyle="Large"
+                                       IsEnabled="{Binding IsEdoApiConnected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                       LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_Employee.svg}"
+                                       Command="{Binding ConnectCounteragentsCommand}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Сопоставления">
                     <dxb:BarButtonItem Content="Сопоставление товаров" 
@@ -165,13 +178,13 @@
                     <dxg:GridControl.View>
                         <dxg:TableView>
                             <dxg:TableView.FormatConditions>
-                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked] And [ProcessingStatus.DocStatus] != 2 And [ProcessingStatus.DocStatus] != 8 And [ProcessingStatus.IsMainDocumentError] != 1 And [ProcessingStatus.AnnulmentStatus] != 8" >
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarked] And ([EdoProcessing.HonestMarkStatus] &lt;= 1)" >
                                     <dxg:Format Background="#FF27C3E6"/>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition ApplyToRow="True"  Expression="[ProcessingStatus.DocStatus] == 2 And [ProcessingStatus.IsMainDocumentError] != 1 And [ProcessingStatus.AnnulmentStatus] != 8" >
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarkedDocumentProcessed]" >
                                     <dxg:Format Background="#7cfc00"/>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition ApplyToRow="True"  Expression="[ProcessingStatus.DocStatus] == 8 || [ProcessingStatus.IsMainDocumentError] == 1 || [ProcessingStatus.AnnulmentStatus] == 8" >
+                                <dxg:FormatCondition ApplyToRow="True"  Expression="[IsMarkedDocumentProcessingError]" >
                                     <dxg:Format Background="#FFF95A52"/>
                                 </dxg:FormatCondition>
                             </dxg:TableView.FormatConditions>

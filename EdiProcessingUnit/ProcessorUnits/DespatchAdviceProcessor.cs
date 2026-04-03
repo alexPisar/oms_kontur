@@ -211,6 +211,14 @@ namespace EdiProcessingUnit.ProcessorUnits
                         bool existsTraderDocsWithLessStatus = false;
                         bool existsTraderDocsNotDelivered = false;
 
+                        if (traderDocs.Count == 1 && connectedBuyer.MultiDesadv == 0)
+                        {
+                            var trDoc = traderDocs.First();
+
+                            if (trDoc.DeliveryDate != null)
+                                deliveryDate = trDoc.DeliveryDate;
+                        }
+
                         foreach (DocJournal traderDoc in traderDocs)
                         {
                             if (traderDoc.ActStatus < docStatusWhenIsSent)

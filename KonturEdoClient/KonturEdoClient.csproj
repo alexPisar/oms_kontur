@@ -44,7 +44,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>B02EA6C4DB3409FAB91269F8CD71AA2F37C7DA2E</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8CED658932C59DCD5CD108F1083D3D20770DD1C1</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>KonturEdoClient_TemporaryKey.pfx</ManifestKeyFile>
@@ -148,9 +148,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\DevExpress 20.1\Components\Bin\Framework\DevExpress.Xpf.Themes.VS2019Light.v20.1.dll</HintPath>
     </Reference>
-    <Reference Include="DiadocApi, Version=2.24.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\OMS\packages\DiadocSDK.2.24.0\lib\net461\DiadocApi.dll</HintPath>
+    <Reference Include="DiadocApi, Version=3.6.0.0, Culture=neutral, PublicKeyToken=d18fd4c7ad3c243e, processorArchitecture=MSIL">
+      <HintPath>..\OMS\packages\DiadocSDK.3.6.0\lib\net461\DiadocApi.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\OMS\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -205,44 +204,36 @@
     <Compile Include="ConfirmAnnulmentWindow.xaml.cs">
       <DependentUpon>ConfirmAnnulmentWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ConnectCounteragentWindow.xaml.cs">
+      <DependentUpon>ConnectCounteragentWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CounteragentConsigneeEditWindow.xaml.cs">
+      <DependentUpon>CounteragentConsigneeEditWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CounteragentConsigneesWindow.xaml.cs">
+      <DependentUpon>CounteragentConsigneesWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CounteragentsWindow.xaml.cs">
+      <DependentUpon>CounteragentsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ErrorSendHonestMarkWindow.xaml.cs">
       <DependentUpon>ErrorSendHonestMarkWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="GoodsMatchingWindow.xaml.cs">
       <DependentUpon>GoodsMatchingWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HonestMark\Enums.cs" />
-    <Compile Include="HonestMark\HonestMarkClient.cs" />
-    <Compile Include="HonestMark\HonestMarkTokenCache.cs" />
-    <Compile Include="HonestMark\IDocument.cs" />
-    <Compile Include="HonestMark\Models\AuthData.cs" />
-    <Compile Include="HonestMark\Models\AuthRequest.cs" />
-    <Compile Include="HonestMark\Models\AuthResult.cs" />
-    <Compile Include="HonestMark\Models\DocumentEdoProcessResultInfo.cs" />
-    <Compile Include="HonestMark\Models\DocumentInfo.cs" />
-    <Compile Include="HonestMark\Models\EdoProcessingError.cs" />
-    <Compile Include="HonestMark\Models\EdoProcessingErrorDescription.cs" />
-    <Compile Include="HonestMark\Models\MarkInfo.cs" />
-    <Compile Include="HonestMark\Models\DocumentCreateRequest.cs" />
-    <Compile Include="HonestMark\Models\DocumentCreateResponse.cs" />
-    <Compile Include="HonestMark\Models\MarkCodeInfo.cs" />
-    <Compile Include="HonestMark\Models\OrgRegistrationResponse.cs" />
-    <Compile Include="HonestMark\Models\ProcessEdoOperation.cs" />
-    <Compile Include="HonestMark\Models\ProcessEdoOperationDetail.cs" />
-    <Compile Include="HonestMark\Models\ReceiveDocument.cs" />
-    <Compile Include="HonestMark\Models\ReceiveProduct.cs" />
-    <Compile Include="HonestMark\Models\ReprocessDocumentResponse.cs" />
-    <Compile Include="HonestMark\Models\ShipmentDocument.cs" />
-    <Compile Include="HonestMark\Models\ShipmentProduct.cs" />
     <Compile Include="MarkedCodesWindow.xaml.cs">
       <DependentUpon>MarkedCodesWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\Base\ListViewModel.cs" />
     <Compile Include="Models\ChannelSettingsModel.cs" />
     <Compile Include="Models\ChannelsListModel.cs" />
+    <Compile Include="Models\ConnectCounteragentModel.cs" />
     <Compile Include="Models\CorrectionDocumentsModel.cs" />
+    <Compile Include="Models\CounteragentConsigneesModel.cs" />
     <Compile Include="Models\DocEdoProcessingForLoading.cs" />
     <Compile Include="Models\GoodsMatchingModel.cs" />
+    <Compile Include="Models\RefEdoCounteragentConsigneeForLoading.cs" />
     <Compile Include="Models\TreeListGoodInfo.cs" />
     <Compile Include="Models\Implementations\RelayCommand.cs" />
     <Compile Include="Models\SendModel.cs" />
@@ -291,6 +282,22 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ConfirmAnnulmentWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ConnectCounteragentWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentConsigneeEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentConsigneesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CounteragentsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

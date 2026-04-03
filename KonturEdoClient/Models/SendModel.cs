@@ -14,10 +14,10 @@ namespace KonturEdoClient.Models
     {
         private Kontragent _myOrganization;
         private X509Certificate2 _signerCertificate;
-        private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> _currentDocuments;
+        private IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>> _currentDocuments;
         private AbtDbContext _abt;
         private bool _isSendReceive = false;
-        private HonestMark.DocumentProcessStatusesEnum _docStatus = HonestMark.DocumentProcessStatusesEnum.None;
+        private EdiProcessingUnit.HonestMark.DocumentProcessStatusesEnum _docStatus = EdiProcessingUnit.HonestMark.DocumentProcessStatusesEnum.None;
         private UtilitesLibrary.Logger.UtilityLog _log = UtilitesLibrary.Logger.UtilityLog.GetInstance();
         private DataContextManagementUnit.DataAccess.DocJournalType _docType;
         private bool _authInHonestMark;
@@ -41,7 +41,7 @@ namespace KonturEdoClient.Models
         }
 
         public SendModel(AbtDbContext abt, Kontragent myOrganization, X509Certificate2 signerCertificate,
-            IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.Utd820.Hyphens.UniversalTransferDocumentWithHyphens>> currentDocuments,
+            IEnumerable<KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>> currentDocuments,
             DataContextManagementUnit.DataAccess.DocJournalType docType, bool authInHonestMark)
         {
             _abt = abt;
@@ -109,7 +109,7 @@ namespace KonturEdoClient.Models
                     loadWindow.Show();
                     Exception exception = null;
 
-                    if (isMarked && _authInHonestMark && !HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
+                    if (isMarked && _authInHonestMark && !EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().IsOrgRegistered(SelectedOrganization.Inn))
                     {
                         _log.Log("Проверка на регистрацию дала отрицательный результат.");
 
@@ -124,8 +124,8 @@ namespace KonturEdoClient.Models
                             var currentDocuments = _currentDocuments.Where(c => c.Value != null).Select(c => c.Value).ToList();
                             if (_docType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             {
-                                Diadoc.Api.DataXml.RussianAddress receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
-                                    new Diadoc.Api.DataXml.RussianAddress
+                                Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970 receiverAddress = SelectedOrganization?.Address?.RussianAddress != null ?
+                                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.RussianAddressUtd970
                                     {
                                         ZipCode = string.IsNullOrEmpty(SelectedOrganization.Address.RussianAddress.ZipCode) ? null : SelectedOrganization.Address.RussianAddress.ZipCode,
                                         Region = SelectedOrganization.Address.RussianAddress.Region,
@@ -138,17 +138,17 @@ namespace KonturEdoClient.Models
 
                                 foreach (var curDoc in currentDocuments)
                                 {
-                                    curDoc.Buyers = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens[]
+                                    curDoc.Buyers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970[]
                                     {
-                                        new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationInfoWithHyphens
+                                        new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationInfoUtd970
                                         {
-                                            Item = new Diadoc.Api.DataXml.Utd820.Hyphens.ExtendedOrganizationDetailsWithHyphens
+                                            Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
                                             {
                                                 Inn = SelectedOrganization.Inn,
                                                 Kpp = string.IsNullOrEmpty(SelectedOrganization.Kpp) ? null : SelectedOrganization.Kpp,
-                                                OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.OrganizationType.IndividualEntity : Diadoc.Api.DataXml.OrganizationType.LegalEntity,
+                                                OrgType = SelectedOrganization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
                                                 OrgName = SelectedOrganization.Name,
-                                                Address = new Diadoc.Api.DataXml.Address
+                                                Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
                                                 {
                                                     Item = receiverAddress
                                                 }
@@ -160,7 +160,7 @@ namespace KonturEdoClient.Models
 
                             var message = new XmlSignUtils().SignAndSend(isSign,
                                 _signerCertificate, _myOrganization, SelectedOrganization,
-                                currentDocuments);
+                                currentDocuments.ToList<object>());
 
                             DocEdoProcessing docProcessing;
                             if (message != null)
@@ -181,6 +181,11 @@ namespace KonturEdoClient.Models
 
                                     var fileName = entity.FileName.Substring(0, fileNameLength);
 
+                                    bool isDocMarked = false;
+
+                                    if (isMarked)
+                                        isDocMarked = currentDocument.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0);
+
                                     docProcessing = new DocEdoProcessing
                                     {
                                         Id = Guid.NewGuid().ToString(),
@@ -193,7 +198,8 @@ namespace KonturEdoClient.Models
                                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                                         ReceiverName = SelectedOrganization.Name,
                                         ReceiverInn = SelectedOrganization.Inn,
-                                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd
+                                        DocType = (int)EdiProcessingUnit.Enums.DocEdoType.Upd,
+                                        HonestMarkStatus = isDocMarked ? (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent : (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.None
                                     };
 
                                     var comissionDocument = ComissionDocuments.FirstOrDefault(c => c.IdDoc == currentDocument.Key);
@@ -201,12 +207,10 @@ namespace KonturEdoClient.Models
                                     if (comissionDocument == null && currentDocument.Value.Table.Item.Any(i => (i?.ItemIdentificationNumbers?.FirstOrDefault()?.Items?.Count() ?? 0) > 0))
                                     {
                                         var comDoc = _abt.DocComissionEdoProcessings.FirstOrDefault(d => d.IdDoc == currentDocument.Key &&
-                                        (d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent));
+                                        (d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Processed || d.DocStatus == (int)EdiProcessingUnit.HonestMark.DocEdoProcessingStatus.Sent));
 
-                                        if (comDoc == null)
-                                            throw new Exception("Не найден комиссионный документ.");
-
-                                        comissionDocument = comDoc;
+                                        if (comDoc != null)
+                                            comissionDocument = comDoc;
                                     }
 
                                     if (comissionDocument != null)
