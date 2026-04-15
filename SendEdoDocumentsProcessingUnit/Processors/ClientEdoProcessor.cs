@@ -2079,9 +2079,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 },
                 TransferInfo = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.TransferInfo
                 {
-                    OperationInfo = "Товары переданы",
+                    OperationInfo = "Товары переданы от комитента комиссионеру",
                     TransferDate = d.DeliveryDate?.Date.ToString("dd.MM.yyyy") ?? DateTime.Now.ToString("dd.MM.yyyy")
-                }
+                },
+                CircumFormat = "00005"
             };
 
             if (!string.IsNullOrEmpty(senderOrganization.EmchdId))
