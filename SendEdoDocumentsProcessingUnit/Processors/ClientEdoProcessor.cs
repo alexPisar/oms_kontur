@@ -75,6 +75,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             var fileController = new WebService.Controllers.FileController();
             var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+            var otherOrgInns = fileController.GetApplicationConfigParameter<List<KeyValuePair<string, string>>>(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name, "OurOrganizations");
 
             foreach (var connStr in connectionStringList)
             {
@@ -108,8 +109,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     }).ToList();
 
                         var orgsInnKpp = orgs.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
-                        orgsInnKpp.Add(new KeyValuePair<string, string>("2539108495", "253901001"));
-                        orgsInnKpp.Add(new KeyValuePair<string, string>("2536090987", "253901001"));
+                        orgsInnKpp.AddRange(otherOrgInns);
 
                         foreach (var myOrganization in orgs)
                         {
