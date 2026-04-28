@@ -94,6 +94,11 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt.Mapping
                 .HasMaxLength(50);
 
             this
+                .Property(r => r.NameOfBaseShipmentByOrder)
+                .HasColumnName(@"NAME_OF_BASE_SHIPMENT_BY_ORDER")
+                .HasMaxLength(100);
+
+            this
                 .HasMany(r => r.EdoValuesPairs)
                 .WithRequired(p => p.EdoGoodChannel)
                 .HasForeignKey(p => p.IdEdoGoodChannel)

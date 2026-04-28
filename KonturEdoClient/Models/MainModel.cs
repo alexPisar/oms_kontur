@@ -2924,20 +2924,40 @@ namespace KonturEdoClient.Models
                                     }
                         };
 
-                        var contractNumber = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 200 && c.IdObject == buyerCustomer.Id)?.TagValue;
-                        var contractDate = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 199 && c.IdObject == buyerCustomer.Id)?.TagValue;
-
-                        if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                        if (!string.IsNullOrEmpty(edoGoodChannel?.NameOfBaseShipmentByOrder))
                         {
+                            var orderNumber = _abt.DocJournalTags?.FirstOrDefault(t => t.IdDoc == d.IdDocMaster && t.IdTad == 137)?.TagValue;
+
+                            if (string.IsNullOrEmpty(orderNumber))
+                                throw new Exception("Отсутствует номер заказа покупателя.");
+
                             document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
                             {
+                                new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
+                                {
+                                    DocumentName = edoGoodChannel.NameOfBaseShipmentByOrder,
+                                    DocumentNumber = orderNumber,
+                                    DocumentDate = d.DocMaster.DocDatetime.ToString("dd.MM.yyyy")
+                                }
+                            };
+                        }
+                        else
+                        {
+                            var contractNumber = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 200 && c.IdObject == buyerCustomer.Id)?.TagValue;
+                            var contractDate = _abt.RefRefTags.FirstOrDefault(c => c.IdTag == 199 && c.IdObject == buyerCustomer.Id)?.TagValue;
+
+                            if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
+                            {
+                                document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
+                                {
                                 new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
                                 {
                                     DocumentName = "Договор поставки",
                                     DocumentNumber = contractNumber,
                                     DocumentDate = contractDate
                                 }
-                            };
+                                };
+                            }
                         }
                     }
                 }

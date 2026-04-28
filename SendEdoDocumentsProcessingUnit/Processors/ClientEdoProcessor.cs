@@ -862,7 +862,22 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 };
             }
 
-            if (!(string.IsNullOrEmpty(d.ContractNumber) || string.IsNullOrEmpty(d.ContractDate)))
+            if (!string.IsNullOrEmpty(edoGoodChannel?.NameOfBaseShipmentByOrder))
+            {
+                if (string.IsNullOrEmpty(d.OrderNumber))
+                    throw new Exception("Отсутствует номер заказа покупателя.");
+
+                document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
+                {
+                    new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType
+                    {
+                        DocumentName = edoGoodChannel?.NameOfBaseShipmentByOrder,
+                        DocumentNumber = d.OrderNumber,
+                        DocumentDate = d.OrderDate.ToString("dd.MM.yyyy")
+                    }
+                };
+            }
+            else if (!(string.IsNullOrEmpty(d.ContractNumber) || string.IsNullOrEmpty(d.ContractDate)))
             {
                 document.TransferInfo.TransferBases = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.DocumentRequisitesType[]
                 {
@@ -1189,6 +1204,19 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         detail.ItemIdentificationNumbers[0].Items[j] = doc;
                         j++;
                     }
+                }
+                else
+                {
+                    //if (barCode.Length < 14)
+                    //    detail.Gtin = barCode.PadLeft(14, '0');
+                    //else
+                    //    detail.Gtin = barCode;
+
+                    //detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                    //detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                    //{
+                    //    QuantityMark = docJournalDetail.Quantity.ToString()
+                    //};
                 }
 
                 var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
