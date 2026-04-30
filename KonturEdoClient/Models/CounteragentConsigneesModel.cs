@@ -96,7 +96,10 @@ namespace KonturEdoClient.Models
             r.IdCustomerBuyer == SelectedItem.IdCustomerBuyer && r.IdContractorConsignee == SelectedItem.ConsigneeId);
 
             if (refEdoCounteragentConsignee != null)
+            {
                 _abt.RefEdoCounteragentConsignees.Remove(refEdoCounteragentConsignee);
+                _abt.SaveChanges();
+            }
 
             Refresh();
         }
