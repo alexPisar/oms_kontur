@@ -17,6 +17,7 @@ namespace EdiProcessingUnit.Edo.Models
         private List<string> _labels = null;
         private bool _mappedNotRequired = true;
         private RefGood _good;
+        private string _productName = null;
 
         public DocGoodsDetailsI DocDetailI { get; set; }
         public DocGoodsDetail DocDetail { get; set; }
@@ -33,7 +34,16 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
-        public string Product { get { return DocDetailI?.Good?.Name ?? DocDetail?.Good?.Name; } }
+        public string Product
+        {
+            get
+            {
+                if (_productName == null)
+                    _productName = DocDetailI?.Good?.Name ?? DocDetail?.Good?.Name;
+
+                return _productName;
+            }
+        }
 
         public decimal? Quantity { get { return DocDetailI?.Quantity ?? DocDetail?.Quantity; } }
 
@@ -170,6 +180,7 @@ namespace EdiProcessingUnit.Edo.Models
             if (DocDetailI != null)
             {
                 _good = DocDetailI.Good;
+                _productName = _good?.Name;
                 _countryCode = abtContext.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
                     $"(select ID_COUNTRY from REF_GOODS where ID = {DocDetailI.IdGood})");
 
@@ -181,6 +192,7 @@ namespace EdiProcessingUnit.Edo.Models
             else if (DocDetail != null)
             {
                 _good = DocDetail.Good;
+                _productName = _good?.Name;
                 _countryCode = abtContext.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
                     $"(select ID_COUNTRY from REF_GOODS where ID = {DocDetail.IdGood})");
 

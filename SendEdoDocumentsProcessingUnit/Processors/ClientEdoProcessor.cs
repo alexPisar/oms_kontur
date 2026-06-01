@@ -635,7 +635,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                             _abt.SaveChanges();
                                         }
 
-                                        var universalDocument = GetUniversalDocument(doc, myOrganization, doc.Details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
+                                        var details = doc.Details.OrderBy(d => d.Product);
+                                        var universalDocument = GetUniversalDocument(doc, myOrganization, details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
 
                                         if (universalDocument == null)
                                             throw new Exception("Не удалось сформировать документ.");
@@ -810,9 +811,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> GetUniversalDocumentAsync(
             UniversalTransferDocumentV2 doc, Kontragent myOrganization, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null)
         {
+            var details = doc.Details.OrderBy(d => d.Product);
             var result = await Task.Run(() =>
             {
-                var universalDocument = GetUniversalDocument(doc, myOrganization, doc.Details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
+                var universalDocument = GetUniversalDocument(doc, myOrganization, details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
                 return universalDocument;
             });
 
