@@ -3100,7 +3100,8 @@ namespace KonturEdoClient.Models
                     document.AdditionalInfoId = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfoId { AdditionalInfo = additionalInfoList.ToArray() };
 
                 int number = 1;
-                foreach (var docJournalDetail in d.DocGoodsDetailsIs)
+                var docJournalDetails = d.DocGoodsDetailsIs.OrderBy(det => det.Good.Name);
+                foreach (var docJournalDetail in docJournalDetails)
                 {
                     var refGood = _abt.RefGoods?
                     .FirstOrDefault(r => r.Id == docJournalDetail.IdGood);

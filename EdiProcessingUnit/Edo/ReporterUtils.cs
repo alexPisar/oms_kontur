@@ -301,8 +301,9 @@ namespace EdiProcessingUnit.Edo
                 reportObj.AdditionalInfos = additionalInfoList;
 
             var productList = new List<Reporter.Entities.Product>();
+            var docJournalDetails = docJournal.DocGoodsDetailsIs.OrderBy(det => det.Good.Name);
             int i = 0;
-            foreach (var detail in docJournal.DocGoodsDetailsIs)
+            foreach (var detail in docJournalDetails)
             {
                 if (detail.Good == null)
                     continue;
