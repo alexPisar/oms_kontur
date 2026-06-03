@@ -180,6 +180,13 @@ namespace OrderManagementSystem.UserInterface
         private bool CheckLogin()
         {
             _log.Log( "CheckLogin" );
+
+            if((DataContext as EdiProcessingUnit.UsersConfig)?.SelectedUser == null)
+            {
+                MessageBox.Show("Ошибка, не выбран профиль.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
             try
             {
                 _log.Log( "Получение хэшированного пароля." );

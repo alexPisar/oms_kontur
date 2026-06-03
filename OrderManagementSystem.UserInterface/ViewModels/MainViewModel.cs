@@ -200,6 +200,10 @@ namespace OMS.ViewModels
 
                 if (!_usersConfig.IsMainAccount)
                 {
+                    if (_edi.ConnectedBuyers.Any(c => c.Gln == _usersConfig.SelectedUser.UserGLN))
+                        docs = docs.Where(d => d.GlnBuyer == _usersConfig.SelectedUser.UserGLN || d.GlnSender == _usersConfig.SelectedUser.UserGLN)?
+                            .ToList() ?? new List<DocOrder>();
+
                     docs = docs.Where(d => d.ShipTo?.IdContractor != 0 && d.ShipTo?.IdContractor != null && 
                     _abt.RefContractors.FirstOrDefault(r => r.Id == d.ShipTo.IdContractor) != null)?
                     .ToList() ?? new List<DocOrder>();
