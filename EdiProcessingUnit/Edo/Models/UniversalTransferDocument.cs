@@ -52,6 +52,8 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public DataContextManagementUnit.DataAccess.DocJournalUsingType? DocUsingType { get; set; }
+
         public decimal? IdSubdivision
         {
             get {

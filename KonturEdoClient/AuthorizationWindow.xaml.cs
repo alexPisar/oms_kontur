@@ -86,6 +86,7 @@ namespace KonturEdoClient
                     mainWindow.ChangeFilialsBar.IsVisible = false;
 
                 mainWindow.DocTypesBar.EditValue = DataContextManagementUnit.DataAccess.DocJournalType.Invoice;
+                mainModel.SetDocUsingTypes();
 
                 ((Config)DataContext).Save((Config)DataContext, Config.ConfFileName);
                 mainWindow.DataContext = mainModel;

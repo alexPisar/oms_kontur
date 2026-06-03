@@ -41,5 +41,21 @@ namespace KonturEdoClient
         {
             ((MainModel)DataContext).Dispose();
         }
+
+        private void DocTypesBar_EditValueChanged(object sender, RoutedEventArgs e)
+        {
+            if ((DocTypesBar.EditValue as DataContextManagementUnit.DataAccess.DocJournalType?) == DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+            {
+                if (DataContext as MainModel != null)
+                    ((MainModel)DataContext).SetDocUsingTypes();
+
+                //DocUsingTypesBar.EditValue = DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales;
+            }
+            else if (DataContext as MainModel != null)
+            {
+                ((MainModel)DataContext).DocUsingTypes = new List<KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>>();
+                ((MainModel)DataContext).OnPropertyChanged("DocUsingTypes");
+            }
+        }
     }
 }

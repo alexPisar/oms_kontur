@@ -71,6 +71,9 @@ namespace KonturEdoClient.Models
         public List<UniversalTransferDocumentDetail> DocumentDetails { get; set; }
         public UniversalTransferDocumentDetail SelectedDetail { get; set; }
 
+        public List<KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>> DocUsingTypes { get; set; }
+        public DataContextManagementUnit.DataAccess.DocJournalUsingType? SelectedDocUsingType => DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales;//(DataContextManagementUnit.DataAccess.DocJournalUsingType?)(_owner as MainWindow)?.DocUsingTypesBar?.EditValue;
+
         public MainModel(AbtDbContext abt, Utils.XmlSignUtils utils = null)
         {
             _loadContext = new LoadModel();
@@ -199,6 +202,15 @@ namespace KonturEdoClient.Models
             OnPropertyChanged("DocumentWithErrorStatus");
             OnPropertyChanged("IsSended");
             OnPropertyChanged("IsSigned");
+        }
+
+        public void SetDocUsingTypes()
+        {
+            DocUsingTypes = new List<KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>>();
+            DocUsingTypes.Add(new KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>(DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales, "Товарный"));
+            DocUsingTypes.Add(new KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>(DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting, "Бухгалтерский"));
+
+            OnPropertyChanged("DocUsingTypes");
         }
 
         private void Refresh()
@@ -1042,7 +1054,9 @@ namespace KonturEdoClient.Models
                         if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
                         {
                             UniversalTransferDocument.DbContext = _abt;
-                            _loadedDocuments[index] = (from doc in docs
+
+                            if (SelectedDocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                                _loadedDocuments[index] = (from doc in docs
                                                        where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
                                                        join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
                                                        where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= DateFrom && docMaster.DocDatetime < DateTo
@@ -1087,10 +1101,15 @@ namespace KonturEdoClient.Models
 
                                                            BuyerContractor = buyerContractor,
 
+                                                           DocUsingType = DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales,
                                                            //RefEdoGoodChannel = edoGoodChannel,
 
                                                            IsMarked = isMarked
                                                        }).ToList();
+                            else if(SelectedDocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                            {
+
+                            }
                         }
                         else if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                             _loadedDocuments[index] = (from doc in docs

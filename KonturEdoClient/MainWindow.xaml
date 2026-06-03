@@ -53,7 +53,7 @@
                             </dxe:CheckEditSettings>
                         </dxb:BarEditItem.EditSettings>
                     </dxb:BarEditItem>
-                    <dxb:BarEditItem x:Name="DocTypesBar" EditWidth="150" Content="Тип документа">
+                    <dxb:BarEditItem x:Name="DocTypesBar" EditWidth="150" Content="Тип документа" EditValueChanged="DocTypesBar_EditValueChanged">
                         <dxb:BarEditItem.EditSettings>
                             <dxe:ComboBoxEditSettings ItemsSource="{Binding DocTypes}" DisplayMember="Value" ValueMember="Key" SelectItemWithNullValue="False"/>
                         </dxb:BarEditItem.EditSettings>
@@ -64,6 +64,12 @@
                             DisplayMember="Name" ValueMember="UserGLN"/>
                         </dxb:BarEditItem.EditSettings>
                     </dxb:BarEditItem>
+                    <!--<dxb:BarEditItem x:Name="DocUsingTypesBar" EditWidth="150" Content="Тип использования">
+                        <dxb:BarEditItem.EditSettings>
+                            <dxe:ComboBoxEditSettings ItemsSource="{Binding Path=DocUsingTypes, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                      DisplayMember="Value" ValueMember="Key" />
+                        </dxb:BarEditItem.EditSettings>
+                    </dxb:BarEditItem>-->
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Документ" IsEnabled="{Binding PermissionShowMarkedCodes}">
                     <dxb:BarButtonItem Content="Коды маркировки"

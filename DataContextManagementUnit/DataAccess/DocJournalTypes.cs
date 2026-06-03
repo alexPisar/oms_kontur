@@ -15,4 +15,10 @@ namespace DataContextManagementUnit.DataAccess
         Invoice,
         Correction = 18
     }
+
+    public enum DocJournalUsingType
+    {
+        Sales,
+        Accounting
+    }
 }
