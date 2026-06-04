@@ -1535,16 +1535,50 @@ namespace KonturEdoClient.Models
 
                 byte[] content;
 
-                var idCustomer = SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? SelectedDocument.DocJournal.DocMaster?.DocGoods?.IdCustomer : null;
+                decimal? idCustomer = null;
+
+                if (SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                {
+                    if (SelectedDocument.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                        idCustomer = SelectedDocument.DocJournal.DocMaster?.DocGoods?.IdCustomer;
+                    else if (SelectedDocument.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                        idCustomer = SelectedDocument.DocJournal?.DocGoodsI?.IdCustomer;
+                }
+                else
+                {
+                    idCustomer = null;
+                }
+
                 if (idCustomer != null)
                 {
-                    var buyerContractor = SelectedDocument.DocJournal?.DocMaster?.DocGoods?.Customer;
+                    RefCustomer buyerCustomer = null;
 
-                    var buyerCustomer = _abt.RefCustomers?
-                        .Where(r => r.Id == buyerContractor.DefaultCustomer)?
-                        .FirstOrDefault();
+                    if (SelectedDocument.DocJournal.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ||
+                        SelectedDocument.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                    {
+                        RefContractor buyerContractor;
 
-                    var docGoodDetailLabels = _abt?.DocGoodsDetailsLabels?.Where(l => l.IdDocSale == SelectedDocument.DocJournal.IdDocMaster)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+                        if(SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                            buyerContractor = SelectedDocument.DocJournal?.DocMaster?.DocGoods?.Customer;
+                        else
+                            buyerContractor = SelectedDocument.DocJournal?.DocGoods?.Customer;
+
+                        buyerCustomer = _abt.RefCustomers?
+                            .Where(r => r.Id == buyerContractor.DefaultCustomer)?
+                            .FirstOrDefault();
+                    }
+                    else
+                        buyerCustomer = _abt.RefCustomers?
+                            .Where(r => r.Id == idCustomer)?
+                            .FirstOrDefault();
+
+                    List<DocGoodsDetailsLabels> docGoodDetailLabels;
+
+                    if(SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                        SelectedDocument.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                        docGoodDetailLabels = _abt?.DocGoodsDetailsLabels?.Where(l => l.IdDocSale == SelectedDocument.DocJournal.IdDocMaster)?.ToList() ?? new List<DocGoodsDetailsLabels>();
+                    else
+                        docGoodDetailLabels = _abt?.DocGoodsDetailsLabels?.Where(l => l.IdDocSale == SelectedDocument.DocJournal.Id)?.ToList() ?? new List<DocGoodsDetailsLabels>();
 
                     var reporterUtils = new ReporterUtils(_abt, "Вирэй ЭДО", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
@@ -1558,7 +1592,11 @@ namespace KonturEdoClient.Models
                     if (!(string.IsNullOrEmpty(contractNumber) || string.IsNullOrEmpty(contractDate)))
                         contract = new KeyValuePair<string, string>(contractNumber, contractDate);
 
-                    var docJournalTags = _abt.DocJournalTags.Where(t => t.IdDoc == SelectedDocument.DocJournal.IdDocMaster && (t.IdTad == 137 || t.IdTad == 222)).ToList();
+                    List<DocJournalTag> docJournalTags = new List<DocJournalTag>();
+
+                    if(SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && 
+                        SelectedDocument.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                        docJournalTags = _abt.DocJournalTags.Where(t => t.IdDoc == SelectedDocument.DocJournal.IdDocMaster && (t.IdTad == 137 || t.IdTad == 222)).ToList();
 
                     content = reporterUtils
                         .GetReportXmlContent(SelectedOrganization, buyerCustomer, SelectedDocument.DocJournal, SelectedOrganization.Certificate, SelectedDocument.IsMarked, docGoodDetailLabels,

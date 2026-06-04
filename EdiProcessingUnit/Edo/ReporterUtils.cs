@@ -133,6 +133,17 @@ namespace EdiProcessingUnit.Edo
 
             var senderContractor = docJournal?.DocMaster?.DocGoods?.Seller;
 
+            if (senderContractor == null)
+            {
+                var idCustomer = docJournal?.DocGoodsI?.IdSeller ?? sender.IdCustomer;
+
+                senderContractor = (from customer in _abt.RefCustomers
+                                    where customer.Id == idCustomer
+                                    join contractor in _abt.RefContractors
+                                    on customer.IdContractor equals contractor.Id
+                                    select contractor).FirstOrDefault();
+            }
+
             if (sender?.Address?.RussianAddress != null)
             {
                 var zipCode = sender?.Address?.RussianAddress?.ZipCode;
@@ -208,6 +219,11 @@ namespace EdiProcessingUnit.Edo
             };
 
             var receiverContractor = docJournal?.DocMaster?.DocGoods?.Customer;
+
+            if(receiverContractor == null)
+            {
+                receiverContractor = _abt.RefContractors?.Where(r => r.DefaultCustomer == receiver.Id)?.FirstOrDefault();
+            }
 
             if (receiverContractor != null)
                 reportObj.ConsigneeAddress = new Reporter.Entities.Address
