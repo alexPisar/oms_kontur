@@ -49,7 +49,7 @@ namespace KonturEdoClient
                 if (DataContext as MainModel != null)
                     ((MainModel)DataContext).SetDocUsingTypes();
 
-                //DocUsingTypesBar.EditValue = DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales;
+                DocUsingTypesBar.EditValue = DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales;
             }
             else if (DataContext as MainModel != null)
             {

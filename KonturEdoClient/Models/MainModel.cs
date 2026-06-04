@@ -72,7 +72,7 @@ namespace KonturEdoClient.Models
         public UniversalTransferDocumentDetail SelectedDetail { get; set; }
 
         public List<KeyValuePair<DataContextManagementUnit.DataAccess.DocJournalUsingType, string>> DocUsingTypes { get; set; }
-        public DataContextManagementUnit.DataAccess.DocJournalUsingType? SelectedDocUsingType => DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales;//(DataContextManagementUnit.DataAccess.DocJournalUsingType?)(_owner as MainWindow)?.DocUsingTypesBar?.EditValue;
+        public DataContextManagementUnit.DataAccess.DocJournalUsingType? SelectedDocUsingType => (DataContextManagementUnit.DataAccess.DocJournalUsingType?)(_owner as MainWindow)?.DocUsingTypesBar?.EditValue;
 
         public MainModel(AbtDbContext abt, Utils.XmlSignUtils utils = null)
         {
@@ -1108,7 +1108,55 @@ namespace KonturEdoClient.Models
                                                        }).ToList();
                             else if(SelectedDocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
                             {
+                                _loadedDocuments[index] = (from doc in docs
+                                                           where doc != null && doc.DocGoodsI != null && doc.IdDocMaster == null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
+                                                           join docGoodsI in _abt.DocGoodsIs on doc.Id equals docGoodsI.IdDoc
+                                                           join customer in _abt.RefCustomers on docGoodsI.IdSeller equals customer.Id
+                                                           where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
+                                                           join sellerContractor in _abt.RefContractors on customer.IdContractor equals sellerContractor.Id
+                                                           let isMarked = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.Id select label).Count() > 0
+                                                           let docEdoProcessing = (from docEdo in _abt.DocEdoProcessings
+                                                                                   where docEdo.IdDoc == doc.Id && docEdo.DocType == updDocType
+                                                                                   orderby docEdo.DocDate descending
+                                                                                   select docEdo)
+                                                           where isMarked || !OnlyMarkedOrders
+                                                           where (!loadOnlyUnsentDocuments) || docEdoProcessing.Count() == 0
+                                                           join buyerCustomer in _abt.RefCustomers
+                                                           on docGoodsI.IdCustomer equals buyerCustomer.Id
+                                                           join buyerContractor in _abt.RefContractors
+                                                           on buyerCustomer.Id equals buyerContractor.DefaultCustomer
+                                                           //let edoGoodChannel = (from refEdoGoodChannel in _abt.RefEdoGoodChannels
+                                                           //                      where refEdoGoodChannel.IdChannel == buyerContractor.IdChannel
+                                                           //                      select refEdoGoodChannel)
+                                                           select new UniversalTransferDocument
+                                                           {
+                                                               Total = doc.DocGoodsI.TotalSumm,
+                                                               Vat = doc.DocGoodsI.TaxSumm,
+                                                               TotalWithVatExcluded = (doc.DocGoodsI.TotalSumm - doc.DocGoodsI.TaxSumm),
+                                                               EdoProcessing = docEdoProcessing,
+                                                               DocJournal = doc,
+                                                               DocJournalNumber = doc.Code,
+                                                               DocumentNumber = doc.Code,
+                                                               ActStatus = doc.ActStatus,
+                                                               OrgId = organization.OrgId,
 
+                                                               SenderName = organization.Name,
+
+                                                               SenderInnKpp = senderInnKpp,
+
+                                                               SenderAddress = addressSender,
+
+                                                               BuyerCustomer = buyerCustomer,
+
+                                                               SellerContractor = sellerContractor,
+
+                                                               BuyerContractor = buyerContractor,
+
+                                                               DocUsingType = DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting,
+                                                               //RefEdoGoodChannel = edoGoodChannel,
+
+                                                               IsMarked = isMarked
+                                                           }).ToList();
                             }
                         }
                         else if(SelectedDocType == DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
@@ -1524,7 +1572,7 @@ namespace KonturEdoClient.Models
                     if (!result)
                         throw new Exception("Не удалось авторизоваться в системе по сертификату.");
 
-                    var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
+                    var doc = GetUniversalDocument(SelectedDocument.DocJournal, SelectedOrganization, SelectedDocument.DocUsingType, employee, SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel);
                     var file = _utils.GetGeneratedFile(doc);
                     changePathDialog.FileName = file.FileName;
                     content = file.Content;
@@ -1651,7 +1699,7 @@ namespace KonturEdoClient.Models
                 var docs = SelectedDocuments.Where(s => s.CurrentDocJournalId != null)?
                     .Select(s => new KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>(
                     s.CurrentDocJournalId.Value,
-                    GetUniversalDocument(s.DocJournal, SelectedOrganization, employee, refEdoGoodChannel as RefEdoGoodChannel)));
+                    GetUniversalDocument(s.DocJournal, SelectedOrganization, s.DocUsingType, employee, refEdoGoodChannel as RefEdoGoodChannel)));
                 SendModel sendModel = new SendModel(_abt, SelectedOrganization, SelectedOrganization.Certificate, docs, (DataContextManagementUnit.DataAccess.DocJournalType)SelectedDocument.DocJournal.IdDocType, _authInHonestMark);
                 sendModel.SetButtonsEnabled(true);
 
@@ -2755,9 +2803,10 @@ namespace KonturEdoClient.Models
         }
 
         private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
-            DocJournal d, Kontragent organization, string employee = null, RefEdoGoodChannel edoGoodChannel = null)
+            DocJournal d, Kontragent organization, DataContextManagementUnit.DataAccess.DocJournalUsingType? docUsingType, string employee = null, RefEdoGoodChannel edoGoodChannel = null, List<string> allLabels = null)
         {
-            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
+            if (docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales &&
+                d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
                 return null;
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocGoodsI == null)
@@ -2848,13 +2897,15 @@ namespace KonturEdoClient.Models
 
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
             {
-                var sellerContractor = _abt.RefContractors?
-                .Where(s => s.Id == d.DocMaster.DocGoods.IdSeller)?
-                .FirstOrDefault();
+                if (docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                {
+                    var sellerContractor = _abt.RefContractors?
+                    .Where(s => s.Id == d.DocMaster.DocGoods.IdSeller)?
+                    .FirstOrDefault();
 
-                if (sellerContractor != null)
-                    document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
-                    {
+                    if (sellerContractor != null)
+                        document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
+                        {
                             new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper
                             {
                                 Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
@@ -2873,15 +2924,82 @@ namespace KonturEdoClient.Models
                                     OrgName = sellerContractor.Name
                                 }
                             }
-                    };
+                        };
+                }
+                else if(docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                {
+                    var sellerCustomer = _abt.RefCustomers?
+                        .Where(s => s.Id == d.DocGoodsI.IdSeller)?
+                        .FirstOrDefault();
+
+                    RefContractor sellerContractor = null;
+
+                    if(sellerCustomer != null)
+                        sellerContractor = _abt.RefContractors?
+                            .Where(s => s.Id == sellerCustomer.IdContractor)?.FirstOrDefault();
+
+                    if (sellerContractor != null)
+                        document.Shippers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper[]
+                        {
+                            new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocumentShipper
+                            {
+                                Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ExtendedOrganizationDetailsUtd970
+                                {
+                                    Inn = organization.Inn,
+                                    Kpp = organization.Kpp,
+                                    OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.OrganizationType_DatabaseOrder.Item2,
+                                    Address = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AddressUtd970
+                                    {
+                                        Item = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.ForeignAddressUtd970
+                                        {
+                                            Country = Properties.Settings.Default.DefaultOrgCountryCode,
+                                            Address = sellerContractor.Address
+                                        }
+                                    },
+                                    OrgName = sellerContractor.Name
+                                }
+                            }
+                        };
+                }
             }
 
-            var idCustomer = d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ? d.DocMaster?.DocGoods?.IdCustomer : d?.DocGoods?.IdCustomer;
+            decimal idCustomer = 0;
+
+            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+            {
+                if(docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                    idCustomer = d.DocMaster?.DocGoods?.IdCustomer ?? 0;
+                else if(docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                    idCustomer = d?.DocGoodsI?.IdCustomer ?? 0;
+            }
+            else
+            {
+                idCustomer = d?.DocGoods?.IdCustomer ?? 0;
+            }
+
             if (idCustomer > 0)
             {
-                var buyerContractor = _abt?.RefContractors?
-                .Where(r => r.Id == idCustomer)?
-                .FirstOrDefault();
+                RefContractor buyerContractor = null;
+                RefCustomer buyerCustomer = null;
+
+                if(d.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice ||
+                    docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                    buyerContractor = _abt?.RefContractors?
+                        .Where(r => r.Id == idCustomer)?
+                        .FirstOrDefault();
+                else if(docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                {
+                    buyerCustomer = _abt.RefCustomers?
+                        .Where(r => r.Id == idCustomer)?
+                        .FirstOrDefault();
+
+                    if(buyerCustomer != null)
+                        buyerContractor = _abt?.RefContractors?
+                        .Where(r => r.DefaultCustomer == buyerCustomer.Id)?
+                        .FirstOrDefault();
+
+                    idCustomer = buyerContractor?.Id ?? 0;
+                }
 
                 if (buyerContractor != null)
                 {
@@ -2889,9 +3007,11 @@ namespace KonturEdoClient.Models
 
                     if (buyerContractor.DefaultCustomer != null)
                     {
-                        var buyerCustomer = _abt.RefCustomers?
-                        .Where(r => r.Id == buyerContractor.DefaultCustomer)?
-                        .FirstOrDefault();
+                        if(d.IdDocType != (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice || 
+                            docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
+                            buyerCustomer = _abt.RefCustomers?
+                                .Where(r => r.Id == buyerContractor.DefaultCustomer)?
+                                .FirstOrDefault();
 
                         if (string.IsNullOrEmpty(buyerKpp))
                             buyerKpp = buyerCustomer.Kpp;
@@ -2943,7 +3063,8 @@ namespace KonturEdoClient.Models
                                     }
                         };
 
-                        if (!string.IsNullOrEmpty(edoGoodChannel?.NameOfBaseShipmentByOrder))
+                        if (docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales && 
+                            !string.IsNullOrEmpty(edoGoodChannel?.NameOfBaseShipmentByOrder))
                         {
                             var orderNumber = _abt.DocJournalTags?.FirstOrDefault(t => t.IdDoc == d.IdDocMaster && t.IdTad == 137)?.TagValue;
 
@@ -3201,11 +3322,26 @@ namespace KonturEdoClient.Models
                             break;
                     }
 
-                    decimal idGood = docJournalDetail.IdGood, idDoc = (decimal)d.IdDocMaster;
+                    List<string> docGoodDetailLabels;
 
-                    var docGoodDetailLabels = _abt?.Database?
-                    .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {idDoc} and id_good = {idGood}")?
-                    .ToList() ?? new List<string>();
+                    if (allLabels != null && allLabels.Count > 0)
+                    {
+                        decimal idGood = docJournalDetail.IdGood;
+                        var allBarCodes = _abt.RefBarCodes.Where(r => r.IdGood == idGood).Select(r => r.BarCode).ToList();
+
+                        docGoodDetailLabels = allLabels?.Select(s => new KeyValuePair<string, string>(s, s.Substring(0, 16).TrimStart('0', '1').TrimStart('0')))?
+                            .Where(l => allBarCodes.Any(br => br == l.Value))?
+                            .Select(l => l.Key)?
+                            .ToList() ?? new List<string>();
+                    }
+                    else
+                    {
+                        decimal idGood = docJournalDetail.IdGood, idDoc = docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales ? (decimal)d.IdDocMaster : (decimal)d.Id;
+
+                        docGoodDetailLabels = _abt?.Database?
+                        .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {idDoc} and id_good = {idGood}")?
+                        .ToList() ?? new List<string>();
+                    }
 
                     if(docGoodDetailLabels.Count > 0)
                     {

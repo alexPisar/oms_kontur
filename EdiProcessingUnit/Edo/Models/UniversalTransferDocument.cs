@@ -124,6 +124,10 @@ namespace EdiProcessingUnit.Edo.Models
                     return "Вывезен";
                 else if (ActStatus == 6)
                     return "Подтверждён";
+                else if (ActStatus == 10)
+                    return "Не проведён";
+                else if (ActStatus == 11)
+                    return "Вывезен/оприх.";
                 else return null;
             }
         }
