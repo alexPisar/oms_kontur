@@ -368,6 +368,10 @@ namespace EdiProcessingUnit.Edo
                     if (product.MarkedCodes.Count != product.Quantity)
                         throw new Exception("Количество кодов маркировки не совпадает с количеством товара.");
                 }
+                else
+                {
+                    product.GtinMark = barCode.PadLeft(14, '0');
+                }
 
                 if (edoGoodChannel != null)
                 {

@@ -335,6 +335,9 @@ namespace Reporter.Reports
                             product.BarCode = barCodeField.Значен;
                     }
 
+                    if (!string.IsNullOrEmpty(good?.ДопСведТов?.ГТИН))
+                        product.GtinMark = good.ДопСведТов.ГТИН;
+
                     if (!string.IsNullOrEmpty(good?.ДопСведТов?.КодТов))
                     {
                         if (string.IsNullOrEmpty(product.BarCode))
@@ -595,6 +598,14 @@ namespace Reporter.Reports
                         else if (p.TransportPackingIdentificationCode != null && p.TransportPackingIdentificationCode.Count > 0)
                         {
                             good.ДопСведТов.НомСредИдентТов = p.TransportPackingIdentificationCode.Select(t => new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов { ИдентТрансУпак = t }).ToArray();
+                        }
+                        else if (!string.IsNullOrEmpty(p.GtinMark))
+                        {
+                            good.ДопСведТов.ГТИН = p.GtinMark;
+                            good.ДопСведТов.НомСредИдентТов = new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов[1];
+                            good.ДопСведТов.НомСредИдентТов[0] = new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов();
+
+                            good.ДопСведТов.НомСредИдентТов[0].КолВедМарк = Convert.ToInt32(quantity).ToString();
                         }
 
                         if (p.AdditionalInfos.Count > 0)

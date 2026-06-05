@@ -31,6 +31,8 @@ namespace Reporter.Entities
 
         public List<string> MarkedCodes { get; set; }
 
+        public string GtinMark { get; set; }
+
         public List<string> TransportPackingIdentificationCode { get; set; }
 
         public decimal? VatRate { get; set; }
