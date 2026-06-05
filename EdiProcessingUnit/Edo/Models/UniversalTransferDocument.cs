@@ -100,7 +100,12 @@ namespace EdiProcessingUnit.Edo.Models
                     return null;
 
                 if (DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
-                    return DocJournal.IdDocMaster;
+                {
+                    if (DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
+                        return DocJournal.Id;
+                    else
+                        return DocJournal.IdDocMaster;
+                }
                 else
                     return DocJournal.Id;
             }
