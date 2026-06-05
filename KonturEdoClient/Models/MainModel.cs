@@ -416,9 +416,6 @@ namespace KonturEdoClient.Models
         private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument CreateShipmentDocument(
             DocJournal d, Kontragent senderOrganization, Kontragent receiverOrganization, List<DocGoodsDetailsLabels> detailsLabels, string documentNumber, string employee = null, bool considerOnlyLabeledGoods = false)
         {
-            if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
-                return null;
-
             if (d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocGoodsI == null)
                 return null;
 
@@ -1712,7 +1709,9 @@ namespace KonturEdoClient.Models
                 return;
             }
 
-            if (SelectedDocuments.Exists(s => (s.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && s.DocJournal.DocMaster.ActStatus < 5) ||
+            if (SelectedDocuments.Exists(s => (s.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && 
+            (s.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales && s.DocJournal.DocMaster.ActStatus < 5 ||
+            s.DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting && s.DocJournal.ActStatus == 10)) ||
             (s.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation && s.DocJournal.ActStatus < 5)))
             {
                 System.Windows.MessageBox.Show(
@@ -1980,8 +1979,10 @@ namespace KonturEdoClient.Models
                     string employee = _abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
                     var orgsInnKpp = Organizations.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
-                    orgsInnKpp.Add(new KeyValuePair<string, string>("2539108495", "253901001"));
-                    orgsInnKpp.Add(new KeyValuePair<string, string>("2536090987", "253901001"));
+
+                    var fileController = new WebService.Controllers.FileController();
+                    var otherOrgInns = fileController.GetApplicationConfigParameter<List<KeyValuePair<string, string>>>("SendEdoDocumentsProcessingUnit", "OurOrganizations");
+                    orgsInnKpp.AddRange(otherOrgInns);
 
                     foreach (var labelsByDocument in labelsByDocuments)
                     {
@@ -2003,6 +2004,7 @@ namespace KonturEdoClient.Models
 
                         var markedCodesInfoByOrganizations = markedCodesInfo.GroupBy(m => m.CisInfo.OwnerInn);
 
+                        int i = 1;
                         foreach(var markedCodesInfoByOrganization in markedCodesInfoByOrganizations)
                         {
                             var orgInnKpp = orgsInnKpp.First(r => r.Key == markedCodesInfoByOrganization.Key);
@@ -2015,6 +2017,7 @@ namespace KonturEdoClient.Models
 
                             var labels = labelsByDoc.Where(l => markedCodesInfoByOrganization.Any(m => m.CisInfo.Cis == l.DmLabel));
                             string documentNumber = doc.DocJournal?.Code;
+                            documentNumber = i > 9 ? $"{documentNumber}-{i}" : $"{documentNumber}-0{i}";
 
                             var document = CreateShipmentDocument(doc.DocJournal, org, SelectedOrganization, labels.ToList(), documentNumber, employee, true);
 
@@ -2087,7 +2090,7 @@ namespace KonturEdoClient.Models
                             loadContext.Text = "Сохранение в базе данных.";
 
                             var entity = message.Entities.FirstOrDefault(t => t.AttachmentType == Diadoc.Api.Proto.Events.AttachmentType.UniversalTransferDocument &&
-                                t?.DocumentInfo?.DocumentNumber == doc.DocJournal.Code);
+                                t?.DocumentInfo?.DocumentNumber == documentNumber);
 
                             var fileNameLength = entity.DocumentInfo.FileName.LastIndexOf('.');
 
@@ -2114,6 +2117,7 @@ namespace KonturEdoClient.Models
 
                             _abt.DocComissionEdoProcessings.Add(docComissionProcessing);
                             docProcessings.Add(docComissionProcessing);
+                            i++;
                         }
                     }
                 };
@@ -2763,8 +2767,9 @@ namespace KonturEdoClient.Models
                 else if(SelectedDocument.DocJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
                 {
                     var orgsInnKpp = Organizations.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
-                    orgsInnKpp.Add(new KeyValuePair<string, string>("2539108495", "253901001"));
-                    orgsInnKpp.Add(new KeyValuePair<string, string>("2536090987", "253901001"));
+                    var fileController = new WebService.Controllers.FileController();
+                    var otherOrgInns = fileController.GetApplicationConfigParameter<List<KeyValuePair<string, string>>>("SendEdoDocumentsProcessingUnit", "OurOrganizations");
+                    orgsInnKpp.AddRange(otherOrgInns);
 
                     if(markedCodesInfo.Any(m => !orgsInnKpp.Exists(r => r.Key == m.CisInfo?.OwnerInn)))
                     {
@@ -3399,6 +3404,19 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
+                    else
+                    {
+                        if (barCode.Length < 14)
+                            detail.Gtin = barCode.PadLeft(14, '0');
+                        else
+                            detail.Gtin = barCode;
+
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                        {
+                            QuantityMark = docJournalDetail.Quantity.ToString()
+                        };
+                    }
 
 
                     var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
@@ -3517,6 +3535,19 @@ namespace KonturEdoClient.Models
                             detail.ItemIdentificationNumbers[0].Items[j] = doc;
                             j++;
                         }
+                    }
+                    else
+                    {
+                        if (barCode.Length < 14)
+                            detail.Gtin = barCode.PadLeft(14, '0');
+                        else
+                            detail.Gtin = barCode;
+
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                        {
+                            QuantityMark = docJournalDetail.Quantity.ToString()
+                        };
                     }
 
                     details.Add(detail);
