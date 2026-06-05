@@ -60,7 +60,8 @@ namespace EdiProcessingUnit.Edo.Models
                 if (_docJournal == null)
                     return null;
 
-                if (_docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                if (_docJournal.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice &&
+                    DocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales)
                     return _docJournal?.DocMaster?.DocGoods?.IdSubdivision;
                 else
                     return _docJournal?.DocGoods?.IdSubdivision;
