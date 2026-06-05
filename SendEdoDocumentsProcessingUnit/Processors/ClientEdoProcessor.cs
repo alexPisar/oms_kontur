@@ -1209,16 +1209,16 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 }
                 else
                 {
-                    //if (barCode.Length < 14)
-                    //    detail.Gtin = barCode.PadLeft(14, '0');
-                    //else
-                    //    detail.Gtin = barCode;
+                    if (barCode.Length < 14)
+                        detail.Gtin = barCode.PadLeft(14, '0');
+                    else
+                        detail.Gtin = barCode;
 
-                    //detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
-                    //detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
-                    //{
-                    //    QuantityMark = docJournalDetail.Quantity.ToString()
-                    //};
+                    detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                    detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                    {
+                        QuantityMark = docJournalDetail.Quantity.ToString()
+                    };
                 }
 
                 var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();
