@@ -1381,14 +1381,14 @@ namespace EdiTest
             var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
             var crypto = new WinApiCryptWrapper();
             var cert = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
-            edo.Authenticate(false, cert, "2539108495");
+            edo.Authenticate(false, cert, "2538150215");
 
             var organization = new EdiProcessingUnit.Edo.Models.Kontragent
             {
-                Name = "ООО \"ВЛАМУР\"",
-                Inn = "2539108495",
-                Kpp = "253901001",
-                EmchdId = "feb287b7-a5a1-4c3e-a1df-0db5a984d89f",
+                Name = "ООО \"Вирэй-Восточный\"",
+                Inn = "2538150215",
+                Kpp = "253801001",
+                EmchdId = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
                 EmchdBeginDate = DateTime.ParseExact("2024-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                 EmchdEndDate = DateTime.ParseExact("2029-11-13", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                 EmchdPersonInn = "253605132573",
@@ -1399,6 +1399,11 @@ namespace EdiTest
             };
 
             edo.SetOrganizationParameters(organization);
+
+            //var edoDocument = edo.GetDocument("4b3e37a4-6261-4afe-9ba6-e7ea518c1fd8", "ece4f657-4072-4b97-bfb1-7553335c604c");
+            //var report = new Reporter.Reports.UniversalTransferSellerDocumentUtd970();
+            //report.Parse(edoDocument.Content.Data);
+            //var sourceMarkedCodes = report.Products.SelectMany(p => p.MarkedCodes).ToList();
 
             ExcelColumnCollection columnCollection = new ExcelColumnCollection();
 
@@ -1413,13 +1418,14 @@ namespace EdiTest
             ExcelFileWorker worker = new ExcelFileWorker("C:\\Users\\developer3\\Desktop\\Codes.xlsx", docs);
 
             worker.ImportData<DocGoodsDetailsLabelsForLoad>();
-            List<string> labels = doc.Data.Cast<DocGoodsDetailsLabelsForLoad>().Select(c => c.DmLabel).ToList();
+            List<string> labels = doc.Data.Cast<DocGoodsDetailsLabelsForLoad>().Where(c => c.DmLabel != null).Select(c => c.DmLabel).ToList();
+            //labels.AddRange(sourceMarkedCodes);
 
             using (var abt = new AbtDbContext())
             {
                 string employee = abt.SelectSingleValue("select const_value from ref_const where id = 1200");
 
-                var docJournal = abt.DocJournals.First(d => d.Id == 1196733400);
+                var docJournal = abt.DocJournals.First(d => d.Id == 1200867700);
                 var document = GetUniversalDocument(abt, docJournal, organization, DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting, employee, null, labels);
 
                 var markedCodes = document.Table?.Item?.Where(i => i.ItemIdentificationNumbers != null && i.ItemIdentificationNumbers?.Count() > 0)?
@@ -1434,6 +1440,10 @@ namespace EdiTest
                 {
                     var generatedFile = EdiProcessingUnit.Edo.Edo.GetInstance().GenerateTitleXml("UniversalTransferDocument", "СЧФДОП", "utd970_05_03_01", 0, document);
                     generatedFile.SaveContentToFile($"C:\\Users\\developer3\\Desktop\\Files\\{generatedFile.FileName}");
+                }
+                catch (System.Net.WebException webEx)
+                {
+
                 }
                 catch(Exception ex)
                 {
