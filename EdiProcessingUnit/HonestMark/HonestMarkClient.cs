@@ -16,6 +16,7 @@ namespace EdiProcessingUnit.HonestMark
         private X509Certificate2 _certificate;
         private string _token;
         private string _urlAddressHonestMark;
+        private string _urlAddressHonestMarkNewVersion;
 
         private HonestMarkClient()
         {
@@ -28,6 +29,7 @@ namespace EdiProcessingUnit.HonestMark
 
             var fileController = new WebService.Controllers.FileController();
             _urlAddressHonestMark = fileController.GetApplicationConfigParameter<string>(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name, "UrlAddressHonestMark");
+            _urlAddressHonestMarkNewVersion = fileController.GetApplicationConfigParameter<string>(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name, "UrlAddressHonestMarkNewVersion");
         }
 
         public static HonestMarkClient GetInstance()
@@ -222,6 +224,98 @@ namespace EdiProcessingUnit.HonestMark
 
             var orgRegisteredInfo = _webService.GetRequest<Models.OrgRegistrationResponse[]>($"{_urlAddressHonestMark}/participants?inns={inn}", authData);
             return orgRegisteredInfo.FirstOrDefault()?.IsRegistered ?? false;
+        }
+
+        public List<Models.ProductInfo> GetGtinInfo(List<string> gtins)
+        {
+            var authData = new Dictionary<string, string>();
+            authData.Add("Authorization", $"Bearer {_token}");
+
+            int block = 1000;
+            int position = 0;
+
+            var resultList = new List<Models.ProductInfo>();
+
+            while (position < gtins.Count)
+            {
+                int length = gtins.Count - position > block ? block : gtins.Count - position;
+                var gtinsStr = "{" + $"\"gtins\":[\"{string.Join("\",\"", gtins.Skip(position).Take(length))}\"]" + "}";
+                var result = _webService.PostRequest<Models.Base.SearchResult<Models.ProductInfo>>($"{_urlAddressHonestMarkNewVersion}/product/info",
+                    gtinsStr, null, "application/json", authData);
+
+                if (!string.IsNullOrEmpty(result.ErrorCode))
+                    throw new Exception($"Произошла ошибка с кодом {result.ErrorCode}");
+
+                if (result.Results != null)
+                    resultList.AddRange(result.Results);
+
+                position += block;
+            }
+            return resultList;
+        }
+
+        public async Task<List<Models.ProductInfo>> GetGtinInfoAsync(List<string> gtins)
+        {
+            var authData = new Dictionary<string, string>();
+            authData.Add("Authorization", $"Bearer {_token}");
+
+            int block = 1000;
+            int position = 0;
+
+            var resultList = new List<Models.ProductInfo>();
+
+            while (position < gtins.Count)
+            {
+                int length = gtins.Count - position > block ? block : gtins.Count - position;
+                var gtinsStr = "{" + $"\"gtins\":[\"{string.Join("\",\"", gtins.Skip(position).Take(length))}\"]" + "}";
+                var result = await _webService.PostRequestAsync<Models.Base.SearchResult<Models.ProductInfo>>($"{_urlAddressHonestMarkNewVersion}/product/info",
+                    gtinsStr, null, "application/json", authData);
+
+                if (!string.IsNullOrEmpty(result.ErrorCode))
+                    throw new Exception($"Произошла ошибка с кодом {result.ErrorCode}");
+
+                if (result.Results != null)
+                    resultList.AddRange(result.Results);
+
+                position += block;
+            }
+            return resultList;
+        }
+
+        public List<Models.TnVedInfo> GetTnVedsListForProductGroups(List<ProductGroupsEnum> productGroups)
+        {
+            var authData = new Dictionary<string, string>();
+            authData.Add("Authorization", $"Bearer {_token}");
+
+            var enumUtil = new UtilitesLibrary.Service.EnumUtil();
+            var productGroupsStr = productGroups.Select(productGroup => enumUtil.GetEnumMemberAttrValue(productGroup));
+
+            var resultList = new List<Models.TnVedInfo>();
+            int page = 0;
+            Models.TnVedsListResponse result = null;
+
+            do
+            {
+                var request = new Models.TnVedsListRequest
+                {
+                    ProductGroups = productGroupsStr.ToArray(),
+                    Limit = 1000,
+                    Page = page
+                };
+
+                var requestJson = JsonConvert.SerializeObject(request);
+
+                result = _webService.PostRequest<Models.TnVedsListResponse>($"{_urlAddressHonestMarkNewVersion}/tn-ved/search",
+                    requestJson, null, "application/json", authData);
+
+                if (result != null)
+                    resultList.AddRange(result.TnVeds);
+
+                page++;
+            }
+            while (!(result?.Last ?? true));
+
+            return resultList;
         }
     }
 }

@@ -18,6 +18,7 @@ namespace EdiProcessingUnit.Edo.Models
         private bool _mappedNotRequired = true;
         private RefGood _good;
         private string _productName = null;
+        private string _tnVedCode = null;
 
         public DocGoodsDetailsI DocDetailI { get; set; }
         public DocGoodsDetail DocDetail { get; set; }
@@ -134,6 +135,13 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string TnVedCode
+        {
+            get{
+                return _tnVedCode;
+            }
+        }
+
         public UniversalTransferDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
         {
             if (_good != null && string.IsNullOrEmpty(_barCode))
@@ -188,6 +196,8 @@ namespace EdiProcessingUnit.Edo.Models
                 _labels = abtContext?.Database?
                     .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {idDoc} and id_good = {DocDetailI.IdGood}")?
                     .ToList() ?? new List<string>();
+
+                _tnVedCode = abtContext.RefRefTags?.FirstOrDefault(r => r.IdTag == 142 && r.IdObject == DocDetailI.IdGood)?.TagValue;
             }
             else if (DocDetail != null)
             {
@@ -199,6 +209,8 @@ namespace EdiProcessingUnit.Edo.Models
                 _labels = abtContext?.Database?
                     .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {DocDetail.IdDoc} and id_good = {DocDetail.IdGood}")?
                     .ToList() ?? new List<string>();
+
+                _tnVedCode = abtContext.RefRefTags?.FirstOrDefault(r => r.IdTag == 142 && r.IdObject == DocDetail.IdGood)?.TagValue;
             }
 
             return this;

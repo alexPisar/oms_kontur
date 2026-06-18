@@ -19,6 +19,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         private Utils.XmlCertificateUtil _utils;
         private List<X509Certificate2> _personalCertificates = null;
         private Dictionary<decimal, Kontragent> _consignors;
+        private WebService.Models.VolumetricGradeAccounting[] _volumetricGradeAccounting = null;
 
         private readonly object locker = new object();
 
@@ -76,6 +77,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             var fileController = new WebService.Controllers.FileController();
             var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
             var otherOrgInns = fileController.GetApplicationConfigParameter<List<KeyValuePair<string, string>>>(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name, "OurOrganizations");
+            _volumetricGradeAccounting = fileController.GetApplicationConfigParameter<WebService.Models.VolumetricGradeAccounting[]>(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name, "VolumetricGradeAccounting");
 
             foreach (var connStr in connectionStringList)
             {
@@ -126,6 +128,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                                 var counteragents = _edo.GetOrganizations(myOrganizationBoxIdGuid);
+
+                                if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
+                                    throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
 
                                 await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, orgsInnKpp);
                                 await SendUniversalCorrectionDocuments(myOrganization, counteragents);
@@ -274,9 +279,6 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             try
             {
-                if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
-                    throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
-
                 DocComissionEdoProcessing docComissionEdoProcessing = null;
                 var labels = (from label in _abt.DocGoodsDetailsLabels where label.IdDocSale == doc.IdDocMaster select label).ToList();
                 var docJournal = _abt.DocJournals.FirstOrDefault(j => j.Id == doc.IdDoc);
@@ -356,7 +358,17 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
             try
             {
-                var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, signerDetails);
+                var gtins = doc.Details.Select(det => 
+                {
+                    if (det.ItemVendorCode.Length < 14)
+                        return det.ItemVendorCode.PadLeft(14, '0');
+                    else
+                        return det.ItemVendorCode;
+                }).ToList();
+
+                var gtinInfos = await EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetGtinInfoAsync(gtins) ?? new List<EdiProcessingUnit.HonestMark.Models.ProductInfo>();
+
+                var universalDocument = await GetUniversalDocumentAsync(doc, myOrganization, signerDetails, gtinInfos);
 
                 if (universalDocument == null)
                     throw new Exception("Не удалось сформировать документ.");
@@ -809,12 +821,13 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         }
 
         private async Task<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument> GetUniversalDocumentAsync(
-            UniversalTransferDocumentV2 doc, Kontragent myOrganization, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null)
+            UniversalTransferDocumentV2 doc, Kontragent myOrganization, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails = null,
+            List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null)
         {
             var details = doc.Details.OrderBy(d => d.Product);
             var result = await Task.Run(() =>
             {
-                var universalDocument = GetUniversalDocument(doc, myOrganization, details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel);
+                var universalDocument = GetUniversalDocument(doc, myOrganization, details.ToList(), doc.RefEdoGoodChannel as RefEdoGoodChannel, gtinInfos);
                 return universalDocument;
             });
 
@@ -822,7 +835,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         }
 
         public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
-            UniversalTransferDocumentV2 d, Kontragent organization, List<UniversalTransferDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null)
+            UniversalTransferDocumentV2 d, Kontragent organization, List<UniversalTransferDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null,
+            List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null)
         {
             var document = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument()
             {
@@ -1207,18 +1221,29 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         j++;
                     }
                 }
-                else
+                else if(gtinInfos != null)
                 {
-                    //if (barCode.Length < 14)
-                    //    detail.Gtin = barCode.PadLeft(14, '0');
-                    //else
-                    //    detail.Gtin = barCode;
+                    string gtin;
+                    if (barCode.Length < 14)
+                        gtin = barCode.PadLeft(14, '0');
+                    else
+                        gtin = barCode;
 
-                    //detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
-                    //detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
-                    //{
-                    //    QuantityMark = docJournalDetail.Quantity.ToString()
-                    //};
+                    var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                    if (gtinInfo != null)
+                    {
+                        if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                        {
+                            detail.Gtin = gtin;
+
+                            detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                            detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                            {
+                                QuantityMark = docJournalDetail.Quantity.ToString()
+                            };
+                        }
+                    }
                 }
 
                 var detailAdditionalInfos = new List<Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.AdditionalInfo>();

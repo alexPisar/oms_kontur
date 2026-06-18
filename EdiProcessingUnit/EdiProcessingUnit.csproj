@@ -179,6 +179,7 @@
     <Compile Include="HonestMark\Models\AuthData.cs" />
     <Compile Include="HonestMark\Models\AuthRequest.cs" />
     <Compile Include="HonestMark\Models\AuthResult.cs" />
+    <Compile Include="HonestMark\Models\Base\SearchResult.cs" />
     <Compile Include="HonestMark\Models\DocumentCreateRequest.cs" />
     <Compile Include="HonestMark\Models\DocumentCreateResponse.cs" />
     <Compile Include="HonestMark\Models\DocumentEdoProcessResultInfo.cs" />
@@ -192,11 +193,15 @@
     <Compile Include="HonestMark\Models\OrgRegistrationResponse.cs" />
     <Compile Include="HonestMark\Models\ProcessEdoOperation.cs" />
     <Compile Include="HonestMark\Models\ProcessEdoOperationDetail.cs" />
+    <Compile Include="HonestMark\Models\ProductInfo.cs" />
     <Compile Include="HonestMark\Models\ReceiveDocument.cs" />
     <Compile Include="HonestMark\Models\ReceiveProduct.cs" />
     <Compile Include="HonestMark\Models\ReprocessDocumentResponse.cs" />
     <Compile Include="HonestMark\Models\ShipmentDocument.cs" />
     <Compile Include="HonestMark\Models\ShipmentProduct.cs" />
+    <Compile Include="HonestMark\Models\TnVedInfo.cs" />
+    <Compile Include="HonestMark\Models\TnVedsListRequest.cs" />
+    <Compile Include="HonestMark\Models\TnVedsListResponse.cs" />
     <Compile Include="Infrastructure\EdiProcessor.cs" />
     <Compile Include="Infrastructure\EdoProcessor.cs" />
     <Compile Include="Infrastructure\MailReporter.cs" />

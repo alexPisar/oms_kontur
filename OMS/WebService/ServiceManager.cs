@@ -29,6 +29,78 @@ namespace WebService
             return _statusCode;
         }
 
+        public async Task<T> PostRequestAsync<T>(string url, object contentData, CookieCollection cookies = null, string contentType = null,
+            Dictionary<string, string> headers = null, Encoding encoding = null, string accept = null) where T : class, new()
+        {
+            if (string.IsNullOrEmpty(contentType))
+                contentType = "application/x-www-form-urlencoded";
+
+            HttpClient client;
+
+            if (_webProxy != null)
+            {
+                var handler = new HttpClientHandler
+                {
+                    Proxy = _webProxy,
+                    UseProxy = true
+                };
+
+                if (cookies != null)
+                {
+                    handler.UseCookies = true;
+                    handler.CookieContainer = new CookieContainer();
+                    handler.CookieContainer.Add(cookies);
+                }
+
+                client = new HttpClient(handler);
+            }
+            else if (cookies != null)
+            {
+                var handler = new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = new CookieContainer()
+                };
+
+                handler.CookieContainer.Add(cookies);
+                client = new HttpClient(handler);
+            }
+            else
+                client = new HttpClient();
+
+            if (accept != null)
+                client.DefaultRequestHeaders.Add("Accept", accept);
+
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
+            }
+
+            var content = new StringContent(contentData as string, encoding, contentType);
+            var response = await client.PostAsync(url, content);
+
+            string resultAsJson;
+            bool isSuccessStatusCode = response.IsSuccessStatusCode;
+            var statusCode = response.StatusCode;
+
+            try
+            {
+                resultAsJson = await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                resultAsJson = string.Empty;
+            }
+
+            if (!isSuccessStatusCode)
+                throw new Exception($"Произошла ошибка со статусом {statusCode}\n{resultAsJson}");
+
+            var result = JsonConvert.DeserializeObject<T>(resultAsJson);
+
+            return result;
+        }
+
         public string PostRequest(string url, string contentData, string cookie = null, string contentType = null,
             Dictionary<string, string> headers = null, Encoding encoding = null, CookieCollection cookies = null)
         {
