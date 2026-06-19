@@ -192,7 +192,7 @@ namespace EdiProcessingUnit.Edo.Models
                 _countryCode = abtContext.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
                     $"(select ID_COUNTRY from REF_GOODS where ID = {DocDetailI.IdGood})");
 
-                var idDoc = DocDetailI.DocJournal.IdDocMaster;
+                var idDoc = DocDetailI?.DocJournal?.IdDocMaster ?? DocDetailI.IdDoc;
                 _labels = abtContext?.Database?
                     .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {idDoc} and id_good = {DocDetailI.IdGood}")?
                     .ToList() ?? new List<string>();

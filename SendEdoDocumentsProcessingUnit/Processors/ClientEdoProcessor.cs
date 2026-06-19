@@ -155,7 +155,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
         private async Task SendUniversalTransferDocuments(Kontragent myOrganization, List<Kontragent> counteragents, Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails signerDetails, List<KeyValuePair<string, string>> orgsInnKpp)
         {
             var totalDocProcessings = new List<Utils.AsyncOperationEntity<DocEdoProcessing>>();
-            IEnumerable<UniversalTransferDocumentV2> docs = GetDocumentsForEdoAutomaticSend(myOrganization);
+            List<UniversalTransferDocumentV2> docsList = GetDocumentsForEdoAutomaticSend(myOrganization) ?? new List<UniversalTransferDocumentV2>();
+            docsList.AddRange(this.GetAccountingDocumentsForEdoAutomaticSend(myOrganization) ?? new List<UniversalAccountingTransferDocumentV2>());
+            IEnumerable<UniversalTransferDocumentV2> docs = docsList;
 
             int position = 0, block = 10, count = docs.Count();
             docs = docs ?? new List<UniversalTransferDocumentV2>();
@@ -398,7 +400,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         EntityId = entity.EntityId,
                         FileName = fileName,
                         IsReprocessingStatus = 0,
-                        IdDoc = doc.IdDocMaster,
+                        IdDoc = doc.IdDocMaster != 0 ? doc.IdDocMaster : doc.IdDoc,
                         DocDate = DateTime.Now,
                         UserName = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser,
                         ReceiverName = receiver.Name,
@@ -763,6 +765,46 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 try
                 {
                     return u.Init(_abt);
+                }
+                catch (Exception ex)
+                {
+                    _log.Log(ex);
+                    MailReporter.Add(ex, $"Ошибка в документе {u.InvoiceNumber}: ");
+                    return null;
+                }
+            }).Where(u => u != null).ToList();
+            return docs;
+        }
+
+        private List<UniversalAccountingTransferDocumentV2> GetAccountingDocumentsForEdoAutomaticSend(Kontragent organization)
+        {
+            var fileController = new WebService.Controllers.FileController();
+            var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+            var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+            fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
+
+            string sqlString = string.Empty;
+            var properties = typeof(UniversalAccountingTransferDocumentV2).GetProperties();
+
+            foreach (var property in properties)
+            {
+                var colAttribute = property?.GetCustomAttributes(false)?
+                    .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                if (colAttribute != null)
+                    sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+            }
+
+            sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_2 D where D.DOC_DATE >= :FromDate" +
+                $" and SELLER_INN = '{organization.Inn}' and SELLER_KPP = '{organization.Kpp}' and D.act_status = D.PERMISSION_STATUS";
+            var docs = _abt.Database.SqlQuery<UniversalAccountingTransferDocumentV2>(sqlString, fromDateParam).ToList();
+
+            docs = docs.Select(u =>
+            {
+                try
+                {
+                    return u.Init(_abt) as UniversalAccountingTransferDocumentV2;
                 }
                 catch (Exception ex)
                 {

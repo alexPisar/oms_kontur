@@ -214,10 +214,18 @@ namespace EdiProcessingUnit.Edo.Models
             }
 
             if(this.IsMarked)
-                _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings
-                           where docComissionEdoProcessing.IdDoc == this.IdDocMaster
-                           orderby docComissionEdoProcessing.DocDate descending
-                           select docComissionEdoProcessing);
+            {
+                if (this.IdDocMaster != 0)
+                    _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings
+                               where docComissionEdoProcessing.IdDoc == this.IdDocMaster
+                               orderby docComissionEdoProcessing.DocDate descending
+                               select docComissionEdoProcessing);
+                else
+                    _status = (from docComissionEdoProcessing in abt.DocComissionEdoProcessings
+                               where docComissionEdoProcessing.IdDoc == this.IdDoc
+                               orderby docComissionEdoProcessing.DocDate descending
+                               select docComissionEdoProcessing);
+            }
 
             return this;
         }

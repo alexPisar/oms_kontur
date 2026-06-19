@@ -1452,6 +1452,35 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void TestMethod2()
+        {
+            using (var abt = new AbtDbContext())
+            {
+                var fileController = new WebService.Controllers.FileController();
+                var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
+
+                var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
+                fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
+
+                string sqlString = string.Empty;
+                var properties = typeof(EdiProcessingUnit.Edo.Models.UniversalAccountingTransferDocumentV2).GetProperties();
+
+                foreach (var property in properties)
+                {
+                    var colAttribute = property?.GetCustomAttributes(false)?
+                        .FirstOrDefault(c => c as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute != null) as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                    if (colAttribute != null)
+                        sqlString += sqlString == string.Empty ? $"{colAttribute.Name} as {property.Name}" : $", {colAttribute.Name} as {property.Name}";
+                }
+
+                sqlString = $"select {sqlString} from VIEW_INVOICES_EDO_AUTOMATIC_2 D where D.DOC_DATE >= :FromDate" +
+                $" and SELLER_INN = '2538150215' and SELLER_KPP = '253801001' and D.act_status = D.PERMISSION_STATUS";
+                var docs = abt.Database.SqlQuery<EdiProcessingUnit.Edo.Models.UniversalTransferDocumentV2>(sqlString, fromDateParam).ToList();
+            }
+        }
+
         public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
             AbtDbContext abt, DocJournal d, EdiProcessingUnit.Edo.Models.Kontragent organization, DataContextManagementUnit.DataAccess.DocJournalUsingType? docUsingType, string employee = null, RefEdoGoodChannel edoGoodChannel = null, List<string> allLabels = null)
         {
