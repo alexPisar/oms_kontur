@@ -95,6 +95,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     join refUser in _abt.RefUsersByOrgEdo
                                     on c.Id equals refUser.IdCustomer
                                     where refUser.UserName == dataBaseUser
+                                    join r in _abt.RefRefTags
+                                    on c.Id equals r.IdObject
+                                    where r.IdTag == 215 && r.TagValue == "1"
                                     select new Kontragent
                                     {
                                         Name = c.Name,
@@ -107,7 +110,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         EmchdPersonSurname = a.Surname,
                                         EmchdPersonName = a.Name,
                                         EmchdPersonPatronymicSurname = a.PatronymicSurname,
-                                        EmchdPersonPosition = a.Position
+                                        EmchdPersonPosition = a.Position,
+                                        IsEdoApiConnected = true
                                     }).ToList();
 
                         var orgsInnKpp = orgs.Select(o => new KeyValuePair<string, string>(o.Inn, o.Kpp)).Distinct().ToList();
@@ -575,6 +579,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     join refUser in _abt.RefUsersByOrgEdo
                                     on c.Id equals refUser.IdCustomer
                                     where refUser.UserName == dataBaseUser
+                                    join r in _abt.RefRefTags
+                                    on c.Id equals r.IdObject
+                                    where r.IdTag == 215 && r.TagValue == "1"
                                     select new Kontragent
                                     {
                                         Name = c.Name,
@@ -587,7 +594,8 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         EmchdPersonSurname = a.Surname,
                                         EmchdPersonName = a.Name,
                                         EmchdPersonPatronymicSurname = a.PatronymicSurname,
-                                        EmchdPersonPosition = a.Position
+                                        EmchdPersonPosition = a.Position,
+                                        IsEdoApiConnected = true
                                     }).ToList();
 
                         foreach (var myOrganization in orgs)
