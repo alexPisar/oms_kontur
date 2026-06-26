@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace EdiProcessingUnit.HonestMark.Models
+namespace EdoLiteHonestMarkProcessing.Models
 {
     public class AuthResult
     {
@@ -23,5 +23,8 @@ namespace EdiProcessingUnit.HonestMark.Models
 
         [JsonProperty(PropertyName = "description")]
         public string Description { get; set; }
+
+        [JsonProperty(PropertyName = "expireDate")]
+        public string ExpireDate { get; set; }
     }
 }

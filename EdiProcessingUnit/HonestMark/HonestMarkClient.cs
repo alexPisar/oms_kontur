@@ -14,6 +14,7 @@ namespace EdiProcessingUnit.HonestMark
 
         private WebService.ServiceManager _webService;
         private X509Certificate2 _certificate;
+        private bool _isUuidToken = false;
         private string _token;
         private string _urlAddressHonestMark;
         private string _urlAddressHonestMarkNewVersion;
@@ -66,7 +67,8 @@ namespace EdiProcessingUnit.HonestMark
             var authRequest = new Models.AuthRequest
             {
                 Uid = authData.Uid,
-                Data = Convert.ToBase64String(signature)
+                Data = Convert.ToBase64String(signature),
+                UnitedToken = _isUuidToken
             };
 
             if (organization != null && !string.IsNullOrEmpty(organization?.EmchdId))
@@ -80,14 +82,17 @@ namespace EdiProcessingUnit.HonestMark
             if (result.ErrorMessage != null)
                 throw new Exception($"Произошла ошибка с кодом {result.ErrorCode}:{result.ErrorMessage} /nОписание:{result.Description}");
 
-            if (string.IsNullOrEmpty(result.Token))
+            if (string.IsNullOrEmpty(result.Token) && string.IsNullOrEmpty(result.UuidToken))
                 throw new Exception("Не удалось получить токен авторизации.");
 
-            _token = result.Token;
+            if(_isUuidToken && !string.IsNullOrEmpty(result.UuidToken))
+                _token = result.UuidToken;
+            else
+                _token = result.Token;
 
             cache = new HonestMarkTokenCache()
             {
-                Token = result.Token,
+                Token = _token,
                 TokenCreationDate = DateTime.Now,
                 TokenExpirationDate = DateTime.Now.AddHours(10)
             };

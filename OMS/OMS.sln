@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceivingEdiOrdersUnit", ".
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendEdoDocumentsProcessingUnit", "..\SendEdoDocumentsProcessingUnit\SendEdoDocumentsProcessingUnit.csproj", "{89CD9C62-D20C-4234-9B07-918326F4CC3E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdoLiteHonestMarkProcessing", "..\EdoLiteHonestMarkProcessing\EdoLiteHonestMarkProcessing.csproj", "{A26079D3-885E-4D5A-9908-43F4E8D87C69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{89CD9C62-D20C-4234-9B07-918326F4CC3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89CD9C62-D20C-4234-9B07-918326F4CC3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89CD9C62-D20C-4234-9B07-918326F4CC3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A26079D3-885E-4D5A-9908-43F4E8D87C69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A26079D3-885E-4D5A-9908-43F4E8D87C69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A26079D3-885E-4D5A-9908-43F4E8D87C69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A26079D3-885E-4D5A-9908-43F4E8D87C69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

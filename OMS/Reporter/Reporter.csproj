@@ -148,19 +148,29 @@
     <Compile Include="Entities\OrganizationEmployee.cs" />
     <Compile Include="Entities\OrganizationExchangeParticipantEntity.cs" />
     <Compile Include="Entities\OrganizationRepresentative.cs" />
+    <Compile Include="Entities\PaperPowerOfAttorney.cs" />
     <Compile Include="Entities\Product.cs" />
+    <Compile Include="Entities\SignerInfo.cs" />
     <Compile Include="Entities\TrustedIndividual.cs" />
+    <Compile Include="Enums\AcceptResultEnum.cs" />
     <Compile Include="Enums\MethodOfConfirmingAuthorityEnum.cs" />
     <Compile Include="Enums\SignTypeEnum.cs" />
     <Compile Include="IReport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReporterDll.cs" />
+    <Compile Include="Reports\UniversalTransferBuyerDocumentUtd970.cs" />
     <Compile Include="Reports\UniversalTransferSellerDocumentUtd970.cs" />
     <Compile Include="XmlUtils.cs" />
+    <Compile Include="XsdClasses\ON_NSCHFDOPPOK_1_997_02_05_03_01.cs" />
     <Compile Include="XsdClasses\ON_NSCHFDOPPR_1_997_01_05_03_01.cs" />
     <Compile Include="XsdClasses\ON_NSCHFDOPPR_1_997_01_05_03_05.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\UtilitesLibrary\UtilitesLibrary.csproj">
+      <Project>{1772810a-892e-45cd-b91c-21f020628dc1}</Project>
+      <Name>UtilitesLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <None Include="XSD\ON_NSCHFDOPPR_1_997_01_05_03_01.xsd">
       <SubType>Designer</SubType>

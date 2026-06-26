@@ -48,6 +48,7 @@
     <Compile Include="Controllers\FinDbController.cs" />
     <Compile Include="IController.cs" />
     <Compile Include="Models\DocOrderInfo.cs" />
+    <Compile Include="Models\FileParameter.cs" />
     <Compile Include="Models\RefEdiChannel.cs" />
     <Compile Include="Models\VolumetricGradeAccounting.cs" />
     <Compile Include="ServiceManager.cs" />

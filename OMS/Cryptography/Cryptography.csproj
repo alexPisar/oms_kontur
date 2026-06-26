@@ -48,6 +48,7 @@
     <Compile Include="ICrypt.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools\SymmetricAlgoritm.cs" />
+    <Compile Include="Utils\XmlCertificate.cs" />
     <Compile Include="WinApi\WinApiConstants.cs" />
     <Compile Include="WinApi\WinApiCrypt.cs" />
     <Compile Include="WinApi\WinApiCryptWrapper.cs" />

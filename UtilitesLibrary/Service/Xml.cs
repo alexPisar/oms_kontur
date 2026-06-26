@@ -36,20 +36,24 @@ namespace UtilitesLibrary.Service
 			}			
 		}
 
-		public static string SerializeEntity<TModel>(TModel obj)
+		public static string SerializeEntity<TModel>(TModel obj, Encoding encoding = null)
 		{
 			XmlSerializer ser = new XmlSerializer( typeof( TModel ) );
 			StringBuilder builder = new StringBuilder();
 			var _XmlWriterSettings = new XmlWriterSettings();
-			_XmlWriterSettings.Encoding = Encoding.Unicode;
+			_XmlWriterSettings.Encoding = encoding ?? Encoding.Unicode;
 			_XmlWriterSettings.OmitXmlDeclaration = true;
-			using (XmlWriter writer = XmlWriter.Create( builder, _XmlWriterSettings ))
+
+            if (encoding == null)
+                encoding = Encoding.UTF8;
+
+            using (XmlWriter writer = XmlWriter.Create( builder, _XmlWriterSettings ))
 			{
 				//writer.Settings.Encoding = Encoding.UTF8;
 				ser.Serialize( writer, obj );
 			}
-			byte[] utf8Bytes = Encoding.UTF8.GetBytes( builder.ToString() );
-			var ret = Encoding.UTF8.GetString( utf8Bytes );
+			byte[] bytes = encoding.GetBytes( builder.ToString() );
+			var ret = encoding.GetString( bytes );
 			return ret;
 
 		}

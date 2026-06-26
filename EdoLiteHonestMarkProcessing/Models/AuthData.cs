@@ -5,20 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace EdiProcessingUnit.HonestMark.Models
+namespace EdoLiteHonestMarkProcessing.Models
 {
-    public class AuthRequest
+    public class AuthData
     {
         [JsonProperty(PropertyName = "uuid")]
         public string Uid { get; set; }
 
         [JsonProperty(PropertyName = "data")]
         public string Data { get; set; }
-
-        [JsonProperty(PropertyName = "inn")]
-        public string Inn { get; set; }
-
-        [JsonProperty(PropertyName = "unitedToken")]
-        public bool UnitedToken { get; set; }
     }
 }

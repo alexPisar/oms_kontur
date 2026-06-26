@@ -61,6 +61,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Service\DateTimeUtil.cs" />
     <Compile Include="Service\EnumUtil.cs" />
     <Compile Include="Service\Xml.cs" />
     <Compile Include="Service\XmlValidation.cs" />

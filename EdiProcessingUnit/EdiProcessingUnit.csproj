@@ -167,6 +167,7 @@
     <Compile Include="Edo\Models\UniversalCorrectionDocument.cs" />
     <Compile Include="Edo\Models\UniversalCorrectionDocumentDetail.cs" />
     <Compile Include="Edo\Models\UniversalCorrectionDocumentV2.cs" />
+    <Compile Include="Edo\Models\UniversalTransferBuyerDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocument.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentDetail.cs" />
     <Compile Include="Edo\Models\UniversalTransferDocumentV2.cs" />
