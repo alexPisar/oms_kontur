@@ -228,6 +228,25 @@ namespace SendEdoDocumentsProcessingUnit.Utils
             }
         }
 
+        public string GetPersonInnFromCertificate(X509Certificate2 certificate)
+        {
+            var crypt = new WinApiCryptWrapper(certificate);
+            var ogrnip = crypt.GetValueBySubjectOid("1.2.643.100.5");
+
+            if (string.IsNullOrEmpty(ogrnip))
+                return null;
+
+            var inn = ParseCertAttribute(certificate.Subject, "ИНН").TrimStart('0');
+
+            if (string.IsNullOrEmpty(inn))
+            {
+                crypt.InitializeCertificate(certificate);
+                inn = crypt.GetValueBySubjectOid("1.2.643.3.131.1.1");
+            }
+
+            return inn;
+        }
+
         public string GetOrgInnFromCertificate(X509Certificate2 certificate)
         {
             var inn = ParseCertAttribute(certificate.Subject, "ИНН").TrimStart('0');

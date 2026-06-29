@@ -88,10 +88,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         _abt.Database.CommandTimeout = 500;
                         var docJournals = _abt.Set<DocJournal>().Include("DocMaster").Include("DocGoodsI").Include("DocGoodsDetailsIs");
 
-                        var orgs = (from a in _abt.RefAuthoritySignDocuments
-                                    where a.EmchdEndDate != null && a.IsMainDefault
-                                    join c in _abt.RefCustomers
-                                    on a.IdCustomer equals (c.Id)
+                        var orgs = (from c in _abt.RefCustomers
                                     join refUser in _abt.RefUsersByOrgEdo
                                     on c.Id equals refUser.IdCustomer
                                     where refUser.UserName == dataBaseUser
@@ -103,14 +100,6 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         Name = c.Name,
                                         Inn = c.Inn,
                                         Kpp = c.Kpp,
-                                        EmchdId = a.EmchdId,
-                                        EmchdBeginDate = a.EmchdBeginDate,
-                                        EmchdEndDate = a.EmchdEndDate,
-                                        EmchdPersonInn = a.Inn,
-                                        EmchdPersonSurname = a.Surname,
-                                        EmchdPersonName = a.Name,
-                                        EmchdPersonPatronymicSurname = a.PatronymicSurname,
-                                        EmchdPersonPosition = a.Position,
                                         IdCustomer = c.Id,
                                         IsEdoApiConnected = true
                                     }).ToList();
@@ -122,8 +111,33 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         {
                             try
                             {
-                                var certs = personalCertificates.Where(c => myOrganization.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
-                                myOrganization.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
+                                var refAuthoritySignDocuments = (from a in _abt.RefAuthoritySignDocuments
+                                                                 where a.EmchdEndDate != null && a.IdCustomer == myOrganization.IdCustomer && a.IsMainDefault
+                                                                 select a)?.FirstOrDefault();
+
+                                if(refAuthoritySignDocuments != null)
+                                {
+                                    myOrganization.EmchdId = refAuthoritySignDocuments.EmchdId;
+                                    myOrganization.EmchdBeginDate = refAuthoritySignDocuments.EmchdBeginDate;
+                                    myOrganization.EmchdEndDate = refAuthoritySignDocuments.EmchdEndDate;
+                                    myOrganization.EmchdPersonInn = refAuthoritySignDocuments.Inn;
+                                    myOrganization.EmchdPersonSurname = refAuthoritySignDocuments.Surname;
+                                    myOrganization.EmchdPersonName = refAuthoritySignDocuments.Name;
+                                    myOrganization.EmchdPersonPatronymicSurname = refAuthoritySignDocuments.PatronymicSurname;
+                                    myOrganization.EmchdPersonPosition = refAuthoritySignDocuments.Position;
+                                }
+
+                                if (!string.IsNullOrEmpty(myOrganization?.EmchdId))
+                                {
+                                    var certs = personalCertificates.Where(c => myOrganization.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
+                                    myOrganization.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
+                                }
+                                else
+                                {
+                                    var certs = personalCertificates.Where(c => (myOrganization?.Inn?.Length == 10 && myOrganization.Inn == _utils.GetOrgInnFromCertificate(c) ||
+                                    myOrganization?.Inn?.Length == 12 && myOrganization.Inn == _utils.GetPersonInnFromCertificate(c)) && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
+                                    myOrganization.Certificate = certs.FirstOrDefault();
+                                }
 
                                 if (!_edo.Authenticate(false, myOrganization.Certificate, myOrganization.Inn))
                                     throw new Exception("Не удалось авторизоваться в системе по сертификату.");
@@ -134,7 +148,14 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 var signerDetails = _edo.GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType.UtdSeller);
                                 var counteragents = _edo.GetOrganizations(myOrganizationBoxIdGuid);
 
-                                if (!EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization))
+                                bool honestMarkAuthResult;
+
+                                if (!string.IsNullOrEmpty(myOrganization?.EmchdId))
+                                    honestMarkAuthResult = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate, myOrganization);
+                                else
+                                    honestMarkAuthResult = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(myOrganization.Certificate);
+
+                                if (!honestMarkAuthResult)
                                     throw new Exception("Не удалось авторизоваться в системе ЧЗ по сертификату.");
 
                                 await SendUniversalTransferDocuments(myOrganization, counteragents, signerDetails, orgsInnKpp);
