@@ -19,6 +19,7 @@ namespace EdiProcessingUnit.Edo.Models
         private RefGood _good;
         private string _productName = null;
         private string _tnVedCode = null;
+        private string _gtin = null;
 
         public DocGoodsDetailsI DocDetailI { get; set; }
         public DocGoodsDetail DocDetail { get; set; }
@@ -142,6 +143,13 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public string Gtin
+        {
+            get{
+                return _gtin;
+            }
+        }
+
         public UniversalTransferDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
         {
             if (_good != null && string.IsNullOrEmpty(_barCode))
@@ -211,6 +219,12 @@ namespace EdiProcessingUnit.Edo.Models
                     .ToList() ?? new List<string>();
 
                 _tnVedCode = abtContext.RefRefTags?.FirstOrDefault(r => r.IdTag == 142 && r.IdObject == DocDetail.IdGood)?.TagValue;
+            }
+
+            if(_good != null)
+            {
+                if (abtContext?.RefItems?.Any(r => r.IdName == 30071 && r.IdGood == _good.Id && r.Quantity == 2) ?? false)
+                    _gtin = abtContext.RefBarCodes?.FirstOrDefault(b => b.IdGood == _good.Id && b.IsPrimary == 10)?.BarCode;
             }
 
             return this;

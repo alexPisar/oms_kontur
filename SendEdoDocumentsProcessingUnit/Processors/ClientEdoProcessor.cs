@@ -1293,28 +1293,43 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         j++;
                     }
                 }
-                else if(gtinInfos != null)
+                else
                 {
-                    string gtin;
-                    if (barCode.Length < 14)
-                        gtin = barCode.PadLeft(14, '0');
-                    else
-                        gtin = barCode;
+                    string volumetricGradeGtin = null;
 
-                    var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
-
-                    if (gtinInfo != null)
+                    if (string.IsNullOrEmpty(docDetail?.Gtin))
                     {
-                        if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                        if (gtinInfos != null)
                         {
-                            detail.Gtin = gtin;
+                            string gtin;
+                            if (barCode.Length < 14)
+                                gtin = barCode.PadLeft(14, '0');
+                            else
+                                gtin = barCode;
 
-                            detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
-                            detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                            var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                            if (gtinInfo != null)
                             {
-                                QuantityMark = docJournalDetail.Quantity.ToString()
-                            };
+                                if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                    volumetricGradeGtin = gtin;
+                            }
                         }
+                    }
+                    else
+                    {
+                        volumetricGradeGtin = docDetail.Gtin;
+                    }
+
+                    if (!string.IsNullOrEmpty(volumetricGradeGtin))
+                    {
+                        detail.Gtin = volumetricGradeGtin;
+
+                        detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                        detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                        {
+                            QuantityMark = docJournalDetail.Quantity.ToString()
+                        };
                     }
                 }
 
