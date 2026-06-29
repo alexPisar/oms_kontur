@@ -811,6 +811,11 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             var fileController = new WebService.Controllers.FileController();
             var dateTimeLastPeriod = fileController.GetApplicationConfigParameter<DateTime>("KonturEdo", "DocsDateTime");
 
+            var fromDateTime = new DateTime(2026, 6, 29);
+
+            if (dateTimeLastPeriod < fromDateTime)
+                dateTimeLastPeriod = fromDateTime;
+
             var fromDateParam = new Oracle.ManagedDataAccess.Client.OracleParameter(@"FromDate", dateTimeLastPeriod);
             fromDateParam.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Date;
 
