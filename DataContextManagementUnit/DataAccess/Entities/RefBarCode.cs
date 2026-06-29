@@ -29,7 +29,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
 
         public virtual string BarCode { get; set; }
 
-        public virtual bool? IsPrimary { get; set; }
+        public virtual short? IsPrimary { get; set; }
 
         #endregion
 

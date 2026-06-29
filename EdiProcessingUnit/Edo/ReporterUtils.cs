@@ -324,7 +324,7 @@ namespace EdiProcessingUnit.Edo
                 if (detail.Good == null)
                     continue;
 
-                var barCode = detail.Good.BarCodes?.FirstOrDefault(r => r.IsPrimary == false && r.BarCode != null)?.BarCode;
+                var barCode = detail.Good.BarCodes?.FirstOrDefault(r => r.IsPrimary == 0 && r.BarCode != null)?.BarCode;
 
                 var subtotal = Math.Round(detail.Quantity * ((decimal)detail.Price - (decimal)detail.DiscountSumm), 2);
                 var vat = (decimal)Math.Round(subtotal * detail.TaxRate / (detail.TaxRate + 100), 2, MidpointRounding.AwayFromZero);

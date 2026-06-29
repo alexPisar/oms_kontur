@@ -480,7 +480,7 @@ namespace KonturEdoClient.Models
                             int baseIndex = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
 
                             var barCode = _abt.RefBarCodes?
-                            .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == false)?
+                            .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 0)?
                             .BarCode;
 
                             var oldSubtotal = Math.Round(baseDetail.Quantity * ((decimal)baseDetail.Price - (decimal)baseDetail.DiscountSumm), 2);
@@ -726,7 +726,7 @@ namespace KonturEdoClient.Models
                             int baseIndex = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
 
                             var barCode = _abt.RefBarCodes?
-                            .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == false)?
+                            .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 0)?
                             .BarCode;
 
                             var oldSubtotal = Math.Round(baseDetail.Quantity * ((decimal)baseDetail.Price - (decimal)baseDetail.DiscountSumm), 2);

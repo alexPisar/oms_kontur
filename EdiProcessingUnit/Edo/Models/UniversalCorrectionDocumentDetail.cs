@@ -30,9 +30,9 @@ namespace EdiProcessingUnit.Edo.Models
                 if (_barCode == null)
                 {
                     if ((DocDetail?.Good?.BarCodes?.Count() ?? 0) > 0)
-                        _barCode = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
+                        _barCode = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (b.IsPrimary != null && b.IsPrimary == 0))?.BarCode;
                     else if((DocDetailsI?.Good?.BarCodes?.Count() ?? 0) > 0)
-                        _barCode = DocDetailsI?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetailsI?.IdGood && (!b.IsPrimary ?? false))?.BarCode;
+                        _barCode = DocDetailsI?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetailsI?.IdGood && (b.IsPrimary != null && b.IsPrimary == 0))?.BarCode;
                 }
 
                 return _barCode;
@@ -89,7 +89,7 @@ namespace EdiProcessingUnit.Edo.Models
             if (_good != null && string.IsNullOrEmpty(_barCode))
             {
                 _barCode = abtContext?.RefBarCodes?
-                    .FirstOrDefault(b => b.IdGood == _good.Id && b.IsPrimary == false)?
+                    .FirstOrDefault(b => b.IdGood == _good.Id && b.IsPrimary == 0)?
                     .BarCode;
             }
 

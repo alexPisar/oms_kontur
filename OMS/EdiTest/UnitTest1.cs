@@ -496,7 +496,7 @@ namespace EdiTest
                         continue;
 
                     var barCode = abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
@@ -1166,7 +1166,7 @@ namespace EdiTest
 
                     string barCodeStr = docGoodsDetailsLabelsForLoad.Gtin.TrimStart('0');
 
-                    var refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr && r.IsPrimary == false);
+                    var refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr && r.IsPrimary == 0);
 
                     if (refBarCode?.IdGood == null)
                         refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCodeStr);
@@ -1304,7 +1304,7 @@ namespace EdiTest
                     }
                     else
                     {
-                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == false);
+                        refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode && r.IsPrimary == 0);
 
                         if (refBarCode?.IdGood == null)
                             refBarCode = abt.RefBarCodes.FirstOrDefault(r => r.BarCode == barCode);
@@ -1927,7 +1927,7 @@ namespace EdiTest
                         continue;
 
                     var barCode = abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
@@ -2093,7 +2093,7 @@ namespace EdiTest
                         continue;
 
                     var barCode = abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
@@ -2523,7 +2523,7 @@ namespace EdiTest
                         continue;
 
                     var barCode = abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
@@ -2625,7 +2625,7 @@ namespace EdiTest
                         continue;
 
                     var barCode = abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +

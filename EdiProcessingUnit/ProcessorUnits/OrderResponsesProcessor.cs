@@ -282,7 +282,7 @@ namespace EdiProcessingUnit.WorkingUnits
 
                                     if (origLineItem == null && connectedBuyer?.IncludedBuyerCodes == 1)
                                     {
-                                        var refBarCode = _abtDbContext?.RefBarCodes?.FirstOrDefault(r => r.IdGood == detail.IdGood && r.IsPrimary == false);
+                                        var refBarCode = _abtDbContext?.RefBarCodes?.FirstOrDefault(r => r.IdGood == detail.IdGood && r.IsPrimary == 0);
 
                                         IEnumerable<MapGoodByBuyer> buyerItems = null;
 

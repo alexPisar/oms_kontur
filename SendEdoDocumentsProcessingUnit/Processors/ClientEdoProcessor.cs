@@ -111,6 +111,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                         EmchdPersonName = a.Name,
                                         EmchdPersonPatronymicSurname = a.PatronymicSurname,
                                         EmchdPersonPosition = a.Position,
+                                        IdCustomer = c.Id,
                                         IsEdoApiConnected = true
                                     }).ToList();
 
@@ -2471,7 +2472,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         continue;
 
                     var barCode = _abt.RefBarCodes?
-                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == false)?
+                        .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 0)?
                         .BarCode;
 
                     string countryCode = _abt.SelectSingleValue("select NUM_CODE from REF_COUNTRIES where id in" +
