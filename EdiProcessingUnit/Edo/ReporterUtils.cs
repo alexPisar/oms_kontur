@@ -87,10 +87,12 @@ namespace EdiProcessingUnit.Edo
             var receiverKpp = receiver.Inn.Length == 10 && !string.IsNullOrEmpty(receiver.Kpp) ? receiver.Kpp + "_" : string.Empty;
             var senderKpp = sender.Inn.Length == 10 && !string.IsNullOrEmpty(sender.Kpp) ? sender.Kpp + "_" : string.Empty;
 
+            string endOfSellerFile = null;
+
             if (isMarked)
-                reportObj.FileName = $"{_prefixSellerFileName}_{receiver.Inn}_{receiverKpp}{sender.Inn}_{senderKpp}{DateTime.Now.ToString("yyyyMMdd")}_{Guid.NewGuid().ToString()}_0_1_0_0_0_00";
+                endOfSellerFile = "_0_1_0_0_0_00";
             else
-                reportObj.FileName = $"{_prefixSellerFileName}_{receiver.Inn}_{receiverKpp}{sender.Inn}_{senderKpp}{DateTime.Now.ToString("yyyyMMdd")}_{Guid.NewGuid().ToString()}_0_0_0_0_0_00";
+                endOfSellerFile = "_0_0_0_0_0_00";
 
             reportObj.EdoProgramVersion = this.EdoProgram;
 
@@ -375,7 +377,10 @@ namespace EdiProcessingUnit.Edo
                     var gtin = detail?.Good.BarCodes?.FirstOrDefault(r => r.IsPrimary == 10 && r.BarCode != null)?.BarCode;
 
                     if(!string.IsNullOrEmpty(gtin))
+                    {
                         product.GtinMark = gtin;
+                        endOfSellerFile = "_0_1_0_0_0_00";
+                    }
                 }
 
                 if (edoGoodChannel != null)
@@ -412,6 +417,7 @@ namespace EdiProcessingUnit.Edo
                 productList.Add(product);
             }
 
+            reportObj.FileName = $"{_prefixSellerFileName}_{receiver.Inn}_{receiverKpp}{sender.Inn}_{senderKpp}{DateTime.Now.ToString("yyyyMMdd")}_{Guid.NewGuid().ToString()}{endOfSellerFile}";
             reportObj.Products = productList;
             reportObj.SignType = Reporter.Enums.SignTypeEnum.QualifiedElectronicDigitalSignature;
             reportObj.SignDate = DateTime.Now.Date;
