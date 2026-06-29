@@ -3404,18 +3404,22 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else
+                    else if(_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
                     {
-                        //if (barCode.Length < 14)
-                        //    detail.Gtin = barCode.PadLeft(14, '0');
-                        //else
-                        //    detail.Gtin = barCode;
+                        var gtin = _abt.RefBarCodes?
+                            .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
+                            .BarCode;
 
-                        //detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
-                        //detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
-                        //{
-                        //    QuantityMark = docJournalDetail.Quantity.ToString()
-                        //};
+                        if (!string.IsNullOrEmpty(gtin))
+                        {
+                            detail.Gtin = gtin;
+
+                            detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                            detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                            {
+                                QuantityMark = docJournalDetail.Quantity.ToString()
+                            };
+                        }
                     }
 
 
@@ -3536,18 +3540,22 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else
+                    else if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
                     {
-                        //if (barCode.Length < 14)
-                        //    detail.Gtin = barCode.PadLeft(14, '0');
-                        //else
-                        //    detail.Gtin = barCode;
+                        var gtin = _abt.RefBarCodes?
+                            .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
+                            .BarCode;
 
-                        //detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
-                        //detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
-                        //{
-                        //    QuantityMark = docJournalDetail.Quantity.ToString()
-                        //};
+                        if (!string.IsNullOrEmpty(gtin))
+                        {
+                            detail.Gtin = gtin;
+
+                            detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
+                            detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
+                            {
+                                QuantityMark = docJournalDetail.Quantity.ToString()
+                            };
+                        }
                     }
 
                     details.Add(detail);

@@ -361,6 +361,8 @@ namespace EdiProcessingUnit.Edo
                     product.OriginCountryName = refGood?.Country?.Name?.ToString();
                 }
 
+                var markedItems = detail.Good.Item.Where(r => r.IdName == 30071 && r.IdGood == detail.IdGood);
+
                 if(isMarked && markedCodes != null)
                 {
                     product.MarkedCodes = markedCodes.Where(m => m.IdGood == detail.IdGood).Select(m => m.DmLabel)?.ToList() ?? new List<string>();
@@ -368,9 +370,12 @@ namespace EdiProcessingUnit.Edo
                     if (product.MarkedCodes.Count != product.Quantity)
                         throw new Exception("Количество кодов маркировки не совпадает с количеством товара.");
                 }
-                else
+                else if (markedItems.Any(r => r.Quantity == 2))
                 {
-                    product.GtinMark = barCode.PadLeft(14, '0');
+                    var gtin = detail?.Good.BarCodes?.FirstOrDefault(r => r.IsPrimary == 10 && r.BarCode != null)?.BarCode;
+
+                    if(!string.IsNullOrEmpty(gtin))
+                        product.GtinMark = gtin;
                 }
 
                 if (edoGoodChannel != null)
