@@ -1413,7 +1413,7 @@ namespace KonturEdoClient.Models
                 if (!string.IsNullOrEmpty(org.EmchdPersonInn))
                 {
                     var certs = personalCertificates.Where(c => org.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
-                    org.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
+                    org.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)) && string.IsNullOrEmpty(_utils.GetPersonInnFromCertificate(c)));
                 }
                 
                 if(org.Certificate == null || string.IsNullOrEmpty(org.EmchdPersonInn))
