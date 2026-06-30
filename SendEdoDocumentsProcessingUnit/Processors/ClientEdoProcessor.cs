@@ -130,7 +130,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 if (!string.IsNullOrEmpty(myOrganization?.EmchdId))
                                 {
                                     var certs = personalCertificates.Where(c => myOrganization.EmchdPersonInn == _utils.ParseCertAttribute(c.Subject, "ИНН").TrimStart('0') && _utils.IsCertificateValid(c)).OrderByDescending(c => c.NotBefore);
-                                    myOrganization.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)));
+                                    myOrganization.Certificate = certs.FirstOrDefault(c => string.IsNullOrEmpty(_utils.GetOrgInnFromCertificate(c)) && string.IsNullOrEmpty(_utils.GetPersonInnFromCertificate(c)));
                                 }
                                 else
                                 {
