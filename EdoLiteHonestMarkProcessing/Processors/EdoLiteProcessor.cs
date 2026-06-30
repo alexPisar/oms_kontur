@@ -168,6 +168,8 @@ namespace EdoLiteHonestMarkProcessing.Processors
                                 continue;
                             }
 
+                            var sellerContent = Edo.EdoLiteClient.GetInstance().GetIncomingDocumentContent(docFromEdoLite.EdoId);
+
                             if (!System.IO.Directory.Exists($"{edoFilesPath}//{docFromEdoLite.EdoId}"))
                                 System.IO.Directory.CreateDirectory($"{edoFilesPath}//{docFromEdoLite.EdoId}");
 
