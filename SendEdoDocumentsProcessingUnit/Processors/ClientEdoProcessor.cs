@@ -1302,26 +1302,36 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 {
                     string volumetricGradeGtin = null;
 
+                    string gtin;
+
                     if (string.IsNullOrEmpty(docDetail?.Gtin))
                     {
-                        if (gtinInfos != null)
-                        {
-                            string gtin;
-                            if (barCode.Length < 14)
-                                gtin = barCode.PadLeft(14, '0');
-                            else
-                                gtin = barCode;
-
-                            var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
-
-                            if (gtinInfo != null)
-                            {
-                                if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
-                                    volumetricGradeGtin = gtin;
-                            }
-                        }
+                        if (barCode.Length < 14)
+                            gtin = barCode.PadLeft(14, '0');
+                        else
+                            gtin = barCode;
                     }
                     else
+                    {
+                        gtin = docDetail.Gtin;
+                    }
+
+                    if(gtinInfos != null)
+                    {
+                        var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                        if(gtinInfo == null && !string.IsNullOrEmpty(docDetail?.Gtin))
+                        {
+                            gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin);
+                        }
+
+                        if (gtinInfo != null)
+                        {
+                            if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                volumetricGradeGtin = gtin;
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(docDetail?.Gtin))
                     {
                         volumetricGradeGtin = docDetail.Gtin;
                     }
