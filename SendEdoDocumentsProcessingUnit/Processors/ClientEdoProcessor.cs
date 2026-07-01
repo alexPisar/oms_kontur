@@ -388,6 +388,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             {
                 var gtins = doc.Details.Select(det => 
                 {
+                    if (!string.IsNullOrEmpty(det?.Gtin))
+                        return det.Gtin;
+
                     if (det.ItemVendorCode.Length < 14)
                         return det.ItemVendorCode.PadLeft(14, '0');
                     else
