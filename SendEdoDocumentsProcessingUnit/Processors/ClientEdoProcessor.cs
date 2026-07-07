@@ -483,7 +483,20 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                 if(receiver == null)
                     receiver = receivers.FirstOrDefault();
 
-                var universalCorrectionDocument = await GetUniversalCorrectionDocumentAsync(doc, myOrganization, receiver, baseDocument);
+                var gtins = doc.Details.Select(det =>
+                {
+                    if (!string.IsNullOrEmpty(det?.Gtin))
+                        return det.Gtin;
+
+                    if (det.ItemVendorCode.Length < 14)
+                        return det.ItemVendorCode.PadLeft(14, '0');
+                    else
+                        return det.ItemVendorCode;
+                }).ToList();
+
+                var gtinInfos = await EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetGtinInfoAsync(gtins) ?? new List<EdiProcessingUnit.HonestMark.Models.ProductInfo>();
+
+                var universalCorrectionDocument = await GetUniversalCorrectionDocumentAsync(doc, myOrganization, receiver, baseDocument, gtinInfos);
 
                 if (universalCorrectionDocument == null)
                     throw new Exception("Не удалось сформировать корректировочный документ.");
@@ -1385,23 +1398,28 @@ namespace SendEdoDocumentsProcessingUnit.Processors
             return document;
         }
 
-        public async Task<Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument> GetUniversalCorrectionDocumentAsync(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, Diadoc.Api.Proto.Documents.Document baseDocument)
+        public async Task<Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument> GetUniversalCorrectionDocumentAsync(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, Diadoc.Api.Proto.Documents.Document baseDocument,
+            List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null)
         {
             var detailsList = d.Details.ToList();
 
             var result = await Task.Run(() =>
             {
-                var universalCorrectionDocument = GetUniversalCorrectionDocument(d, organization, receiver, baseDocument.CounteragentBoxId, detailsList, d.RefEdoGoodChannel);
+                var universalCorrectionDocument = GetUniversalCorrectionDocument(d, organization, receiver, baseDocument.CounteragentBoxId, detailsList, d.RefEdoGoodChannel, gtinInfos);
                 return universalCorrectionDocument;
             });
 
             return result;
         }
 
-        public Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument GetUniversalCorrectionDocument(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, string counteragentBoxId, List<UniversalCorrectionDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null)
+        public Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument GetUniversalCorrectionDocument(UniversalCorrectionDocumentV2 d, Kontragent organization, Kontragent receiver, string counteragentBoxId, List<UniversalCorrectionDocumentDetail> docDetails, RefEdoGoodChannel edoGoodChannel = null,
+            List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null)
         {
             if (d?.BaseProcessing == null)
                 throw new Exception($"Не найден основной документ для корректировки {d?.CorrectionNumber}");
+
+            var endOfBaseDocumentFile = d.BaseProcessing.FileName.Substring(d.BaseProcessing.FileName.Length - 13);
+            bool isBaseDocumentMarked = endOfBaseDocumentFile[3] == '1';
 
             var correctionDocument = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.UniversalCorrectionDocument
             {
@@ -1595,6 +1613,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     var newVat = (decimal)Math.Round(newSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
                     var newPrice = (decimal)Math.Round((newSubtotal - newVat) / detail.Quantity, 2, MidpointRounding.AwayFromZero);
 
+                    var correctedQuantity = baseDetail.Quantity - detail.Quantity;
                     var item = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItem
                     {
                         Product = detail.Good.Name,
@@ -1614,7 +1633,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         {
                             OriginalValue = baseDetail.Quantity,
                             OriginalValueSpecified = true,
-                            CorrectedValue = baseDetail.Quantity - detail.Quantity,
+                            CorrectedValue = correctedQuantity,
                             CorrectedValueSpecified = true
                         },
                         TaxRate = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemTaxRate(),
@@ -1757,14 +1776,83 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         else
                         {
                             if (item.Quantity.CorrectedValue > 0)
-                                if (docDetail.HonestMarkGood)
+                                if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance)
                                     throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
+                        }
+                    }
+                    else if(docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal && isBaseDocumentMarked)
+                    {
+                        string gtin;
+
+                        if (string.IsNullOrEmpty(docDetail?.Gtin) && !string.IsNullOrEmpty(barCode))
+                        {
+                            if (barCode.Length < 14)
+                                gtin = barCode.PadLeft(14, '0');
+                            else
+                                gtin = barCode;
+                        }
+                        else
+                        {
+                            gtin = docDetail?.Gtin;
+                        }
+
+                        if (!string.IsNullOrEmpty(gtin))
+                        {
+                            string volumetricGradeGtin = null;
+                            if (gtinInfos != null)
+                            {
+                                var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                                if (gtinInfo == null && !string.IsNullOrEmpty(docDetail?.Gtin))
+                                {
+                                    gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin);
+                                }
+
+                                if (gtinInfo != null)
+                                {
+                                    if(_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                        volumetricGradeGtin = gtin;
+                                }
+                            }
+                            else
+                            {
+                                volumetricGradeGtin = gtin;
+                            }
+
+                            if (!string.IsNullOrEmpty(volumetricGradeGtin))
+                            {
+                                item.OriginalItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                item.OriginalItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                {
+                                    ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[]
+                                    {
+                                            Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.PackageId
+                                    },
+                                    Items = new[]
+                                    {
+                                            $"02{volumetricGradeGtin}37{baseDetail?.Quantity.ToString()}"
+                                    }
+                                };
+
+                                item.CorrectedItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                item.CorrectedItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                {
+                                    ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[]
+                                    {
+                                            Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.PackageId
+                                    },
+                                    Items = new[]
+                                    {
+                                            $"02{volumetricGradeGtin}37{correctedQuantity.ToString()}"
+                                    }
+                                };
+                            }
                         }
                     }
                     else
                     {
                         if (item.Quantity.CorrectedValue > 0)
-                            if (docDetail.HonestMarkGood)
+                            if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance)
                                 throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                     }
 
@@ -1985,6 +2073,75 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                 item.CorrectedItemIdentificationNumbers[0].ItemsElementName[j] = Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.Unit;
                                 item.CorrectedItemIdentificationNumbers[0].Items[j] = markedCode;
                                 j++;
+                            }
+                        }
+                    }
+                    else if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal && isBaseDocumentMarked)
+                    {
+                        string gtin;
+
+                        if (string.IsNullOrEmpty(docDetail?.Gtin) && !string.IsNullOrEmpty(barCode))
+                        {
+                            if (barCode.Length < 14)
+                                gtin = barCode.PadLeft(14, '0');
+                            else
+                                gtin = barCode;
+                        }
+                        else
+                        {
+                            gtin = docDetail?.Gtin;
+                        }
+
+                        if (!string.IsNullOrEmpty(gtin))
+                        {
+                            string volumetricGradeGtin = null;
+                            if (gtinInfos != null)
+                            {
+                                var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                                if (gtinInfo == null && !string.IsNullOrEmpty(docDetail?.Gtin))
+                                {
+                                    gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin);
+                                }
+
+                                if (gtinInfo != null)
+                                {
+                                    if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                        volumetricGradeGtin = gtin;
+                                }
+                            }
+                            else
+                            {
+                                volumetricGradeGtin = gtin;
+                            }
+
+                            if (!string.IsNullOrEmpty(volumetricGradeGtin))
+                            {
+                                item.OriginalItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                item.OriginalItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                {
+                                    ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[]
+                                    {
+                                            Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.PackageId
+                                    },
+                                    Items = new[]
+                                    {
+                                            $"02{volumetricGradeGtin}37{baseDetail?.Quantity.ToString()}"
+                                    }
+                                };
+
+                                item.CorrectedItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber[1];
+                                item.CorrectedItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemIdentificationNumbersItemIdentificationNumber
+                                {
+                                    ItemsElementName = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType[]
+                                    {
+                                            Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ItemsChoiceType.PackageId
+                                    },
+                                    Items = new[]
+                                    {
+                                            $"02{volumetricGradeGtin}37{detail?.Quantity.ToString()}"
+                                    }
+                                };
                             }
                         }
                     }
