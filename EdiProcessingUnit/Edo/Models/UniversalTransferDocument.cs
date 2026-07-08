@@ -45,9 +45,9 @@ namespace EdiProcessingUnit.Edo.Models
             }
             set {
                 if(value?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
-                    _details = from detail in value?.DocGoodsDetailsIs select new UniversalTransferDocumentDetail() { DocDetailI = detail, IdGood = detail.IdGood };
+                    _details = from detail in value?.DocGoodsDetailsIs select new UniversalTransferDocumentDetail() { DocDetailI = detail, IdGood = detail.IdGood, IsLazyLoadParametersFromDatabase = true };
                 else if(value?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Translocation)
-                    _details = from detail in value?.Details select new UniversalTransferDocumentDetail() { DocDetail = detail, IdGood = detail.IdGood };
+                    _details = from detail in value?.Details select new UniversalTransferDocumentDetail() { DocDetail = detail, IdGood = detail.IdGood, IsLazyLoadParametersFromDatabase = true };
                 _docJournal = value;
             }
         }

@@ -147,7 +147,7 @@ namespace KonturEdoClient.Models
                 //_abt.Entry(SelectedDocument.DocJournal).Collection(d => d.Details).Load();
             }
 
-            DocumentDetails = SelectedDocument?.Details?.Select(s => s.SetGtinFromDatabase())?.ToList();
+            DocumentDetails = SelectedDocument?.Details?.ToList();
             SelectedDetail = null;
 
             if (SelectedDocument.RefEdoGoodChannel as RefEdoGoodChannel == null)

@@ -26,6 +26,8 @@ namespace EdiProcessingUnit.Edo.Models
         public RefGoodMatching GoodMatching{ get; set; }
         public decimal IdGood { get; set; }
 
+        public bool IsLazyLoadParametersFromDatabase { get; set; } = false;
+
         public bool NotMapped
         {
             set {
@@ -146,17 +148,16 @@ namespace EdiProcessingUnit.Edo.Models
         public string Gtin
         {
             get{
+                if(IsLazyLoadParametersFromDatabase && _gtin == null)
+                {
+                    if ((DocDetailI?.Good?.BarCodes?.Count() ?? 0) > 0)
+                        _gtin = DocDetailI?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetailI?.IdGood && (b.IsPrimary != null && b.IsPrimary == 10))?.BarCode;
+                    else if ((DocDetail?.Good?.BarCodes?.Count() ?? 0) > 0)
+                        _gtin = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (b.IsPrimary != null && b.IsPrimary == 10))?.BarCode;
+                }
+
                 return _gtin;
             }
-        }
-
-        public UniversalTransferDocumentDetail SetGtinFromDatabase()
-        {
-            if (_gtin == null && (DocDetailI?.Good?.BarCodes?.Count() ?? 0) > 0)
-                _gtin = DocDetailI?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetailI?.IdGood && (b.IsPrimary != null && b.IsPrimary == 10))?.BarCode;
-            else if (_gtin == null && (DocDetail?.Good?.BarCodes?.Count() ?? 0) > 0)
-                _gtin = DocDetail?.Good?.BarCodes?.FirstOrDefault(b => b.IdGood == DocDetail?.IdGood && (b.IsPrimary != null && b.IsPrimary == 10))?.BarCode;
-            return this;
         }
 
         public UniversalTransferDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
