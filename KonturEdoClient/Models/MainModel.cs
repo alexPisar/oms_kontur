@@ -25,6 +25,7 @@ namespace KonturEdoClient.Models
         private Dictionary<decimal, Kontragent> _consignors;
         private bool _authInHonestMark;
         private List<X509Certificate2> _personalCertificates = null;
+        private WebService.Models.VolumetricGradeAccounting[] _volumetricGradeAccounting = null;
 
         public RelayCommand RefreshCommand => new RelayCommand((o) => { Refresh(); });
         public RelayCommand LoadXmlCommand => new RelayCommand((o) => { LoadXml(); });
@@ -986,6 +987,9 @@ namespace KonturEdoClient.Models
 
             loadWindow.Show();
 
+            var fileController = new WebService.Controllers.FileController();
+            _volumetricGradeAccounting = fileController.GetApplicationConfigParameter<WebService.Models.VolumetricGradeAccounting[]>("SendEdoDocumentsProcessingUnit", "VolumetricGradeAccounting");
+
             _loadedDocuments = new List<UniversalTransferDocument>[Organizations.Count];
             Exception exception = null;
 
@@ -1733,10 +1737,40 @@ namespace KonturEdoClient.Models
 
                 var refEdoGoodChannel = SelectedDocuments?.FirstOrDefault(s => s.RefEdoGoodChannel != null)?.RefEdoGoodChannel;
 
+                try
+                {
+                    _authInHonestMark = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().Authorization(SelectedOrganization.Certificate, SelectedOrganization);
+
+                    if (!_authInHonestMark)
+                        _log.Log("Не удалось авторизоваться в Честном знаке");
+                }
+                catch (Exception ex)
+                {
+                    _authInHonestMark = false;
+                    _log.Log($"Ошибка авторизации в Честном знаке: {_log.GetRecursiveInnerException(ex)}");
+                }
+
+                List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null;
+                if (_authInHonestMark)
+                {
+                    var gtins = SelectedDocuments.SelectMany(s => s.Details).Select(det =>
+                    {
+                        if (!string.IsNullOrEmpty(det?.Gtin))
+                            return det.Gtin;
+
+                        if (det.ItemVendorCode.Length < 14)
+                            return det.ItemVendorCode.PadLeft(14, '0');
+                        else
+                            return det.ItemVendorCode;
+                    }).Distinct().ToList();
+
+                    gtinInfos = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetGtinInfo(gtins);
+                }
+
                 var docs = SelectedDocuments.Where(s => s.CurrentDocJournalId != null)?
                     .Select(s => new KeyValuePair<decimal, Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument>(
                     s.CurrentDocJournalId.Value,
-                    GetUniversalDocument(s.DocJournal, SelectedOrganization, s.DocUsingType, employee, refEdoGoodChannel as RefEdoGoodChannel)));
+                    GetUniversalDocument(s.DocJournal, SelectedOrganization, s.DocUsingType, employee, refEdoGoodChannel as RefEdoGoodChannel, gtinInfos)));
                 SendModel sendModel = new SendModel(_abt, SelectedOrganization, SelectedOrganization.Certificate, docs, (DataContextManagementUnit.DataAccess.DocJournalType)SelectedDocument.DocJournal.IdDocType, _authInHonestMark);
                 sendModel.SetButtonsEnabled(true);
 
@@ -2846,7 +2880,8 @@ namespace KonturEdoClient.Models
         }
 
         private Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
-            DocJournal d, Kontragent organization, DataContextManagementUnit.DataAccess.DocJournalUsingType? docUsingType, string employee = null, RefEdoGoodChannel edoGoodChannel = null, List<string> allLabels = null)
+            DocJournal d, Kontragent organization, DataContextManagementUnit.DataAccess.DocJournalUsingType? docUsingType, string employee = null, RefEdoGoodChannel edoGoodChannel = null,
+            List<EdiProcessingUnit.HonestMark.Models.ProductInfo> gtinInfos = null, List<string> allLabels = null)
         {
             if (docUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Sales &&
                 d.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && d.DocMaster == null)
@@ -3404,15 +3439,47 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else if(_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
+                    else
                     {
-                        var gtin = _abt.RefBarCodes?
+                        string volumetricGradeGtin = null;
+                        string gtin = null;
+
+                        if(_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
+                            gtin = _abt.RefBarCodes?
                             .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
                             .BarCode;
 
-                        if (!string.IsNullOrEmpty(gtin))
+                        if(gtinInfos != null)
                         {
-                            detail.Gtin = gtin;
+                            bool isGtinNotFromBase = string.IsNullOrEmpty(gtin);
+
+                            if (isGtinNotFromBase && !string.IsNullOrEmpty(barCode))
+                            {
+                                if (barCode.Length < 14)
+                                    gtin = barCode.PadLeft(14, '0');
+                                else
+                                    gtin = barCode;
+                            }
+
+                            var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                            if (gtinInfo == null && !isGtinNotFromBase)
+                            {
+                                gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin);
+                            }
+
+                            if (gtinInfo != null)
+                            {
+                                if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                    volumetricGradeGtin = gtin;
+                            }
+                        }
+                        else if(!string.IsNullOrEmpty(gtin))
+                            volumetricGradeGtin = gtin;
+
+                        if (!string.IsNullOrEmpty(volumetricGradeGtin))
+                        {
+                            detail.Gtin = volumetricGradeGtin;
 
                             detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
                             detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
@@ -3540,15 +3607,47 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
+                    else
                     {
-                        var gtin = _abt.RefBarCodes?
+                        string volumetricGradeGtin = null;
+                        string gtin = null;
+
+                        if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
+                            gtin = _abt.RefBarCodes?
                             .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
                             .BarCode;
 
-                        if (!string.IsNullOrEmpty(gtin))
+                        if (gtinInfos != null)
                         {
-                            detail.Gtin = gtin;
+                            bool isGtinNotFromBase = string.IsNullOrEmpty(gtin);
+
+                            if (isGtinNotFromBase && !string.IsNullOrEmpty(barCode))
+                            {
+                                if (barCode.Length < 14)
+                                    gtin = barCode.PadLeft(14, '0');
+                                else
+                                    gtin = barCode;
+                            }
+
+                            var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
+
+                            if (gtinInfo == null && !isGtinNotFromBase)
+                            {
+                                gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin);
+                            }
+
+                            if (gtinInfo != null)
+                            {
+                                if (_volumetricGradeAccounting.Any(gr => gr.ProductGroupId == gtinInfo.productGroupId))
+                                    volumetricGradeGtin = gtin;
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(gtin))
+                            volumetricGradeGtin = gtin;
+
+                        if (!string.IsNullOrEmpty(volumetricGradeGtin))
+                        {
+                            detail.Gtin = volumetricGradeGtin;
 
                             detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
                             detail.ItemIdentificationNumbers[0] = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber
