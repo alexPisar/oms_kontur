@@ -3909,7 +3909,7 @@ namespace KonturEdoClient.Models
                 if (_owner != null)
                     loadWindow.Owner = _owner;
 
-                var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization);
+                var correctionDocumentsModel = new CorrectionDocumentsModel(_abt, SelectedOrganization, _volumetricGradeAccounting);
                 correctionDocumentsModel.DateTo = this.DateTo;
                 correctionDocumentsModel.DateFrom = this.DateFrom;
 
