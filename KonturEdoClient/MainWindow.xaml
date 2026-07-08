@@ -205,6 +205,7 @@
                 <dxg:GridControl Name="DocumetDetailsDataGrid" ItemsSource="{Binding DocumentDetails, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                  SelectedItem="{Binding SelectedDetail, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2">
                     <dxg:GridColumn FieldName="ItemVendorCode" Header="Код товара/ работ, услуг" Width="2*"/>
+                    <dxg:GridColumn FieldName="Gtin" Header="ГТИН" Width="2*" />
                     <dxg:GridColumn FieldName="IdGood" Header="Id товара" Width="*" />
                     <dxg:GridColumn FieldName="Product" Header="Наименование" Width="2*"/>
                     <dxg:GridColumn FieldName="Quantity" Header="Количество" Width="*"/>
