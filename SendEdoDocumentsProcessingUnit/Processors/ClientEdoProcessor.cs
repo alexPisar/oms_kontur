@@ -391,11 +391,14 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     if (!string.IsNullOrEmpty(det?.Gtin))
                         return det.Gtin;
 
+                    if (string.IsNullOrEmpty(det.ItemVendorCode))
+                        return null;
+
                     if (det.ItemVendorCode.Length < 14)
                         return det.ItemVendorCode.PadLeft(14, '0');
                     else
                         return det.ItemVendorCode;
-                }).ToList();
+                }).Where(g => g != null).ToList();
 
                 var gtinInfos = await EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetGtinInfoAsync(gtins) ?? new List<EdiProcessingUnit.HonestMark.Models.ProductInfo>();
 
@@ -1320,7 +1323,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     string gtin;
 
-                    if (string.IsNullOrEmpty(docDetail?.Gtin))
+                    if (string.IsNullOrEmpty(docDetail?.Gtin) && !string.IsNullOrEmpty(barCode))
                     {
                         if (barCode.Length < 14)
                             gtin = barCode.PadLeft(14, '0');
@@ -1329,10 +1332,10 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                     }
                     else
                     {
-                        gtin = docDetail.Gtin;
+                        gtin = docDetail?.Gtin;
                     }
 
-                    if(gtinInfos != null)
+                    if(gtinInfos != null && !string.IsNullOrEmpty(gtin))
                     {
                         var gtinInfo = gtinInfos.FirstOrDefault(g => g.Gtin == gtin && g.GoodTurnFlag && g.GoodMarkFlag);
 
