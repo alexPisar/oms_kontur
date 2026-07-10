@@ -19,6 +19,7 @@ namespace EdiProcessingUnit.Edo.Models
         private RefGood _good;
         private string _productName = null;
         private string _tnVedCode = null;
+        private Enums.HonestMarkGoodType _honestMarkGood = Enums.HonestMarkGoodType.None;
         private string _gtin = null;
 
         public DocGoodsDetailsI DocDetailI { get; set; }
@@ -160,6 +161,8 @@ namespace EdiProcessingUnit.Edo.Models
             }
         }
 
+        public Enums.HonestMarkGoodType HonestMarkGood => _honestMarkGood;
+
         public UniversalTransferDocumentDetail SetBarCodeFromDataBase(AbtDbContext abtContext)
         {
             if (_good != null && string.IsNullOrEmpty(_barCode))
@@ -233,7 +236,22 @@ namespace EdiProcessingUnit.Edo.Models
 
             if(_good != null)
             {
-                if (abtContext?.RefItems?.Any(r => r.IdName == 30071 && r.IdGood == _good.Id && r.Quantity == 2) ?? false)
+                var honestMarkGood = abtContext?.RefItems?.FirstOrDefault(r => r.IdName == 30071 && r.IdGood == _good.Id)?.Quantity ?? 0;
+
+                switch (honestMarkGood)
+                {
+                    case 0:
+                        _honestMarkGood = Enums.HonestMarkGoodType.None;
+                        break;
+                    case 1:
+                        _honestMarkGood = Enums.HonestMarkGoodType.Instance;
+                        break;
+                    case 2:
+                        _honestMarkGood = Enums.HonestMarkGoodType.VolumetricVarietal;
+                        break;
+                }
+
+                if (_honestMarkGood == Enums.HonestMarkGoodType.VolumetricVarietal)
                     _gtin = abtContext.RefBarCodes?.FirstOrDefault(b => b.IdGood == _good.Id && b.IsPrimary == 10)?.BarCode;
             }
 

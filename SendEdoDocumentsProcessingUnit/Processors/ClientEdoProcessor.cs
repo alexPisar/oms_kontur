@@ -1317,7 +1317,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         j++;
                     }
                 }
-                else
+                else if(docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
                 {
                     string volumetricGradeGtin = null;
 
@@ -1783,7 +1783,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                         }
                     }
-                    else if(isBaseDocumentMarked)
+                    else if(isBaseDocumentMarked && docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
                     {
                         string gtin = null;
 
@@ -1794,7 +1794,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             else
                                 gtin = barCode;
                         }
-                        else if(docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
+                        else
                         {
                             gtin = docDetail?.Gtin;
                         }
@@ -2079,7 +2079,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             }
                         }
                     }
-                    else if (isBaseDocumentMarked)
+                    else if (isBaseDocumentMarked && docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
                     {
                         string gtin = null;
 
@@ -2090,7 +2090,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             else
                                 gtin = barCode;
                         }
-                        else if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
+                        else
                         {
                             gtin = docDetail?.Gtin;
                         }
