@@ -1783,9 +1783,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                                     throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                         }
                     }
-                    else if(docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal && isBaseDocumentMarked)
+                    else if(isBaseDocumentMarked)
                     {
-                        string gtin;
+                        string gtin = null;
 
                         if (string.IsNullOrEmpty(docDetail?.Gtin) && !string.IsNullOrEmpty(barCode))
                         {
@@ -1794,7 +1794,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             else
                                 gtin = barCode;
                         }
-                        else
+                        else if(docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
                         {
                             gtin = docDetail?.Gtin;
                         }
@@ -2079,9 +2079,9 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             }
                         }
                     }
-                    else if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal && isBaseDocumentMarked)
+                    else if (isBaseDocumentMarked)
                     {
-                        string gtin;
+                        string gtin = null;
 
                         if (string.IsNullOrEmpty(docDetail?.Gtin) && !string.IsNullOrEmpty(barCode))
                         {
@@ -2090,7 +2090,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                             else
                                 gtin = barCode;
                         }
-                        else
+                        else if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
                         {
                             gtin = docDetail?.Gtin;
                         }
