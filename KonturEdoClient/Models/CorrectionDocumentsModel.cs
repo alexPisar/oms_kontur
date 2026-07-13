@@ -733,15 +733,12 @@ namespace KonturEdoClient.Models
                                 if (item.Quantity.CorrectedValue > 0)
                                     throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                             }
-                            else if (isBaseDocumentMarked)
+                            else if (isBaseDocumentMarked && _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 2))
                             {
                                 string volumetricGradeGtin = null;
-                                string gtin = null;
-
-                                if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 2))
-                                    gtin = _abt.RefBarCodes?
-                                    .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 10)?
-                                    .BarCode;
+                                string gtin = _abt.RefBarCodes?
+                                .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 10)?
+                                .BarCode;
 
                                 if (gtinInfos != null)
                                 {
@@ -1047,15 +1044,12 @@ namespace KonturEdoClient.Models
                                     }
                                 }
                             }
-                            else if(isBaseDocumentMarked)
+                            else if(isBaseDocumentMarked && _abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 2))
                             {
                                 string volumetricGradeGtin = null;
-                                string gtin = null;
-
-                                if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 2))
-                                    gtin = _abt.RefBarCodes?
-                                    .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 10)?
-                                    .BarCode;
+                                string gtin = _abt.RefBarCodes?
+                                .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 10)?
+                                .BarCode;
 
                                 if (gtinInfos != null)
                                 {

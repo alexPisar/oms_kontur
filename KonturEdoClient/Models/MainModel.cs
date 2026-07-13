@@ -3439,13 +3439,10 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else
+                    else if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
                     {
                         string volumetricGradeGtin = null;
-                        string gtin = null;
-
-                        if(_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
-                            gtin = _abt.RefBarCodes?
+                        string gtin = _abt.RefBarCodes?
                             .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
                             .BarCode;
 
@@ -3607,13 +3604,10 @@ namespace KonturEdoClient.Models
                             j++;
                         }
                     }
-                    else
+                    else if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
                     {
                         string volumetricGradeGtin = null;
-                        string gtin = null;
-
-                        if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 2))
-                            gtin = _abt.RefBarCodes?
+                        string gtin = _abt.RefBarCodes?
                             .FirstOrDefault(b => b.IdGood == docJournalDetail.IdGood && b.IsPrimary == 10)?
                             .BarCode;
 
