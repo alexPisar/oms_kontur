@@ -336,7 +336,10 @@ namespace Reporter.Reports
                     }
 
                     if (!string.IsNullOrEmpty(good?.ДопСведТов?.ГТИН))
-                        product.GtinMark = good.ДопСведТов.ГТИН;
+                        product.Gtin = good.ДопСведТов.ГТИН;
+
+                    if (!string.IsNullOrEmpty(good?.ДопСведТов?.НомСредИдентТов?.FirstOrDefault()?.КолВедМарк))
+                        product.QuantityMark = good?.ДопСведТов?.НомСредИдентТов?.FirstOrDefault()?.КолВедМарк;
 
                     if (!string.IsNullOrEmpty(good?.ДопСведТов?.КодТов))
                     {
@@ -359,12 +362,26 @@ namespace Reporter.Reports
 
                             if (code.Items != null)
                             {
-                                product.MarkedCodes.AddRange(code.Items);
+                                if (code.Items.Count() == 1 && code.ItemsElementName.FirstOrDefault() == ItemsChoiceType.НомУпак)
+                                {
+                                    var regex = new System.Text.RegularExpressions.Regex("020\\d{13}37\\d*");
+                                    var gtinItem = code.Items.First();
 
-                                string markedCodeExample = code.Items?.FirstOrDefault();
-                                if (string.IsNullOrEmpty(product.BarCode) && !string.IsNullOrEmpty(markedCodeExample))
-                                    if (markedCodeExample.Length == 31)
-                                        product.BarCode = markedCodeExample.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+                                    if (regex.IsMatch(gtinItem))
+                                    {
+                                        product.Gtin = gtinItem.Substring(2, 14);
+                                        product.QuantityMark = gtinItem.Substring(18);
+                                    }
+                                }
+                                else
+                                {
+                                    product.MarkedCodes.AddRange(code.Items);
+
+                                    string markedCodeExample = code.Items?.FirstOrDefault();
+                                    if (string.IsNullOrEmpty(product.BarCode) && !string.IsNullOrEmpty(markedCodeExample))
+                                        if (markedCodeExample.Length == 31)
+                                            product.BarCode = markedCodeExample.Substring(0, 16).TrimStart('0', '1').TrimStart('0');
+                                }
                             }
                         }
                     }
@@ -599,13 +616,16 @@ namespace Reporter.Reports
                         {
                             good.ДопСведТов.НомСредИдентТов = p.TransportPackingIdentificationCode.Select(t => new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов { ИдентТрансУпак = t }).ToArray();
                         }
-                        else if (!string.IsNullOrEmpty(p.GtinMark))
+                        else if (!string.IsNullOrEmpty(p.Gtin))
                         {
-                            good.ДопСведТов.ГТИН = p.GtinMark;
+                            good.ДопСведТов.ГТИН = p.Gtin;
                             good.ДопСведТов.НомСредИдентТов = new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов[1];
                             good.ДопСведТов.НомСредИдентТов[0] = new ФайлДокументТаблСчФактСведТовДопСведТовНомСредИдентТов();
 
-                            good.ДопСведТов.НомСредИдентТов[0].КолВедМарк = Convert.ToInt32(quantity).ToString();
+                            if(!string.IsNullOrEmpty(p.QuantityMark))
+                                good.ДопСведТов.НомСредИдентТов[0].КолВедМарк = p.QuantityMark;
+                            else
+                                good.ДопСведТов.НомСредИдентТов[0].КолВедМарк = Convert.ToInt32(quantity).ToString();
                         }
 
                         if (p.AdditionalInfos.Count > 0)

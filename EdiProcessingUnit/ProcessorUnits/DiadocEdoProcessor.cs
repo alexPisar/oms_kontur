@@ -393,5 +393,49 @@ namespace EdiProcessingUnit.ProcessorUnits
                 }
             }
         }
+
+        public void ReceiveDocumentsForConsignors()
+        {
+            var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+            var idCustomersConsignors = (from c in _abtDbContext.RefUserByEdoConsignors
+                                         where c.UserName == dataBaseUser
+                                         join r in _abtDbContext.RefRefTags on c.IdCustomerConsignor equals r.IdObject
+                                         where r.IdTag == 215 && r.TagValue == "1"
+                                         select c.IdCustomerConsignor)?.Distinct()?.ToList() ?? new List<decimal>();
+
+            foreach(var idCustomerConsignor in idCustomersConsignors)
+            {
+                var customerConsignor = _abtDbContext.RefCustomers.FirstOrDefault(r => r.Id == idCustomerConsignor);
+
+                if (customerConsignor == null)
+                    continue;
+
+                OrgInn = customerConsignor.Inn;
+                if (!Auth())
+                    continue;
+
+                var documents = _edo.GetDocuments("Any.Inbound") ?? new List<Diadoc.Api.Proto.Documents.Document>();
+
+                if(documents.Count > 0)
+                {
+                    foreach(var document in documents)
+                    {
+                        if (_abtDbContext.DocEdoPurchasings.Any(d => d.IdDocEdo == document.MessageId))
+                            continue;
+
+                        Reporter.IReport report = null;
+                        var reporterDll = new Reporter.ReporterDll();
+                        List<Reporter.Entities.Product> products = null;
+
+                        if (document.Version == "utd970_05_03_01")
+                        {
+                            var docContentBytes = document.Content.Data;
+                            report = reporterDll.ParseDocument<Reporter.Reports.UniversalTransferSellerDocumentUtd970>(docContentBytes);
+                            products = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970)?.Products;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

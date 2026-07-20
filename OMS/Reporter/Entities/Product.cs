@@ -19,6 +19,8 @@ namespace Reporter.Entities
 
         public decimal? Quantity { get; set; }
 
+        public string QuantityMark { get; set; }
+
         public string BarCode { get; set; }
 
         public decimal? Price { get; set; }
@@ -31,7 +33,7 @@ namespace Reporter.Entities
 
         public List<string> MarkedCodes { get; set; }
 
-        public string GtinMark { get; set; }
+        public string Gtin { get; set; }
 
         public List<string> TransportPackingIdentificationCode { get; set; }
 

@@ -857,6 +857,59 @@ namespace EdiProcessingUnit.Edo
             return message;
         }
 
+        public List<Diadoc.Api.Proto.Documents.Document> GetDocuments(string filterCategory, DateTime? dateFrom = null, DateTime? dateTo = null)
+        {
+            if (dateFrom == null && dateTo == null)
+                dateFrom = DateTime.Now.AddDays(-5);
+
+            var documents = new List<Diadoc.Api.Proto.Documents.Document>();
+            int? totalCount = null;
+            string afterIndexKey = null;
+            bool hasNextPage = true;
+
+            do
+            {
+                int count;
+
+                if (totalCount == null)
+                    count = 100;
+                else
+                    count = totalCount.Value - documents.Count > 100 ? 100 : totalCount.Value - documents.Count;
+
+                var documentsFilter = new DocumentsFilter
+                {
+                    BoxId = _actualBoxId,
+                    FilterCategory = filterCategory,
+                    TimestampFrom = dateFrom,
+                    TimestampTo = dateTo,
+                    Count = count
+                };
+
+                if (!string.IsNullOrEmpty(afterIndexKey))
+                    documentsFilter.AfterIndexKey = afterIndexKey;
+
+                var documentsList = CallApiSafe(new Func<Diadoc.Api.Proto.Documents.DocumentList>(() => _api.GetDocuments(_authToken, documentsFilter)));
+
+                hasNextPage = documentsList.HasMoreResults;
+
+                if (totalCount == null && !hasNextPage)
+                {
+                    totalCount = documents.Count + (documentsList?.TotalCount ?? 0);
+                }
+                else if (hasNextPage)
+                    totalCount = null;
+
+                if (documentsList?.Documents != null && documentsList.Documents.Count > 0)
+                {
+                    afterIndexKey = documentsList.Documents.LastOrDefault()?.IndexKey;
+                    documents.AddRange(documentsList.Documents);
+                }
+
+            } while (hasNextPage || documents.Count < (totalCount ?? 0));
+
+            return documents;
+        }
+
         public MessagePatch SendPatchRecipientXmlDocument(string messageId, int docType, IEnumerable<RecipientTitleAttachment> attachments, PowerOfAttorneyToPost powerOfAttorneyToPost = null)
         {
             var messageToPost = new MessagePatchToPost

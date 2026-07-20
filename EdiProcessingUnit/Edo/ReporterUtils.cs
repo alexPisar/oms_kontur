@@ -378,7 +378,7 @@ namespace EdiProcessingUnit.Edo
 
                     if(!string.IsNullOrEmpty(gtin))
                     {
-                        product.GtinMark = gtin;
+                        product.Gtin = gtin;
                         endOfSellerFile = "_0_1_0_0_0_00";
                     }
                 }

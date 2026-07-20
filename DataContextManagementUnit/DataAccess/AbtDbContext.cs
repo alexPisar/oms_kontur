@@ -134,6 +134,9 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
             modelBuilder.Configurations.Add(new Mapping.RefRefTagConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefEdoCounteragentConfiguration());
             modelBuilder.Configurations.Add(new Mapping.RefEdoCounteragentConsigneeConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.DocEdoPurchasingDetailConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.DocEdoPurchasingConfiguration());
+            modelBuilder.Configurations.Add(new Mapping.RefUserByEdoConsignorConfiguration());
 
             CustomizeMapping(modelBuilder);
         }
@@ -169,5 +172,7 @@ namespace DataContextManagementUnit.DataAccess.Contexts.Abt
         public virtual DbSet<RefRefTag> RefRefTags { get; set; }
         public virtual DbSet<RefEdoCounteragent> RefEdoCounteragents { get; set; }
         public virtual DbSet<RefEdoCounteragentConsignee> RefEdoCounteragentConsignees { get; set; }
+        public virtual DbSet<DocEdoPurchasing> DocEdoPurchasings { get; set; }
+        public virtual DbSet<RefUserByEdoConsignor> RefUserByEdoConsignors { get; set; }
     }
 }

@@ -88,6 +88,8 @@
     <Compile Include="DataAccess\Entities\ConnString.cs" />
     <Compile Include="DataAccess\Entities\DocComissionEdoProcessing.cs" />
     <Compile Include="DataAccess\Entities\DocEdoProcessing.cs" />
+    <Compile Include="DataAccess\Entities\DocEdoPurchasing.cs" />
+    <Compile Include="DataAccess\Entities\DocEdoPurchasingDetail.cs" />
     <Compile Include="DataAccess\Entities\DocGood.cs" />
     <Compile Include="DataAccess\Entities\DocGoodsDetail.cs" />
     <Compile Include="DataAccess\Entities\DocGoodsDetailsI.cs" />
@@ -130,6 +132,7 @@
     <Compile Include="DataAccess\Entities\RefShoppingStore.cs" />
     <Compile Include="DataAccess\Entities\RefStore.cs" />
     <Compile Include="DataAccess\Entities\RefSubdivision.cs" />
+    <Compile Include="DataAccess\Entities\RefUserByEdoConsignor.cs" />
     <Compile Include="DataAccess\Entities\RefUserByOrgEdo.cs" />
     <Compile Include="DataAccess\Entities\RefUserEdoPermissions.cs" />
     <Compile Include="DataAccess\Entities\ViewInvoicDetail.cs" />
@@ -141,6 +144,8 @@
     <Compile Include="DataAccess\Mappings\ConnStringConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocComissionEdoProcessingConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocEdoProcessingConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\DocEdoPurchasingConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\DocEdoPurchasingDetailConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocGoodConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocGoodsDetailConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\DocGoodsDetailsIConfiguration.cs" />
@@ -182,6 +187,7 @@
     <Compile Include="DataAccess\Mappings\RefShoppingStoreConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefStoreConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefSubdivisionConfiguration.cs" />
+    <Compile Include="DataAccess\Mappings\RefUserByEdoConsignorConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\RefUserByOrgEdoConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\ViewInvoicDetailConfiguration.cs" />
     <Compile Include="DataAccess\Mappings\ViewInvoicHeadConfiguration.cs" />
