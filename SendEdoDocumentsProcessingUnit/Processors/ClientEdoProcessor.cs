@@ -1299,7 +1299,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                 var docGoodDetailLabels = docDetail.Labels;
 
-                if (docGoodDetailLabels.Count > 0)
+                if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance && docGoodDetailLabels.Count > 0)
                 {
                     detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
                     detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
@@ -1733,7 +1733,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     item.AdditionalInfos = additionalInfos.ToArray();
 
-                    if (d.IsMarked)
+                    if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance && d.IsMarked)
                     {
                         var originalMarkedCodes = docDetail.OriginalMarkedCodes;
                         var correctedMarkedCodes = docDetail.CorrectedMarkedCodes;
@@ -1779,8 +1779,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
                         else
                         {
                             if (item.Quantity.CorrectedValue > 0)
-                                if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance)
-                                    throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
+                                throw new Exception($"Товар из ЧЗ {detail.IdGood} забыли пропикать!!");
                         }
                     }
                     else if(isBaseDocumentMarked && docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.VolumetricVarietal)
@@ -2035,7 +2034,7 @@ namespace SendEdoDocumentsProcessingUnit.Processors
 
                     item.AdditionalInfos = additionalInfos.ToArray();
 
-                    if (d.IsMarked)
+                    if (docDetail.HonestMarkGood == EdiProcessingUnit.Enums.HonestMarkGoodType.Instance && d.IsMarked)
                     {
                         var originalMarkedCodes = docDetail.OriginalMarkedCodes;
                         var correctedMarkedCodes = docDetail.CorrectedMarkedCodes;
