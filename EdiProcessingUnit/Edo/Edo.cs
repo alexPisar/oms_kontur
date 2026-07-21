@@ -821,6 +821,20 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
+        public Organization GetMyOrganizationByInnKpp(string inn, string kpp = null)
+        {
+            OrganizationList myOrganizations = CallApiSafe(new Func<OrganizationList>(() => _api.GetMyOrganizations(_authToken, false)));
+
+            Organization organization;
+
+            if (!string.IsNullOrEmpty(kpp))
+                organization = myOrganizations.Organizations.FirstOrDefault(o => o.Inn == inn && o.Kpp == kpp);
+            else
+                organization = myOrganizations.Organizations.FirstOrDefault(o => o.Inn == inn);
+
+            return organization;
+        }
+
         public Diadoc.Api.Proto.Invoicing.Signers.ExtendedSignerDetails GetExtendedSignerDetails(Diadoc.Api.Proto.Invoicing.Signers.DocumentTitleType documentTitleType)
         {
             try
@@ -908,6 +922,12 @@ namespace EdiProcessingUnit.Edo
             } while (hasNextPage || documents.Count < (totalCount ?? 0));
 
             return documents;
+        }
+
+        public List<Diadoc.Api.Proto.Documents.Document> GetDocumentsByMessageId(string messageId)
+        {
+            var documentsList = CallApiSafe(new Func<Diadoc.Api.Proto.Documents.DocumentList>(() => _api.GetDocumentsByMessageId(_authToken, _actualBoxId, messageId)));
+            return documentsList?.Documents;
         }
 
         public MessagePatch SendPatchRecipientXmlDocument(string messageId, int docType, IEnumerable<RecipientTitleAttachment> attachments, PowerOfAttorneyToPost powerOfAttorneyToPost = null)

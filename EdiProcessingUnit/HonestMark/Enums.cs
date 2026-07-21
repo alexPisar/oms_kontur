@@ -222,6 +222,29 @@ namespace EdiProcessingUnit.HonestMark
         ProcessingError = 8,
     }
 
+    public enum AnnulmentDocEdoPurchasingStatus
+    {
+        /// <summary>
+        /// Отказано в аннулировании
+        /// </summary>
+        RejectRevoke = 4,
+
+        /// <summary>
+        /// Требуется аннулирование
+        /// </summary>
+        RevokeRequired = 11,
+
+        /// <summary>
+        /// Запрошено аннулирование
+        /// </summary>
+        RevokeRequested,
+
+        /// <summary>
+        /// Аннулирован
+        /// </summary>
+        Revoked
+    }
+
     public enum AnnulmentDocumentStatus
     {
         ///<summary>

@@ -11,6 +11,7 @@ namespace EdiProcessingUnit.ProcessorUnits
     public class DiadocEdoProcessor : EdoProcessor
     {
         internal AbtDbContext _abtDbContext;
+        private const string providerName = "DIADOC";
         public override string ProcessorName => "DiadocEdoProcessor";
         public string OrgInn { get; set; }
         private bool Auth()
@@ -385,6 +386,9 @@ namespace EdiProcessingUnit.ProcessorUnits
                             ChecksCounteragents(myOrg);
                             AddCounteragentsToTrader(myOrg);
                         }
+
+                        ReceiveDocumentsForConsignors();
+                        ExecuteCheckReceiveDocuments();
                     }
                 }
                 catch(Exception ex)
@@ -396,46 +400,343 @@ namespace EdiProcessingUnit.ProcessorUnits
 
         public void ReceiveDocumentsForConsignors()
         {
-            var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
-            var idCustomersConsignors = (from c in _abtDbContext.RefUserByEdoConsignors
-                                         where c.UserName == dataBaseUser
-                                         join r in _abtDbContext.RefRefTags on c.IdCustomerConsignor equals r.IdObject
-                                         where r.IdTag == 215 && r.TagValue == "1"
-                                         select c.IdCustomerConsignor)?.Distinct()?.ToList() ?? new List<decimal>();
-
-            foreach(var idCustomerConsignor in idCustomersConsignors)
+            try
             {
-                var customerConsignor = _abtDbContext.RefCustomers.FirstOrDefault(r => r.Id == idCustomerConsignor);
+                var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+                var idCustomersConsignors = (from c in _abtDbContext.RefUserByEdoConsignors
+                                             where c.UserName == dataBaseUser
+                                             join r in _abtDbContext.RefRefTags on c.IdCustomerConsignor equals r.IdObject
+                                             where r.IdTag == 215 && r.TagValue == "1"
+                                             select c.IdCustomerConsignor)?.Distinct()?.ToList() ?? new List<decimal>();
 
-                if (customerConsignor == null)
-                    continue;
-
-                OrgInn = customerConsignor.Inn;
-                if (!Auth())
-                    continue;
-
-                var documents = _edo.GetDocuments("Any.Inbound") ?? new List<Diadoc.Api.Proto.Documents.Document>();
-
-                if(documents.Count > 0)
+                foreach(var idCustomerConsignor in idCustomersConsignors)
                 {
-                    foreach(var document in documents)
+                    var customerConsignor = _abtDbContext.RefCustomers.FirstOrDefault(r => r.Id == idCustomerConsignor);
+
+                    if (customerConsignor == null)
+                        continue;
+
+                    OrgInn = customerConsignor.Inn;
+                    if (!Auth())
+                        continue;
+
+                    var organization = _edo.GetMyOrganizationByInnKpp(customerConsignor.Inn);
+
+                    var documents = _edo.GetDocuments("Any.Inbound") ?? new List<Diadoc.Api.Proto.Documents.Document>();
+
+                    if(documents.Count > 0)
                     {
-                        if (_abtDbContext.DocEdoPurchasings.Any(d => d.IdDocEdo == document.MessageId))
-                            continue;
-
-                        Reporter.IReport report = null;
-                        var reporterDll = new Reporter.ReporterDll();
-                        List<Reporter.Entities.Product> products = null;
-
-                        if (document.Version == "utd970_05_03_01")
+                        foreach(var document in documents)
                         {
-                            var docContentBytes = document.Content.Data;
-                            report = reporterDll.ParseDocument<Reporter.Reports.UniversalTransferSellerDocumentUtd970>(docContentBytes);
-                            products = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970)?.Products;
+                            if (_abtDbContext.DocEdoPurchasings.Any(d => d.IdDocEdo == document.MessageId))
+                                continue;
+
+                            Reporter.IReport report = null;
+                            var reporterDll = new Reporter.ReporterDll();
+                            List<Reporter.Entities.Product> products = null;
+
+                            if (document.Version == "utd970_05_03_01")
+                            {
+                                var doc = _edo.GetDocument(document.MessageId, document.EntityId);
+                                var docContentBytes = doc.Content.Data;
+                                report = reporterDll.ParseDocument<Reporter.Reports.UniversalTransferSellerDocumentUtd970>(docContentBytes);
+                                products = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970)?.Products;
+                            }
+
+                            if (report != null)
+                                AddDocEdoPurchasingToDataBase(report, customerConsignor, document, organization?.FnsParticipantId);
                         }
                     }
                 }
             }
+            catch (System.Net.WebException webEx)
+            {
+                MailReporter.Add("DiadocEdoProcessorException.ReceiveDocumentsForConsignors: Произошла ошибка на удалённом сервере\r\n" + _log.GetRecursiveInnerException(webEx));
+            }
+            catch (Exception ex)
+            {
+                MailReporter.Add("DiadocEdoProcessorException.ReceiveDocumentsForConsignors: Произошла ошибка \r\n" + _log.GetRecursiveInnerException(ex));
+            }
+        }
+
+        public void ExecuteCheckReceiveDocuments()
+        {
+            try
+            {
+                var dateFrom = DateTime.Now.AddMonths(-6);
+                var dateTo = DateTime.Now.AddDays(1);
+
+                var docs = _abtDbContext.DocEdoPurchasings.Where(d => d.CreateDate > dateFrom && d.CreateDate <= dateTo &&
+                d.ReceiverInn == OrgInn);
+
+                var errorsList = new List<string>();
+                var processingDocuments = docs.Where(d => d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Sent).ToList() ?? new List<DocEdoPurchasing>();
+
+                foreach (var processingDocument in processingDocuments)
+                {
+                    try
+                    {
+                        var doc = _edo?.GetDocumentsByMessageId(processingDocument.IdDocEdo)?
+                            .FirstOrDefault(d => d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocument && d.DocumentNumber == processingDocument.Name);
+
+                        if (doc == null)
+                            throw new Exception($"Не удалось найти маркированный документ в Диадоке. ID {processingDocument.IdDocEdo}");
+
+                        var lastDocFlow = doc.LastOuterDocflows?.FirstOrDefault(l => l?.OuterDocflow?.DocflowNamedId == "TtGis" && l.OuterDocflow?.Status?.Type != null);
+                        Diadoc.Api.Proto.OuterDocflows.OuterStatusType? statusDocFlow = lastDocFlow?.OuterDocflow?.Status?.Type;
+
+                        if (statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Success)
+                        {
+                            processingDocument.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+
+                            if (processingDocument.IdDocJournal != null && processingDocument.IdDocJournal != 0)
+                            {
+                                var docJournal = _abtDbContext.DocJournals.First(d => d.Id == processingDocument.IdDocJournal);
+
+                                if (docJournal.IdDocType == (int)DataContextManagementUnit.DataAccess.DocJournalType.Receipt)
+                                    _abtDbContext.Database.ExecuteSqlCommand($"UPDATE doc_goods_details_labels SET LABEL_STATUS = 2, POST_DATETIME = sysdate where id_doc = {processingDocument.IdDocJournal}");
+                            }
+
+                            _abtDbContext?.SaveChanges();
+                            MailReporter.Add($"Принятый маркированный документ {processingDocument.Name} для организации {OrgInn} успешно обработан.");
+                        }
+                        else if(statusDocFlow == Diadoc.Api.Proto.OuterDocflows.OuterStatusType.Error)
+                        {
+                            processingDocument.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+
+                            var errors = lastDocFlow.OuterDocflow.Status?.Details ?? new List<Diadoc.Api.Proto.OuterDocflows.StatusDetail>();
+
+                            var errorsListStr = new List<string>();
+                            foreach (var error in errors)
+                                errorsListStr.Add($"Произошла ошибка с кодом:{error.Code} \nОписание:{error.Text}\n");
+
+                            var honestMarkErrorMessage = string.Join("\n\n", errorsListStr);
+
+                            if (honestMarkErrorMessage.Length > 500)
+                                honestMarkErrorMessage = honestMarkErrorMessage.Substring(0, 500);
+
+                            processingDocument.ErrorMessage = honestMarkErrorMessage;
+
+                            _abtDbContext?.SaveChanges();
+                            MailReporter.Add($"Маркированный документ {processingDocument.Name} для организации {OrgInn} обработан с ошибками.");
+                        }
+
+                    }
+                    catch (System.Net.WebException webEx)
+                    {
+                        MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка на удалённом сервере\r\n" + _log.GetRecursiveInnerException(webEx));
+                    }
+                    catch (Exception ex)
+                    {
+                        MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка\r\n" + _log.GetRecursiveInnerException(ex));
+                    }
+                }
+
+                if (processingDocuments.Exists(p => p.DocStatus != (int)HonestMark.DocEdoProcessingStatus.Sent))
+                    _abtDbContext?.SaveChanges();
+
+
+
+                var newDocuments = docs.Where(d => d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.None || d.DocStatus == (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequested).ToList() ?? new List<DocEdoPurchasing>();
+
+
+                foreach (var newDocument in newDocuments)
+                {
+                    try
+                    {
+                        var document = _edo.GetDocument(newDocument.IdDocEdo, newDocument.ParentEntityId);
+
+                        if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RequestsMyRevocation)
+                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequired;
+                        else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationAccepted)
+                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.Revoked;
+                        else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationRejected)
+                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RejectRevoke;
+
+                        _abtDbContext?.SaveChanges();
+                    }
+                    catch (System.Net.WebException webEx)
+                    {
+                        MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка на удалённом сервере\r\n" + _log.GetRecursiveInnerException(webEx));
+                    }
+                    catch (Exception ex)
+                    {
+                        MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка\r\n" + _log.GetRecursiveInnerException(ex));
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка\r\n" + _log.GetRecursiveInnerException(ex));
+            }
+        }
+
+        public object AddDocEdoPurchasingToDataBase(Reporter.IReport report, RefCustomer myOrganization, Diadoc.Api.Proto.Documents.Document document, string orgEdoId)
+        {
+            string orgInn = OrgInn, orgKpp = myOrganization.Kpp, orgName = myOrganization.Name;
+            var dataBaseUser = UtilitesLibrary.ConfigSet.Config.GetInstance().DataBaseUser;
+
+            if (document.DocumentType != Diadoc.Api.Proto.DocumentType.XmlAcceptanceCertificate && document.DocumentType != Diadoc.Api.Proto.DocumentType.Invoice &&
+                document.DocumentType != Diadoc.Api.Proto.DocumentType.XmlTorg12 && document.DocumentType != Diadoc.Api.Proto.DocumentType.UniversalTransferDocument &&
+                document.DocumentType != Diadoc.Api.Proto.DocumentType.UniversalTransferDocumentRevision)
+                return null;
+
+            string total, vat;
+
+            if (document.DocumentType == Diadoc.Api.Proto.DocumentType.XmlAcceptanceCertificate)
+            {
+                total = document?.XmlAcceptanceCertificateMetadata?.Total;
+                vat = document?.XmlAcceptanceCertificateMetadata?.Vat;
+            }
+            else if (document.DocumentType == Diadoc.Api.Proto.DocumentType.Invoice)
+            {
+                total = document?.InvoiceMetadata?.Total;
+                vat = document?.InvoiceMetadata?.Vat;
+            }
+            else if (document.DocumentType == Diadoc.Api.Proto.DocumentType.XmlTorg12)
+            {
+                total = document?.XmlTorg12Metadata?.Total;
+                vat = document?.XmlTorg12Metadata.Vat;
+            }
+            else if (document.DocumentType == Diadoc.Api.Proto.DocumentType.UniversalTransferDocument)
+            {
+                total = document?.UniversalTransferDocumentMetadata?.Total;
+                vat = document?.UniversalTransferDocumentMetadata?.Vat;
+            }
+            else if (document.DocumentType == Diadoc.Api.Proto.DocumentType.UniversalTransferDocumentRevision)
+            {
+                total = document?.UniversalTransferDocumentRevisionMetadata?.Total;
+                vat = document?.UniversalTransferDocumentRevisionMetadata?.Vat;
+            }
+            else
+            {
+                total = null;
+                vat = null;
+            }
+
+            DocEdoPurchasing newDoc = null;
+            if (document.Version == "utd970_05_03_01")
+            {
+                newDoc = new DocEdoPurchasing
+                {
+                    IdDocEdo = document.MessageId,
+                    EdoProviderName = providerName,
+                    Name = document.DocumentNumber,
+                    IdDocType = (int)document.DocumentType,
+                    CounteragentEdoBoxId = document.CounteragentBoxId,
+                    ParentEntityId = document.EntityId,
+                    ReceiveDate = document?.DeliveryTimestamp,
+                    CreateDate = document?.CreationTimestamp,
+                    TotalPrice = total,
+                    TotalVatAmount = vat,
+                    SenderEdoId = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).SenderEdoId,
+                    ReceiverEdoId = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).ReceiverEdoId,
+                    SenderEdoOrgId = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).EdoId,
+                    FileName = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).FileName,
+                    UserName = dataBaseUser,
+                    DocVersionFormat = "utd970_05_03_01"
+                };
+
+                var counteragents = Edo.Edo.GetInstance().GetKontragents(Edo.Edo.GetInstance().ActualBoxIdGuid);
+
+                var organization = counteragents?.FirstOrDefault(c => c?.Organization?.Boxes?.Any(b => b.BoxId == document.CounteragentBoxId) ?? false)?.Organization;
+
+                if (organization == null)
+                    throw new Exception($"Организация не найдена для документа {document.Title}.");
+
+                var counteragentName = organization?.FullName;
+                var counteragentInn = organization?.Inn;
+                var counteragentKpp = organization?.Kpp;
+                var counteragentEdoId = organization?.FnsParticipantId;
+
+                newDoc.SenderInn = counteragentInn;
+                newDoc.SenderName = counteragentName;
+                newDoc.SenderKpp = counteragentKpp;
+                newDoc.SenderEdoId = counteragentEdoId;
+                newDoc.ReceiverInn = orgInn;
+                newDoc.ReceiverKpp = orgKpp;
+                newDoc.ReceiverName = orgName;
+                newDoc.ReceiverEdoId = orgEdoId;
+                
+
+                if (document?.DocflowStatus?.PrimaryStatus?.Severity == "Success")
+                    newDoc.DocStatus = (int)HonestMark.DocEdoProcessingStatus.Processed;
+                else if (document?.DocflowStatus?.PrimaryStatus?.Severity == "Error")
+                {
+                    newDoc.DocStatus = (int)HonestMark.DocEdoProcessingStatus.ProcessingError;
+                    newDoc.ErrorMessage = document?.DocflowStatus?.PrimaryStatus?.StatusText;
+                }
+                else
+                    newDoc.DocStatus = (int)HonestMark.DocEdoProcessingStatus.None;
+
+                if (document.DocumentType == Diadoc.Api.Proto.DocumentType.UniversalTransferDocumentRevision)
+                {
+                    newDoc.Name = $"Исправление {(report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).DocNumber} № {newDoc.Name}";
+
+                    var parent = _abtDbContext.DocEdoPurchasings.FirstOrDefault(d => d.EdoProviderName == providerName &&
+                    d.Name == (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).DocNumber
+                    && d.SenderInn == newDoc.SenderInn && d.ReceiverInn == newDoc.ReceiverInn);
+
+                    if (parent != null)
+                    {
+                        newDoc.Parent = parent;
+                        newDoc.ParentIdDocEdo = parent.IdDocEdo;
+                        parent.Children.Add(newDoc);
+                    }
+                }
+
+                var docProcessing = (from d in _abtDbContext.DocEdoProcessings
+                                     where d.MessageId == newDoc.IdDocEdo && d.EntityId == newDoc.ParentEntityId
+                                     select d)?.FirstOrDefault();
+
+                if (docProcessing != null)
+                    newDoc.IdDocJournal = docProcessing.IdDoc;
+
+                foreach (var product in (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).Products)
+                {
+                    var newDetail = new DocEdoPurchasingDetail
+                    {
+                        BarCode = product.BarCode,
+                        Quantity = product.Quantity,
+                        Description = product.Description,
+                        Price = product.Price,
+                        Subtotal = product.Subtotal,
+                        TaxAmount = product.TaxAmount,
+                        IdDocEdoPurchasing = newDoc.IdDocEdo,
+                        EdoDocument = newDoc,
+                        DetailNumber = product.Number,
+                        Gtin = product.Gtin
+                    };
+
+                    if (!string.IsNullOrEmpty(product.QuantityMark))
+                        newDetail.QuantityMark = Convert.ToDecimal(product.QuantityMark);
+
+                    var refGoods = _abtDbContext.RefBarCodes?
+                                .Where(b => b.BarCode == newDetail.BarCode && b.IsPrimary == 0)?
+                                .Select(b => b.IdGood)?.Distinct()?.ToList() ?? new List<decimal?>();
+
+                    if (refGoods.Count == 1)
+                        newDetail.IdGood = refGoods.First();
+                    else if (newDoc.Parent != null)
+                    {
+                        var curDetail = newDoc.Parent.Details.FirstOrDefault(d => d.BarCode == newDetail.BarCode);
+
+                        if (curDetail != null)
+                            newDetail.IdGood = curDetail.IdGood;
+                    }
+
+                    newDoc.Details.Add(newDetail);
+                }
+            }
+
+            if (newDoc != null)
+            {
+                _abtDbContext.DocEdoPurchasings.Add(newDoc);
+                _abtDbContext.SaveChanges();
+                MailReporter.Add($"Входящий документ {newDoc.Name} для организации {orgInn} успешно добавлен.");
+            }
+
+            return newDoc;
         }
     }
 }
