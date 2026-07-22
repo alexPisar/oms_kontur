@@ -1110,7 +1110,7 @@ namespace KonturEdoClient.Models
                             else if(SelectedDocUsingType == DataContextManagementUnit.DataAccess.DocJournalUsingType.Accounting)
                             {
                                 _loadedDocuments[index] = (from doc in docs
-                                                           where doc != null && doc.DocGoodsI != null && doc.IdDocMaster == null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
+                                                           where doc != null && doc.DocGoodsI != null && doc.IdDocMaster == null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom && doc.DocDatetime < DateTo
                                                            join docGoodsI in _abt.DocGoodsIs on doc.Id equals docGoodsI.IdDoc
                                                            join customer in _abt.RefCustomers on docGoodsI.IdSeller equals customer.Id
                                                            where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
