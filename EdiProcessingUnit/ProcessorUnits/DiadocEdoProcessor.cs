@@ -725,6 +725,22 @@ namespace EdiProcessingUnit.ProcessorUnits
                             newDetail.IdGood = curDetail.IdGood;
                     }
 
+                    if (newDetail.IdGood == null && !string.IsNullOrEmpty(newDetail.Gtin))
+                    {
+                        newDetail.IdGood = _abtDbContext.RefBarCodes?
+                            .Where(b => b.BarCode == newDetail.Gtin && b.IsPrimary == 10 && b.IdGood != null)?
+                            .Select(b => b.IdGood)?.FirstOrDefault();
+
+                        if (newDetail.IdGood == null)
+                        {
+                            var barCodeByGtin = newDetail.Gtin.TrimStart('0');
+
+                            newDetail.IdGood = _abtDbContext.RefBarCodes?
+                            .Where(b => b.BarCode == barCodeByGtin && b.IsPrimary == 0 && b.IdGood != null)?
+                            .Select(b => b.IdGood)?.FirstOrDefault();
+                        }
+                    }
+
                     newDoc.Details.Add(newDetail);
                 }
             }
