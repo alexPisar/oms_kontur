@@ -676,7 +676,7 @@ namespace KonturEdoClient.Models
 
                             item.AdditionalInfos = additionalInfos.ToArray();
 
-                            if (SelectedDocument.IsMarked)
+                            if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1) && SelectedDocument.IsMarked)
                             {
                                 var originalMarkedCodes = (from label in _abt.DocGoodsDetailsLabels
                                                            where label.IdDocSale == SelectedDocument.InvoiceDocJournal.IdDocMaster && label.IdGood == detail.IdGood
@@ -1010,7 +1010,7 @@ namespace KonturEdoClient.Models
 
                             item.AdditionalInfos = additionalInfos.ToArray();
 
-                            if (SelectedDocument.IsMarked)
+                            if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == detail.IdGood && r.Quantity == 1) && SelectedDocument.IsMarked)
                             {
                                 var markedCodes = (from label in _abt.DocGoodsDetailsLabels
                                                            where label.IdDocSale == SelectedDocument.InvoiceDocJournal.IdDocMaster && label.IdGood == detail.IdGood

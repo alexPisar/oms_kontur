@@ -3421,7 +3421,7 @@ namespace KonturEdoClient.Models
                         .ToList() ?? new List<string>();
                     }
 
-                    if(docGoodDetailLabels.Count > 0)
+                    if(_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 1) && docGoodDetailLabels.Count > 0)
                     {
                         detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
@@ -3586,7 +3586,7 @@ namespace KonturEdoClient.Models
                     .SqlQuery<string>($"select DM_LABEL from doc_goods_details_labels where id_doc_sale = {idDoc} and id_good = {idGood}")?
                     .ToList() ?? new List<string>();
 
-                    if (docGoodDetailLabels.Count > 0)
+                    if (_abt.RefItems.Any(r => r.IdName == 30071 && r.IdGood == docJournalDetail.IdGood && r.Quantity == 1) && docGoodDetailLabels.Count > 0)
                     {
                         detail.ItemMark = Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemMark.Item4;
                         detail.ItemIdentificationNumbers = new Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.InvoiceTableItemItemIdentificationNumber[1];
