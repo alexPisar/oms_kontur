@@ -170,8 +170,10 @@ namespace EdoLiteHonestMarkProcessing.Processors
 
                             var sellerContent = Edo.EdoLiteClient.GetInstance().GetIncomingDocumentContent(docFromEdoLite.EdoId);
 
-                            if (!System.IO.Directory.Exists($"{edoFilesPath}//{docFromEdoLite.EdoId}"))
-                                System.IO.Directory.CreateDirectory($"{edoFilesPath}//{docFromEdoLite.EdoId}");
+                            string currentDirectoryPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+                            if (!System.IO.Directory.Exists($"{currentDirectoryPath}\\{edoFilesPath}\\{docFromEdoLite.EdoId}"))
+                                System.IO.Directory.CreateDirectory($"{currentDirectoryPath}\\{edoFilesPath}\\{docFromEdoLite.EdoId}");
 
                             var zipDocumentBytes = Edo.EdoLiteClient.GetInstance().GetIncomingZipDocument(docFromEdoLite.EdoId);
 
