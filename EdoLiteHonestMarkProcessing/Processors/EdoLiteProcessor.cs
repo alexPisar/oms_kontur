@@ -204,8 +204,8 @@ namespace EdoLiteHonestMarkProcessing.Processors
 
                             var fileName = universalBuyerTransferDocument.FileName;
 
-                            System.IO.File.WriteAllBytes($"{edoFilesPath}//{docFromEdoLite.EdoId}//{fileName}.xml", fileBytes);
-                            System.IO.File.WriteAllBytes($"{edoFilesPath}//{docFromEdoLite.EdoId}//{fileName}.xml.sig", signature);
+                            System.IO.File.WriteAllBytes($"{currentDirectoryPath}\\{edoFilesPath}\\{docFromEdoLite.EdoId}\\{fileName}.xml", fileBytes);
+                            System.IO.File.WriteAllBytes($"{currentDirectoryPath}\\{edoFilesPath}\\{docFromEdoLite.EdoId}\\{fileName}.xml.sig", signature);
 
                             var directory = new System.IO.DirectoryInfo(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
                             string localPath = directory.Name;
