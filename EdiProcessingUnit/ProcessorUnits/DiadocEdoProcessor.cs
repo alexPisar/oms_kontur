@@ -671,11 +671,11 @@ namespace EdiProcessingUnit.ProcessorUnits
 
                 if (document.DocumentType == Diadoc.Api.Proto.DocumentType.UniversalTransferDocumentRevision)
                 {
-                    newDoc.Name = $"Исправление {(report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).DocNumber} № {newDoc.Name}";
+                    var docNumber = (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).DocNumber;
+                    newDoc.Name = $"Исправление {docNumber} № {newDoc.Name}";
 
                     var parent = _abtDbContext.DocEdoPurchasings.FirstOrDefault(d => d.EdoProviderName == providerName &&
-                    d.Name == (report as Reporter.Reports.UniversalTransferSellerDocumentUtd970).DocNumber
-                    && d.SenderInn == newDoc.SenderInn && d.ReceiverInn == newDoc.ReceiverInn);
+                    d.Name == docNumber && d.SenderInn == newDoc.SenderInn && d.ReceiverInn == newDoc.ReceiverInn);
 
                     if (parent != null)
                     {
