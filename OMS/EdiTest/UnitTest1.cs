@@ -1481,6 +1481,505 @@ namespace EdiTest
             }
         }
 
+        [TestMethod]
+        public void LogisticsWaybillConsignorTitle()
+        {
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            var crypto = new WinApiCryptWrapper();
+            var cert = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+            edo.Authenticate(true, null, "9652306541");
+
+            var org = edo.GetMyOrganizationByInnKpp("9652306541", "965201000");
+            var organization = new EdiProcessingUnit.Edo.Models.Kontragent(org?.FullName, org?.Inn, org?.Kpp)
+            {
+                OrgId = org?.OrgId,
+                Address = org?.Address
+            };
+
+            var consignorTitle = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsWaybillConsignorTitle
+            {
+                Number = "2/1-744814",
+                Date = "18.08.2026",
+                OrderNumber = "F3600026559",
+                OrderDate = "17.08.2026"
+            };
+
+            Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.RussianAddressLogisticsWaybill shipperAddress = organization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.RussianAddressLogisticsWaybill
+                            {
+                                ZipCode = organization.Address.RussianAddress.ZipCode,
+                                Region = organization.Address.RussianAddress.Region,
+                                Street = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Street) ? null : organization.Address.RussianAddress.Street,
+                                City = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.City) ? null : organization.Address.RussianAddress.City,
+                                Locality = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Locality) ? null : organization.Address.RussianAddress.Locality,
+                                Territory = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Territory) ? null : organization.Address.RussianAddress.Territory,
+                                Building = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? null : organization.Address.RussianAddress.Building
+                            } : null;
+
+            consignorTitle.WaybillInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoType
+            {
+                ShipperInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoTypeShipperInfo
+                {
+                    IsFreightForwarder = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoTypeShipperInfoIsFreightForwarder.Item0,
+                    Shipper = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationInfoLogisticsWaybill
+                    {
+                        Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationDetailsLogisticsWaybill
+                        {
+                            Inn = organization.Inn,
+                            Kpp = organization.Kpp,
+                            OrgType = organization.Inn.Length == 12 ? Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.OrganizationType_DatabaseOrder.Item1 : Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.OrganizationType_DatabaseOrder.Item2,
+                            OrgName = organization.Name,
+                            Address = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                            {
+                                Item = shipperAddress
+                            },
+                            Phones = new[] { "+7(423)2-300-277" }
+                        }
+                    }
+                },
+                ConsigneeInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoTypeConsigneeInfo
+                {
+                    Consignee = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationInfoLogisticsWaybill
+                    {
+                        Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationDetailsLogisticsWaybill
+                        {
+                            //Inn = "2723205733",
+                            //Kpp = "997350001",
+                            //OrgType = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.OrganizationType_DatabaseOrder.Item2,
+                            //OrgName = "ООО \"ДВ Невада\"",
+                            //Address = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                            //{
+                            //    Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ForeignAddressUtd970
+                            //    {
+                            //        Country = "643",
+                            //        Address = "680006, Хабаровский край, г. Хабаровск, ул. Индустриальная, д. 14, каб. 24"
+                            //    }
+                            //},
+                            //Phones = new[] { "8(4212)54-11-70" }
+                            Inn = "2538150215",
+                            Kpp = "253801001",
+                            OrgType = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.OrganizationType_DatabaseOrder.Item2,
+                            OrgName = "ООО \"Вирэй-Восточный\"",
+                            Address = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                            {
+                                Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ForeignAddressUtd970
+                                {
+                                    Country = "643",
+                                    Address = "690039, г. Владивосток, ул. Енисейская, 32"
+                                }
+                            },
+                            Phones = new[] { "+7(423)2-300-277" }
+                        }
+                    },
+                    DeliveryAddres = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CustomAddressLogisticsWaybill
+                    {
+                        AddressLogisticsWaybill = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ForeignAddressUtd970
+                            {
+                                Country = "643",
+                                Address = "690106, Россия, Приморский край, Владивостокский г.о., г. Владивосток, Океанский пр-т, д. 52А"
+                            }
+                        }
+                    }
+                },
+                CargoInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoTypeCargoInfo
+                {
+                    ItemDescriptions = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CargoItemDescription[]
+                    {
+                        new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CargoItemDescription
+                        {
+                            Name = "BIC Бритва \"Флекс 3 Гибрид\" + 2 кассеты",
+                            PackageMethod = "Коробки",
+                            Marks = new string[]{"Отсутствует"},
+                            CargoSpaceQuantity = "3",
+                            CodeTnved = "8212",
+                            Condition="Целый",
+                            Cost = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CostDetails
+                            {
+                                Amount = 966.84M,
+                                CurrencyCode = "643"
+                            },
+                            PlannedMass = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CargoPlannedMass
+                            {
+                                GrossWeight = 31.5M
+                            },
+                            ContainerType = "4F"
+                        }
+                    }
+                },
+                ConsignorDirectives = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ConsignorDirectivesInfo
+                {
+                    TransportationDirectives = "Отсутствуют",
+                    ReaddressDetails = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ConsignorDirectivesInfoReaddressDetails
+                    {
+                        AccountableSide = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ConsignorDirectivesInfoReaddressDetailsAccountableSide.Consignor,
+                        Phones = new string[]
+                        {
+                            "8(4212)54-11-70"
+                        }
+                    }
+                },
+                Carrier = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationInfoLogisticsWaybill
+                {
+                    Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ExtendedOrganizationDetailsLogisticsWaybill
+                    {
+                        Inn = "2504000010",
+                        Kpp = "253901001",
+                        OrgType = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.OrganizationType_DatabaseOrder.Item2,
+                        OrgName = "ООО \"Вирэй\"",
+                        Address = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ForeignAddressUtd970
+                            {
+                                Country = "643",
+                                Address = "690039, г.Владивосток, ул.Енисейская 32, офис 4"
+                            }
+                        },
+                        Phones = new[] { "89005567834" }
+                    }
+                },
+                Drivers = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.DriverInfo[]
+                {
+                    new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.DriverInfo
+                    {
+                        LastName = "Кравченко",
+                        FirstName = "А.А.",
+                        LicenseNumber="1234567890",
+                        LicenseSeries="1234",
+                        LicenseDate="01.01.2015",
+                        Phones = new []{ "+79124643655" }
+                    }
+                },
+                VehicleInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.WaybillInfoTypeVehicleInfo
+                {
+                    Vehicle = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.TransportDetails
+                    {
+                        Number = "В777УС116",
+                        Ownership = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.TransportDetailsOwnership.Item1,
+                        Type = "Тягач с полуприцепом",
+                        Model = "Hyundai Xcient",
+                        MaxWeight = 40,
+                        Capacity = 26
+                    }
+                },
+                LoadingInfo = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfo
+                {
+                    ActualLoadingAddress = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.CustomAddressLogisticsWaybill
+                    {
+                        AddressLogisticsWaybill = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.AddressLogisticsWaybill
+                        {
+                            Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.ForeignAddressUtd970
+                            {
+                                Country = "643",
+                                Address = "690039, г. Владивосток, ул. Енисейская, 32"
+                            }
+                        }
+                    },
+                    StatedArrivalDateTime = "18.08.2026T14:42:19+10:00",
+                    StatedArrivalDateTimeEnablingTimeZone = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.TimeZonePresence.Item1,
+                    ActualArrivalDateTime = "18.08.2026T15:57:28+10:00",
+                    ActualArrivalDateTimeEnablingTimeZone = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.TimeZonePresence.Item1,
+                    ActualDepartureDateTime = "18.08.2026T18:36:34+10:00",
+                    ActualDepartureDateTimeEnablingTimeZone = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.TimeZonePresence.Item1,
+                    GrossWeight = "31.5",
+                    WeighingMethod = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoWeighingMethod.Item03,
+                    NumberOfPlaces = "3",
+                    LoadingPartyDetails = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoLoadingPartyDetails
+                    {
+                        MatchingShipper = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoLoadingPartyDetailsMatchingShipper.Item1,
+                        LoadingPartyEmployee = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoLoadingPartyDetailsLoadingPartyEmployee
+                        {
+                            Position = "Зав. складом",
+                            Item = "Должностные обязанности",
+                            Fio = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.Fio
+                            {
+                                LastName = "Лобань",
+                                FirstName = "Л.В."
+                            }
+                        },
+                        RequisitesShipper = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.PartiesRequisite
+                        {
+                            Inn = org.Inn
+                        }
+                    },
+                    LoadingOwnerDetails = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoLoadingOwnerDetails
+                    {
+                        Type = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LoadingInfoLoadingOwnerDetailsType.Item1,
+                        RequisitesShipper = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.PartiesRequisite
+                        {
+                            Inn = org.Inn
+                        }
+                    }
+                }
+            };
+
+            consignorTitle.Items = new object[]
+            {
+                new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsSigners()
+                {
+                    BoxId = edo.ActualBoxIdGuid,
+                    Signer = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsSigner
+                    {
+                        SignatureType = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.SignatureType.Item1,
+                        SignatureTypeSpecified = true,
+                        //SignerStatus = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.SignerStatus.Item2,
+                        SignerStatus = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.SignerStatus.Item1,
+                        SignerStatusSpecified = true,
+                        Items = new object[]
+                        {
+                            new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.Fio
+                            {
+                                LastName = "Писаренко",
+                                FirstName = "Алексей",
+                                MiddleName = "Николаевич"
+                            },
+                            new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.Position
+                            {
+                                Value = "Инженер-программист",
+                                PositionSource = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.PositionPositionSource.Manual
+                            },
+                            //new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.PowerOfAttorney
+                            //{
+                            //    Electronic = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.Electronic
+                            //    {
+                            //        Item = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.Storage
+                            //        {
+                            //            UseDefault = Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.StorageUseDefault.@false,
+                            //            FullId = new Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.StorageFullId
+                            //            {
+                            //                RegistrationNumber = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                            //                IssuerInn = org.Inn,
+                            //                RepresentativeInn = "253605132573"
+                            //            }
+                            //        }
+                            //    }
+                            //}
+                        }
+                    }
+                }
+            };
+
+            var generatedFile = edo.GenerateTitleXml("LogisticsWaybill", "reception", "kl_trn_mt_05_01", 0, consignorTitle);
+            generatedFile.SaveContentToFile($"C:\\Users\\developer3\\Desktop\\Files\\{generatedFile.FileName}");
+        }
+
+        [TestMethod]
+        public void LogisticsOrderRequestSenderTest()
+        {
+            var edo = EdiProcessingUnit.Edo.Edo.GetInstance();
+            var crypto = new WinApiCryptWrapper();
+            var cert = crypto.GetCertificateWithPrivateKey("333949A354FB57AFF46203276F6BE7CC07813138", false);
+            edo.Authenticate(false, cert, "2538150215");
+
+            var org = edo.GetMyOrganizationByInnKpp("2538150215", "253801001");
+            var organization = new EdiProcessingUnit.Edo.Models.Kontragent(org?.FullName, org?.Inn, org?.Kpp)
+            {
+                OrgId = org?.OrgId,
+                Address = org?.Address
+            };
+
+            Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.RussianAddressLogistics shipperAddress = organization?.Address?.RussianAddress != null ?
+                            new Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.RussianAddressLogistics
+                            {
+                                ZipCode = organization.Address.RussianAddress.ZipCode,
+                                Region = organization.Address.RussianAddress.Region,
+                                Street = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Street) ? null : organization.Address.RussianAddress.Street,
+                                City = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.City) ? null : organization.Address.RussianAddress.City,
+                                Locality = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Locality) ? null : organization.Address.RussianAddress.Locality,
+                                Territory = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Territory) ? null : organization.Address.RussianAddress.Territory,
+                                Building = string.IsNullOrEmpty(organization?.Address?.RussianAddress?.Building) ? null : organization.Address.RussianAddress.Building
+                            } : null;
+
+            var title = new Reporter.Reports.LogisticsOrderRequestSender
+            {
+                FileName = $"ON_ZAKZVGO_2504000010_253901001_{organization.Inn}_{organization.Kpp}_0_20260826_{Guid.NewGuid().ToString()}",
+                EdoProgramVersion = "Вирэй ЭДО 1.0",
+                DocumentCreator = "Общество с ограниченной ответственностью \"Вирэй - Восточный\", ИНН 2538150215, КПП 253801001",
+                Number = "F3600026559",
+                CreateDate = new DateTime(2026, 8, 27),
+                OrderDate = new DateTime(2026, 8, 17),
+                TransportContract = new Reporter.Entities.TransportDocumentContract
+                {
+                    DocumentName = "Договор перевозки",
+                    DocumentNumber = "211627321647",
+                    DocumentDate = new DateTime(2026, 8, 26),
+                    Contractors = new List<Reporter.Entities.LogisticOrgInfo>
+                    {
+                        new Reporter.Entities.LogisticOrgInfo
+                        {
+                            OrgName = organization.Name,
+                            OrgInn = "2538150215"
+                        },
+                        new Reporter.Entities.LogisticOrgInfo
+                        {
+                            OrgName = "ООО \"Вирэй\"",
+                            OrgInn = "2504000010"
+                        }
+                    }
+                }
+            };
+
+            title.Function = "Заявка";
+
+            title.SanitaryRequirements = "Отсутствуют";
+            title.FoodRequirements = "Отсутствуют";
+
+            title.Carrier = new Reporter.Entities.LogisticsParticipantType
+            {
+                Contact = new Reporter.Entities.ContactData
+                {
+                    Phone = "+74232300277"
+                },
+                Address = new Reporter.Entities.Address
+                {
+                    CountryCode = "643",
+                    ForeignTextAddress = "690039, г.Владивосток, ул.Енисейская 32, офис 4"
+                },
+                Item = new Reporter.Entities.OrganizationExchangeParticipantEntity
+                {
+                    JuridicalInn = "2504000010",
+                    JuridicalKpp = "253901001",
+                    OrgName = "ООО \"Вирэй\""
+                }
+            };
+            title.Shipper = new Reporter.Entities.LogisticsParticipantType
+            {
+                Contact = new Reporter.Entities.ContactData
+                {
+                    Phone = "+74232300277"
+                },
+                Address = new Reporter.Entities.Address
+                {
+                    CountryCode = "643",
+                    RussianCity = shipperAddress.City,
+                    RussianIndex = shipperAddress.ZipCode,
+                    RussianRegionCode = shipperAddress.Region,
+                    RussianStreet = shipperAddress.Street,
+                    RussianHouse = shipperAddress.Building
+                },
+                Item = new Reporter.Entities.OrganizationExchangeParticipantEntity
+                {
+                    JuridicalInn = organization.Inn,
+                    JuridicalKpp = organization.Kpp,
+                    OrgName = organization.Name
+                }
+            };
+
+            title.SupplyPoint = new Reporter.Entities.SupplyPoint
+            {
+                Address = new Reporter.Entities.LogisticAddressType
+                {
+                    Address = new Reporter.Entities.Address
+                    {
+                        CountryCode = "643",
+                        ForeignTextAddress = "690039, г.Владивосток, ул.Енисейская 32, офис 4"
+                    }
+                },
+                DateTime = DateTime.Now,
+                IsUtcUsed = true
+            };
+
+            title.AddressPoints = new Reporter.Entities.LogisticAddressPoint[]
+            {
+                    new Reporter.Entities.LogisticAddressPoint
+                    {
+                        Operation = Reporter.Enums.LogisticAddressPointOperationEnum.Loading,
+                        PositionPoint = "1",
+                        AddressPoint = new Reporter.Entities.LogisticAddressType
+                        {
+                            Address = new Reporter.Entities.Address
+                            {
+                                CountryCode = "643",
+                                ForeignTextAddress = "690039, г.Владивосток, ул.Енисейская 32, офис 4"
+                            }
+                        },
+                        OwnerOrganization = new Reporter.Entities.LogisticOrgInfo
+                        {
+                            OrgName = organization.Name,
+                            OrgInn = organization.Inn
+                        }
+                    },
+                    new Reporter.Entities.LogisticAddressPoint
+                    {
+                        Operation = Reporter.Enums.LogisticAddressPointOperationEnum.Unloading,
+                        PositionPoint = "2",
+                        AddressPoint = new Reporter.Entities.LogisticAddressType
+                        {
+                            Address = new Reporter.Entities.Address
+                            {
+                                CountryCode = "643",
+                                ForeignTextAddress = "690106, Россия, Приморский край, Владивостокский г.о., г. Владивосток, Океанский пр-т, д. 52А"
+                            }
+                        }
+                    }
+            };
+
+            title.Cargoes = new Reporter.Entities.Cargo[]
+            {
+                new Reporter.Entities.Cargo
+                {
+                        Name = "BIC Бритва \"Флекс 3 Гибрид\" + 2 кассеты",
+                        PlaceCount = "3",
+                        WeighingMethod = Reporter.Enums.WeighingMethodEnum.CalculatedWeight,
+                        Condition ="Целый",
+                        Volume = 12,
+                        PossibilityDistributionAlongPlatform = Reporter.Enums.PossibilityDistributionAlongPlatformEnum.Possible,
+                        CargoDivisibility = Reporter.Enums.CargoDivisibilityEnum.Divisible,
+                        CargoPlacesWeight = new Reporter.Entities.LogisticWeightType
+                        {
+                            Gross = 31.5M
+                        },
+                        ContainerType = "4F",
+                        PlacesCargoDimensions = new Reporter.Entities.CargoDimensions
+                        {
+                            Height = 1.2M,
+                            Length = 1.5M,
+                            Width = 1.0M
+                        },
+                        DeliveryPoints = new Reporter.Entities.CargoDeliveryPoint[]
+                        {
+                            new Reporter.Entities.CargoDeliveryPoint
+                            {
+                                LoadingPoint = "1",
+                                UnloadingPoint = "2",
+                                PlaceCount = "3"
+                            }
+                        }
+                }
+            };
+
+            title.VehicleParameters = new Reporter.Entities.VehicleParameters
+            {
+                Type = "124512",
+                WeightCapacity = 22,
+                VolumeCapacity = 12
+            };
+
+            title.SignerInfo = new Reporter.Entities.SignerInfo
+            {
+                SignType = Reporter.Enums.SignTypeEnum.QualifiedElectronicDigitalSignature,
+                MethodOfConfirmingAuthorityEnum = Reporter.Enums.MethodOfConfirmingAuthorityEnum.EmchdDataInDocument,
+                Position = "Директор по продажам",
+                Surname = "Бельтюкова",
+                Name = "Ирина",
+                Patronymic = "Васильевна",
+                ElectronicPowerOfAttorney = new Reporter.Entities.ElectronicPowerOfAttorney
+                {
+                    RegistrationNumber = "79f124e5-d8d2-491a-b078-882e74ffa4b0",
+                    RegistrationDate = new DateTime(2024, 11, 13),
+                    SystemIdentificationInfo = "https://m4d.nalog.gov.ru/emchd/check-status?guid=79f124e5-d8d2-491a-b078-882e74ffa4b0"
+                }
+
+            };
+
+            var fileBytes = Encoding.GetEncoding(1251).GetBytes(title.GetXmlContent());
+
+            System.IO.File.WriteAllBytes($"C:\\Users\\developer3\\Desktop\\Files\\{title.FileName}.xml", fileBytes);
+            //var generatedFile = edo.GenerateTitleXml("LogisticsOrderRequest", "default", "zakzvper_05_01_01", 0, title);
+            //generatedFile.SaveContentToFile($"C:\\Users\\developer3\\Desktop\\Files\\{generatedFile.FileName}");
+        }
+
         public Diadoc.Api.DataXml.ON_NSCHFDOPPR_UserContract_970_05_03_01.UniversalTransferDocument GetUniversalDocument(
             AbtDbContext abt, DocJournal d, EdiProcessingUnit.Edo.Models.Kontragent organization, DataContextManagementUnit.DataAccess.DocJournalUsingType? docUsingType, string employee = null, RefEdoGoodChannel edoGoodChannel = null, List<string> allLabels = null)
         {

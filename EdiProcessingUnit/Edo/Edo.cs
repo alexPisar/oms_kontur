@@ -141,6 +141,10 @@ namespace EdiProcessingUnit.Edo
 
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             }
+            else if(userDocument as Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsWaybillConsignorTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsWaybillConsignorTitle)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.LogisticsOrderRequestSenderTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.LogisticsOrderRequestSenderTitle)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return _api.GenerateTitleXml(_authToken,
@@ -211,6 +215,10 @@ namespace EdiProcessingUnit.Edo
 
                 userDataContract = ((Diadoc.Api.DataXml.ON_NSCHFDOPPOK_UserContract_970_05_02_01.UniversalTransferDocumentBuyerTitle)userDocument).SerializeToXml();
             }
+            else if (userDocument as Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsWaybillConsignorTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_TRNACLGROT_MT_05_01.LogisticsWaybillConsignorTitle)userDocument).SerializeToXml();
+            else if (userDocument as Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.LogisticsOrderRequestSenderTitle != null)
+                userDataContract = ((Diadoc.Api.DataXml.ON_ZAKZVGO_1_969_01_05_01_01.LogisticsOrderRequestSenderTitle)userDocument).SerializeToXml();
             else throw new Exception("Неопределённый тип документа");
 
             return await _api.GenerateTitleXmlAsync(_authToken,

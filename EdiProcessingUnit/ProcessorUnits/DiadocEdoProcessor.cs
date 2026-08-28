@@ -367,7 +367,10 @@ namespace EdiProcessingUnit.ProcessorUnits
                     using (_abtDbContext = new AbtDbContext(connectionString, true))
                     {
                         var myOrgs = (from r in _abtDbContext.RefUsersByOrgEdo where r.UserName == _conf.DataBaseUser
-                                      join c in _abtDbContext.RefCustomers on r.IdCustomer equals c.Id select c).ToList();
+                                      join c in _abtDbContext.RefCustomers on r.IdCustomer equals c.Id
+                                      join rt in _abtDbContext.RefRefTags on c.Id equals rt.IdObject
+                                      where rt.IdTag == 215 && rt.TagValue == "1"
+                                      select c).ToList();
 
                         foreach (var myOrg in myOrgs)
                         {
@@ -388,7 +391,6 @@ namespace EdiProcessingUnit.ProcessorUnits
                         }
 
                         ReceiveDocumentsForConsignors();
-                        ExecuteCheckReceiveDocuments();
                     }
                 }
                 catch(Exception ex)
@@ -447,6 +449,8 @@ namespace EdiProcessingUnit.ProcessorUnits
                                 AddDocEdoPurchasingToDataBase(report, customerConsignor, document, organization?.FnsParticipantId);
                         }
                     }
+
+                    ExecuteCheckReceiveDocuments();
                 }
             }
             catch (System.Net.WebException webEx)
