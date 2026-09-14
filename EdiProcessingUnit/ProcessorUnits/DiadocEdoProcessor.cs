@@ -481,7 +481,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                     try
                     {
                         var doc = _edo?.GetDocumentsByMessageId(processingDocument.IdDocEdo)?
-                            .FirstOrDefault(d => d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocument && d.DocumentNumber == processingDocument.Name);
+                            .FirstOrDefault(d => (d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocument || d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocumentRevision) && d.DocumentNumber == processingDocument.Name);
 
                         if (doc == null)
                             throw new Exception($"Не удалось найти маркированный документ в Диадоке. ID {processingDocument.IdDocEdo}");
