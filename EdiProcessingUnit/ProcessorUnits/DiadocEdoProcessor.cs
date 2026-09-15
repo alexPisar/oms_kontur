@@ -480,8 +480,19 @@ namespace EdiProcessingUnit.ProcessorUnits
                 {
                     try
                     {
-                        var doc = _edo?.GetDocumentsByMessageId(processingDocument.IdDocEdo)?
-                            .FirstOrDefault(d => (d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocument || d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocumentRevision) && d.DocumentNumber == processingDocument.Name);
+                        var edoDocs = _edo?.GetDocumentsByMessageId(processingDocument.IdDocEdo);
+
+                        var doc = edoDocs?
+                            .FirstOrDefault(d => d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocument && d.DocumentNumber == processingDocument.Name);
+
+                        if (doc == null && processingDocument.IdDocType == (int)Diadoc.Api.Proto.DocumentType.UniversalTransferDocumentRevision && !string.IsNullOrEmpty(processingDocument?.ParentIdDocEdo))
+                        {
+                            var baseDocEdoPurchasing = _abtDbContext.DocEdoPurchasings.FirstOrDefault(d => d.IdDocEdo == processingDocument.ParentIdDocEdo);
+
+                            if(baseDocEdoPurchasing != null)
+                                doc = edoDocs?.FirstOrDefault(d => d.Type == Diadoc.Api.Com.DocumentType.UniversalTransferDocumentRevision &&
+                                d?.UniversalTransferDocumentRevisionMetadata?.OriginalInvoiceNumber == baseDocEdoPurchasing.Name);
+                        }
 
                         if (doc == null)
                             throw new Exception($"Не удалось найти маркированный документ в Диадоке. ID {processingDocument.IdDocEdo}");
