@@ -709,6 +709,10 @@ namespace OMS.ViewModels
                     }
                 }
             }
+            else
+            {
+                newDocJournal.DocGoods.IdAgent = 1209748400;
+            }
 
             order.ReqDeliveryDate = dateTime.AddDays(1);
 
