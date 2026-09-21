@@ -14,7 +14,7 @@ namespace EdiProcessingUnit.HonestMark
 
         private WebService.ServiceManager _webService;
         private X509Certificate2 _certificate;
-        private bool _isUuidToken = false;
+        private bool _isUuidToken = true;
         private string _token;
         private string _urlAddressHonestMark;
         private string _urlAddressHonestMarkNewVersion;
