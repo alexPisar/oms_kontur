@@ -166,8 +166,14 @@ namespace EdiProcessingUnit.ProcessorUnits
             int RecadvAcceptLineCount = 0;
             long? idDocJournal = null;
             double totalAcceptedQuantity = 0.0;
+            string invoiceNumber = null;
 
-            foreach(var item in docLineItems)
+            if (connectedBuyer.UseSplitDocProcedure == 1 && !string.IsNullOrEmpty(recadv?.DespatchIdentificator?.Number))
+            {
+                invoiceNumber = recadv.DespatchIdentificator.Number;
+            }
+
+            foreach (var item in docLineItems)
 			{
 				var currentRecadvItem = recadv?
 					.recadvLineItems?
@@ -183,7 +189,7 @@ namespace EdiProcessingUnit.ProcessorUnits
                 if (currentRecadvItem == null)
 					continue;
 
-                if(idDocJournal == null && !string.IsNullOrEmpty(item.IdDocJournal))
+                if(idDocJournal == null && string.IsNullOrEmpty(invoiceNumber) && !string.IsNullOrEmpty(item.IdDocJournal))
                 {
                     long idDocJ;
 
@@ -210,7 +216,7 @@ namespace EdiProcessingUnit.ProcessorUnits
 			if (RecadvAcceptLineCount <= 0)
 				return;
 
-            if (!desadvExportedByManufacturers)
+            if (connectedBuyer.UseSplitDocProcedure != 1 && !desadvExportedByManufacturers)
                 order.Status = 4;
             else if(order.Status == 3 && idDocJournal != null)
             {
@@ -270,6 +276,63 @@ namespace EdiProcessingUnit.ProcessorUnits
             if (!string.IsNullOrEmpty(recadv.Date))
                 newDocReceivingAdvice.RecadvDate = DateTime.ParseExact(recadv.Date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
+            User selectedUser = null;
+            UsersConfig usersConfig = new UsersConfig();
+
+            if (idDocJournal == null && !string.IsNullOrEmpty(invoiceNumber))
+            {
+                var firstIdDocJournalStr = docLineItems?.ToList()?.FirstOrDefault(l => !string.IsNullOrEmpty(l.IdDocJournal))?.IdDocJournal;
+                long firstIdDocJournal;
+
+                if (!string.IsNullOrEmpty(firstIdDocJournalStr))
+                {
+                    if (long.TryParse(firstIdDocJournalStr, out firstIdDocJournal))
+                    {
+                        var idFilial = firstIdDocJournal % 100;
+
+                        if (idFilial == 0)
+                            idFilial = 1;
+
+                        string sid = _ediDbContext.Database?
+                            .SqlQuery<string>($"select links from ref_filials@orcl.vladivostok.wera where id = {idFilial}")?.FirstOrDefault();
+
+                        if (!string.IsNullOrEmpty(sid))
+                            selectedUser = usersConfig?.Users?.FirstOrDefault(u => u.SID == sid);
+
+                        if (selectedUser != null)
+                        {
+                            var logOrders = _ediDbContext.LogOrders.Where(l => l.OrderStatus == 1 && l.IdOrder == order.Id && l.IdDocJournal != null)?.ToList() ?? new List<LogOrder>();
+                            using (var abtContext = new DataContextManagementUnit.DataAccess.Contexts.Abt.AbtDbContext(usersConfig.GetConnectionStringByUser(selectedUser), true))
+                            {
+                                var idDocJournals = abtContext.DocJournals.
+                                    Where(dj => dj.Code == invoiceNumber && dj.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && dj.IdDocMaster != null)
+                                    .Select(d => d.IdDocMaster.Value)?.ToList() ?? new List<decimal>();
+
+                                if (logOrders.Count > 0 && idDocJournals.Count > 0)
+                                    idDocJournal = logOrders.FirstOrDefault(l => idDocJournals.Exists(i => i == l.IdDocJournal))?.IdDocJournal;
+                            }
+                        }
+                    }
+                }
+
+                if (order.Status == 3 && idDocJournal != null)
+                {
+                    var logOrders = (from logOrder in _ediDbContext.LogOrders
+                                     where logOrder.IdOrder == order.Id && logOrder.OrderStatus >= 3 && logOrder.OrderStatus <= 4 && logOrder.IdDocJournal != null
+                                     select logOrder)?.ToList() ?? new List<LogOrder>();
+
+                    if (logOrders.Count > 0 && logOrders.Exists(l => l.OrderStatus == 3 && l.IdDocJournal == idDocJournal) &&
+                        !logOrders.Exists(l => l.OrderStatus == 4 && l.IdDocJournal == idDocJournal))
+                    {
+                        var traderDocsWhenDesadvStatus = logOrders?.Where(l => l.OrderStatus == 3)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
+                        var traderDocsWhenRecadvStatus = logOrders?.Where(l => l.OrderStatus == 4)?.Select(l => l.IdDocJournal.Value)?.Distinct()?.Count() ?? 0;
+
+                        if (traderDocsWhenDesadvStatus <= traderDocsWhenRecadvStatus + 1)
+                            order.Status = 4;
+                    }
+                }
+            }
+
             if (idDocJournal != null)
             {
                 var idFilial = idDocJournal.Value % 100;
@@ -277,14 +340,14 @@ namespace EdiProcessingUnit.ProcessorUnits
                 if (idFilial == 0)
                     idFilial = 1;
 
-                User selectedUser = null;
-                UsersConfig usersConfig = new UsersConfig();
+                if (selectedUser == null)
+                {
+                    string sid = _ediDbContext.Database?
+                        .SqlQuery<string>($"select links from ref_filials@orcl.vladivostok.wera where id = {idFilial}")?.FirstOrDefault();
 
-                string sid = _ediDbContext.Database?
-                    .SqlQuery<string>($"select links from ref_filials@orcl.vladivostok.wera where id = {idFilial}")?.FirstOrDefault();
-
-                if (!string.IsNullOrEmpty(sid))
-                    selectedUser = usersConfig?.Users?.FirstOrDefault(u => u.SID == sid);
+                    if (!string.IsNullOrEmpty(sid))
+                        selectedUser = usersConfig?.Users?.FirstOrDefault(u => u.SID == sid);
+                }
 
                 if (selectedUser != null)
                 {
