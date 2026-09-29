@@ -723,6 +723,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                         Gtin = product.Gtin
                     };
 
+                    if (!string.IsNullOrEmpty(newDetail.BarCode))
+                    {
+                        if (newDetail.BarCode.Length > 20 && !string.IsNullOrEmpty(newDetail.Gtin))
+                            newDetail.BarCode = newDetail.Gtin.TrimStart('0');
+                    }
+
                     if (!string.IsNullOrEmpty(product.QuantityMark))
                         newDetail.QuantityMark = Convert.ToDecimal(product.QuantityMark);
 
