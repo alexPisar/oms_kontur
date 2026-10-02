@@ -1177,7 +1177,7 @@ namespace KonturEdoClient.Models
                         {
                             var docJournalTag = _abt.DocJournalTags.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.Id && d.IdTad == 101);
 
-                            if (docJournalTag != null)
+                            if (!string.IsNullOrEmpty(docJournalTag?.TagValue))
                                 additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.AdditionalInfo { Id = refEdoGoodChannel.DocReturnNumberUcdId, Value = docJournalTag.TagValue });
                         }
 
@@ -1185,7 +1185,7 @@ namespace KonturEdoClient.Models
                         {
                             var docJournalTag = _abt.DocJournalTags.FirstOrDefault(d => d.IdDoc == SelectedDocument.CorrectionDocJournal.Id && d.IdTad == 102);
 
-                            if (docJournalTag != null)
+                            if (!string.IsNullOrEmpty(docJournalTag?.TagValue))
                                 additionalInfoList.Add(new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.AdditionalInfo { Id = refEdoGoodChannel.DocReturnDateUcdId, Value = docJournalTag.TagValue });
                         }
                     }
