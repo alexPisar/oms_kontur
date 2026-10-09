@@ -110,6 +110,8 @@ namespace EdiProcessingUnit.WorkingUnits
 
                             if (orderLogsByOrder.All(l => l.IdManufacturer == null))
                             {
+                                bool isSendOrderResponse = true;
+
                                 foreach(var log in orderLogsByOrder)
                                 {
                                     List<DocJournal> trDocs = null;
@@ -133,12 +135,59 @@ namespace EdiProcessingUnit.WorkingUnits
                                     if (trDocs == null)
                                         continue;
 
-                                    foreach (var t in trDocs)
-                                        if (!traderDocs.Contains(t))
+                                    if (trDocs.Count == 0)
+                                        continue;
+
+                                    if (trDocs.Exists(tr => tr.ActStatus > 0 && tr.Deleted != 1))
+                                    {
+                                        foreach (var t in trDocs)
+                                            if ((!traderDocs.Contains(t)) && t.ActStatus > 0 && t.Deleted != 1)
+                                            {
+                                                traderDocs.Add(t);
+                                            }
+                                    }
+                                    else if(trDocs.Exists(tr => tr.Deleted != 1))
+                                    {
+                                        foreach (var tr in trDocs)
                                         {
-                                            traderDocs.Add(t);
+                                            if (tr.Deleted == 1)
+                                                continue;
+
+                                            var trDocJournalId = tr.Id;
+                                            DateTime? trDocDeliveryDate = tr.DeliveryDate;
+
+                                            var param = new Oracle.ManagedDataAccess.Client.OracleParameter("ID_DOC", trDocJournalId);
+                                            param.OracleDbType = Oracle.ManagedDataAccess.Client.OracleDbType.Decimal;
+                                            IEnumerable<DateTime> conductDateTimes = _abtDbContext?.Database?
+                                                .SqlQuery<DateTime>($"select action_datetime from log_actions where id_object = :ID_DOC and id_action = 0", param);
+
+                                            if (conductDateTimes == null)
+                                                conductDateTimes = new List<DateTime>();
+
+                                            DateTime? conductDateTime = null;
+
+                                            if (conductDateTimes.Count() > 0)
+                                                conductDateTime = conductDateTimes.Max().AddDays(1);
+
+                                            if (conductDateTime != null)
+                                            {
+                                                if (conductDateTime.Value.DayOfWeek == DayOfWeek.Saturday)
+                                                    conductDateTime = conductDateTime.Value.AddDays(2);
+                                                else if (conductDateTime.Value.DayOfWeek == DayOfWeek.Sunday)
+                                                    conductDateTime = conductDateTime.Value.AddDays(1);
+
+                                                bool isDocumentDelivered = trDocDeliveryDate != null &&
+                                                    trDocDeliveryDate.Value < DateTime.Now;
+
+                                                if (!(isDocumentDelivered && conductDateTime.Value < DateTime.Now))
+                                                    isSendOrderResponse = false;
+                                            }
                                         }
+                                    }
                                 }
+
+                                if (!isSendOrderResponse)
+                                    continue;
                             }
                             else
                             {
