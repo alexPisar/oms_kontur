@@ -11,6 +11,7 @@ namespace EdiProcessingUnit.ProcessorUnits
     public class DiadocEdoProcessor : EdoProcessor
     {
         internal AbtDbContext _abtDbContext;
+        private static readonly object _locker = new object();
         private const string providerName = "DIADOC";
         public override string ProcessorName => "DiadocEdoProcessor";
         public string OrgInn { get; set; }
@@ -125,34 +126,37 @@ namespace EdiProcessingUnit.ProcessorUnits
             where customer.Inn == company.Inn && customer.Kpp == company.Kpp
             select docEdoProcessing).ToList();
 
-            foreach (var docEdoProcessing in sentStatusDocEdoProcessings)
+            Parallel.ForEach(sentStatusDocEdoProcessings, docEdoProcessing =>
             {
                 var doc = _edo.GetDocument(docEdoProcessing.MessageId, docEdoProcessing.EntityId);
 
-                if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature)
+                lock(_locker)
                 {
-                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Signed, $"Документ {docEdoProcessing.IdDoc} подписан контрагентом.");
-                }
-                else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
-                {
-                    string rejectionReason = null;
-                    var docflow = _edo.GetDocFlow(docEdoProcessing.MessageId, docEdoProcessing.EntityId, true);
-                    var signatureRejection = docflow?.Docflow?.RecipientResponse?.Rejection;
+                    if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientSignature)
+                    {
+                        SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Signed, $"Документ {docEdoProcessing.IdDoc} подписан контрагентом.");
+                    }
+                    else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.RecipientSignatureRequestRejected)
+                    {
+                        string rejectionReason = null;
+                        var docflow = _edo.GetDocFlow(docEdoProcessing.MessageId, docEdoProcessing.EntityId, true);
+                        var signatureRejection = docflow?.Docflow?.RecipientResponse?.Rejection;
 
-                    if(signatureRejection != null)
-                        rejectionReason = signatureRejection.PlainText;
+                        if(signatureRejection != null)
+                            rejectionReason = signatureRejection.PlainText;
 
-                    if (!string.IsNullOrEmpty(rejectionReason))
-                        if (rejectionReason.Length > 2000)
-                            rejectionReason = rejectionReason.Substring(0, 2000);
+                        if (!string.IsNullOrEmpty(rejectionReason))
+                            if (rejectionReason.Length > 2000)
+                                rejectionReason = rejectionReason.Substring(0, 2000);
 
-                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.", rejectionReason);
+                        SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.Rejected, $"Документ {docEdoProcessing.IdDoc} отклонён контрагентом.", rejectionReason);
+                    }
+                    else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
+                    {
+                        SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Документ {docEdoProcessing.IdDoc} подписан с расхождениями.");
+                    }
                 }
-                else if (doc.RecipientResponseStatus == Diadoc.Api.Proto.Documents.RecipientResponseStatus.WithRecipientPartiallySignature)
-                {
-                    SetEdoStatus(docEdoProcessing, (int)Enums.DocEdoSendStatus.PartialSigned, $"Документ {docEdoProcessing.IdDoc} подписан с расхождениями.");
-                }
-            }
+            });
 
             var correctionDocEdoProcessings = (from correctionDocEdoProcessing in _abtDbContext.DocEdoProcessings
                                                where correctionDocEdoProcessing.DocType == ucdDocType && correctionDocEdoProcessing.DocStatus == (int)Enums.DocEdoSendStatus.Sent && correctionDocEdoProcessing.DocDate > dateTimeFrom
