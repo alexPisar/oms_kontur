@@ -288,10 +288,8 @@ namespace EdiProcessingUnit.ProcessorUnits
 
         private void AddCounteragentsToTrader(RefCustomer company)
         {
-            var dateTimeFrom = DateTime.Now.AddMonths(-6);
-
             var refEdoCounteragents = from a in _abtDbContext.RefEdoCounteragents
-                                      where a.IsConnected == 1 && a.IsDefault == 1 && a.InsertDatetime > dateTimeFrom
+                                      where a.IsConnected == 1 && a.IsDefault == 1
                                       && !_abtDbContext.RefRefTags.Any(r => r.IdTag == 223 && r.IdObject == a.IdCustomerBuyer && r.TagValue == a.IdFnsBuyer)
                                       join r in _abtDbContext.RefCustomers
                                       on a.IdCustomerSeller equals r.Id
@@ -323,8 +321,7 @@ namespace EdiProcessingUnit.ProcessorUnits
             }
 
             var refEdoCounteragentConsignees = from a in _abtDbContext.RefEdoCounteragentConsignees
-                                               where a.InsertDatetime > dateTimeFrom &&
-                                               !_abtDbContext.RefRefTags.Any(r => r.IdTag == 224 && r.IdObject == a.IdContractorConsignee && r.TagValue == a.IdFnsBuyer)
+                                               where !_abtDbContext.RefRefTags.Any(r => r.IdTag == 224 && r.IdObject == a.IdContractorConsignee && r.TagValue == a.IdFnsBuyer)
                                                join r in _abtDbContext.RefCustomers on a.IdCustomerSeller equals r.Id
                                                where r.Inn == company.Inn && r.Kpp == company.Kpp
                                                let edoCounteragents = (from refEdo in _abtDbContext.RefEdoCounteragents
