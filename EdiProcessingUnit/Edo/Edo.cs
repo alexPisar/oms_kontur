@@ -636,7 +636,7 @@ namespace EdiProcessingUnit.Edo
             return result;
         }
 
-        public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV3 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
+        public Diadoc.Api.Proto.Docflow.DocumentWithDocflowV4 GetDocFlow(string messageId, string entityId, bool injectEntityContent = false)
         {
             var request = new Diadoc.Api.Proto.Docflow.GetDocflowBatchRequest
             {
@@ -654,7 +654,7 @@ namespace EdiProcessingUnit.Edo
                 }
             };
             
-            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV3>(() => _api.Docflow.GetDocflows(_authToken, _actualBoxId, request)));
+            var docs = CallApiSafe(new Func<Diadoc.Api.Proto.Docflow.GetDocflowBatchResponseV4>(() => _api.Docflow.GetDocflowsV4(_authToken, _actualBoxId, request)));
             return docs?.Documents?.FirstOrDefault();
         }
 
@@ -875,7 +875,7 @@ namespace EdiProcessingUnit.Edo
 
         public Message GetMessage(string messageId, string entityId, bool includedContent = false)
         {
-            var message = CallApiSafe(new Func<Message>(() => _api.GetMessage(_authToken, _actualBoxId, messageId, entityId, false, includedContent)));
+            var message = CallApiSafe(new Func<Message>(() => _api.GetMessageV6(_authToken, _actualBoxId, messageId, entityId, false, includedContent)));
             return message;
         }
 
