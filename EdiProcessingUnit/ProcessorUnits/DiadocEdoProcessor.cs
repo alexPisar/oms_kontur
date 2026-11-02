@@ -556,20 +556,12 @@ namespace EdiProcessingUnit.ProcessorUnits
                 var newDocuments = docs.Where(d => d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.None || d.DocStatus == (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequested).ToList() ?? new List<DocEdoPurchasing>();
 
 
-                foreach (var newDocument in newDocuments)
+                Parallel.ForEach(newDocuments, (newDocument) =>
                 {
+                    Diadoc.Api.Proto.Documents.Document document = null;
                     try
                     {
-                        var document = _edo.GetDocument(newDocument.IdDocEdo, newDocument.ParentEntityId);
-
-                        if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RequestsMyRevocation)
-                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequired;
-                        else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationAccepted)
-                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.Revoked;
-                        else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationRejected)
-                            newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RejectRevoke;
-
-                        _abtDbContext?.SaveChanges();
+                        document = _edo.GetDocument(newDocument.IdDocEdo, newDocument.ParentEntityId);
                     }
                     catch (System.Net.WebException webEx)
                     {
@@ -579,7 +571,32 @@ namespace EdiProcessingUnit.ProcessorUnits
                     {
                         MailReporter.Add("DiadocEdoProcessorException.ExecuteCheckReceiveDocuments: Произошла ошибка\r\n" + _log.GetRecursiveInnerException(ex));
                     }
-                }
+
+                    if (document == null)
+                        return;
+
+                    lock (_locker)
+                    {
+                        if (document != null)
+                        {
+                            if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RequestsMyRevocation)
+                            {
+                                newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequired;
+                                _abtDbContext?.SaveChanges();
+                            }
+                            else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationAccepted)
+                            {
+                                newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.Revoked;
+                                _abtDbContext?.SaveChanges();
+                            }
+                            else if (document.RevocationStatus == Diadoc.Api.Proto.Documents.RevocationStatus.RevocationRejected)
+                            {
+                                newDocument.DocStatus = (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RejectRevoke;
+                                _abtDbContext?.SaveChanges();
+                            }
+                        }
+                    }
+                });
             }
             catch(Exception ex)
             {
