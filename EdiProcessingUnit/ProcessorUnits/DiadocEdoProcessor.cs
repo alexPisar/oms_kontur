@@ -551,6 +551,20 @@ namespace EdiProcessingUnit.ProcessorUnits
                 if (processingDocuments.Exists(p => p.DocStatus != (int)HonestMark.DocEdoProcessingStatus.Sent))
                     _abtDbContext?.SaveChanges();
 
+                var processedDocuments = docs.Where(d => d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.Processed && d.IdDocJournal != null).ToList();
+                var processedDocumentsWithZeroLabelStatus = processedDocuments?.Where(d =>
+                _abtDbContext.SelectSingleValue($"select distinct 1 from doc_goods_details_labels where id_doc = {d.IdDocJournal.Value} and label_status = 0") == "1")?.ToList() ?? new List<DocEdoPurchasing>();
+
+                foreach (var processedDocument in processedDocumentsWithZeroLabelStatus)
+                {
+                    var docJournal = _abtDbContext.DocJournals.First(d => d.Id == processedDocument.IdDocJournal);
+
+                    if (docJournal?.IdDocType == (int)DataContextManagementUnit.DataAccess.DocJournalType.Receipt)
+                    {
+                        _abtDbContext.Database.ExecuteSqlCommand($"UPDATE doc_goods_details_labels SET LABEL_STATUS = 2, POST_DATETIME = sysdate where label_status = 0 and id_doc = {processedDocument.IdDocJournal}");
+                        _abtDbContext?.SaveChanges();
+                    }
+                }
 
 
                 var newDocuments = docs.Where(d => d.DocStatus == (int)HonestMark.DocEdoProcessingStatus.None || d.DocStatus == (int)HonestMark.AnnulmentDocEdoPurchasingStatus.RevokeRequested).ToList() ?? new List<DocEdoPurchasing>();
