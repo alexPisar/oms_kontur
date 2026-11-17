@@ -759,6 +759,9 @@ namespace EdiProcessingUnit.ProcessorUnits
                     {
                         if (newDetail.BarCode.Length > 20 && !string.IsNullOrEmpty(newDetail.Gtin))
                             newDetail.BarCode = newDetail.Gtin.TrimStart('0');
+
+                        if (newDetail.BarCode.Length > 20)
+                            newDetail.BarCode = newDetail.BarCode.Substring(0, 20);
                     }
 
                     if (!string.IsNullOrEmpty(product.QuantityMark))
