@@ -1060,7 +1060,7 @@ namespace KonturEdoClient.Models
                                 _loadedDocuments[index] = (from doc in docs
                                                        where doc != null && doc.DocGoodsI != null && doc.DocMaster != null && doc.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice && doc.DocDatetime >= DateFrom
                                                        join docMaster in _abt.DocJournals on doc.IdDocMaster equals docMaster.Id
-                                                       where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= DateFrom && docMaster.DocDatetime < DateTo
+                                                       where docMaster != null && docMaster.DocGoods != null && docMaster.DocDatetime >= DateFrom && docMaster.DocDatetime < DateTo && docMaster.IdDocMaster == null
                                                        join docGoods in _abt.DocGoods on docMaster.Id equals docGoods.IdDoc
                                                        join customer in _abt.RefCustomers on docGoods.IdSeller equals customer.IdContractor
                                                        where customer.Inn == organization.Inn && customer.Kpp == organization.Kpp
