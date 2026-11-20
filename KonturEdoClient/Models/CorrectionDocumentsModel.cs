@@ -1219,7 +1219,7 @@ namespace KonturEdoClient.Models
 
                             var newQuantity = detail.Quantity + oldQuantity;
                             var newSubtotal = Math.Round(newQuantity * ((decimal)detail.Price - (decimal)detail.DiscountSumm), 2);
-                            var newVat = (decimal)Math.Round(newSubtotal * baseDetail.TaxRate / (baseDetail.TaxRate + 100), 2);
+                            var newVat = (decimal)Math.Round(newSubtotal * detail.TaxRate / (detail.TaxRate + 100), 2);
                             var newPrice = (decimal)Math.Round((newSubtotal - newVat) / newQuantity, 2, MidpointRounding.AwayFromZero);
 
                             if (oldPrice == 0)
