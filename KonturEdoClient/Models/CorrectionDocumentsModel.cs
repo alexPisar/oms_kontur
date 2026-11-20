@@ -1200,13 +1200,20 @@ namespace KonturEdoClient.Models
                             gtinInfos = EdiProcessingUnit.HonestMark.HonestMarkClient.GetInstance().GetGtinInfo(gtins);
                         }
 
+                        var docGoodsCount = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.Count;
+
                         foreach(var detail in DocGoodsDetailsIs)
                         {
                             var baseDetail = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.FirstOrDefault(d => d.IdGood == detail.IdGood);
 
                             var additionalInfos = new List<Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.AdditionalInfo100>();
 
-                            int baseIndex = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
+                            int baseIndex = 0;
+
+                            if(baseDetail == null)
+                                baseIndex = ++docGoodsCount;
+                            else
+                                baseIndex = SelectedDocument.InvoiceDocJournal.DocGoodsDetailsIs.IndexOf(baseDetail) + 1;
 
                             var barCode = _abt.RefBarCodes?
                             .FirstOrDefault(b => b.IdGood == detail.IdGood && b.IsPrimary == 0)?
@@ -1243,7 +1250,7 @@ namespace KonturEdoClient.Models
                                 Quantity = new Diadoc.Api.DataXml.ON_NKORSCHFDOPPR_UserContract_1_996_03_05_01_03.ExtendedInvoiceCorrectionItemQuantity
                                 {
                                     OriginalValue = oldQuantity,
-                                    OriginalValueSpecified = true,
+                                    OriginalValueSpecified = oldQuantity > 0,
                                     CorrectedValue = newQuantity,
                                     CorrectedValueSpecified = true
                                 },
