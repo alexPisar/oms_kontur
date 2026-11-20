@@ -49,6 +49,8 @@ namespace EdiProcessingUnit.Edo.Models
                         return "Возврат от покупателя";
                     case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
                         return "Корректировочная с/ф";
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice:
+                        return "Добавление товаров";
                     default:
                         return "";
                 }
@@ -64,6 +66,8 @@ namespace EdiProcessingUnit.Edo.Models
                         return CorrectionDocJournal?.DocGoods?.Seller?.Name;
                     case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
                         return InvoiceDocJournal?.DocMaster?.DocGoods?.Customer?.Name;
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice:
+                        return CorrectionDocJournal?.DocMaster?.DocGoods?.Customer?.Name;
                     default:
                         return "";
                 }
@@ -79,6 +83,8 @@ namespace EdiProcessingUnit.Edo.Models
                         return CorrectionDocJournal?.DocGoods?.Customer?.Name;
                     case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction:
                         return InvoiceDocJournal?.DocMaster?.DocGoods?.Seller?.Name;
+                    case (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice:
+                        return CorrectionDocJournal?.DocMaster?.DocGoods?.Seller?.Name;
                     default:
                         return "";
                 }
@@ -142,8 +148,10 @@ namespace EdiProcessingUnit.Edo.Models
 
             if(CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Correction)
                 IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocSale == InvoiceDocJournal.IdDocMaster select label).Count() > 0;
-            else
+            else if (CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.ReturnFromBuyer)
                 IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocReturn == CorrectionDocJournal.Id select label).Count() > 0;
+            else if(CorrectionDocJournal?.IdDocType == (decimal)DataContextManagementUnit.DataAccess.DocJournalType.Invoice)
+                IsMarked = (from label in abtContext.DocGoodsDetailsLabels where label.IdDocSale == CorrectionDocJournal.IdDocMaster select label).Count() > 0;
 
             _actStatusStr = abtContext.SelectSingleValue($"select name from ref_actions where id = {CorrectionDocJournal.ActStatus}");
             return this;
